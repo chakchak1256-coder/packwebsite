@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Payment Status — DIGITCH</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --accent:#10B981;--bg:#0C0C0C;--bg2:#141414;--bg3:#1E1E1E;
+  --text:#F2F2F2;--text-muted:#71717A;--border:rgba(255,255,255,.08);
+  --radius:14px;--shadow:0 4px 32px rgba(0,0,0,.4);
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem}
+.card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:2.5rem 2rem;max-width:440px;width:100%;text-align:center;
+  box-shadow:var(--shadow);
+}
+.icon{font-size:3rem;margin-bottom:1rem;display:block}
+h1{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;margin-bottom:.5rem}
+p{font-size:.92rem;color:var(--text-muted);line-height:1.6;margin-bottom:1.5rem}
+.btn{
+  display:inline-flex;align-items:center;gap:.5rem;
+  background:var(--accent);color:#fff;font-weight:700;font-size:.9rem;
+  padding:.8rem 1.6rem;border-radius:9px;border:none;cursor:pointer;
+  text-decoration:none;transition:opacity .15s;
+}
+.btn:hover{opacity:.88}
+.btn.outline{background:transparent;border:1px solid var(--border);color:var(--text-muted)}
+.status-badge{
+  display:inline-block;padding:.35rem .85rem;border-radius:99px;
+  font-size:.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  margin-bottom:1.5rem;
+}
+.badge-pending{background:rgba(245,158,11,.12);color:#F59E0B;border:1px solid rgba(245,158,11,.25)}
+.badge-paid   {background:rgba(16,185,129,.12);color:#10B981;border:1px solid rgba(16,185,129,.25)}
+.badge-failed {background:rgba(239,68,68,.12);color:#EF4444;border:1px solid rgba(239,68,68,.25)}
+.spinner{display:inline-block;width:1.1rem;height:1.1rem;border:2px solid rgba(16,185,129,.25);
+  border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.detail-box{background:var(--bg3);border:1px solid var(--border);border-radius:9px;
+  padding:1rem;margin-bottom:1.5rem;text-align:left;font-size:.85rem}
+.detail-row{display:flex;justify-content:space-between;padding:.3rem 0;
+  border-bottom:1px solid var(--border)}
+.detail-row:last-child{border-bottom:none}
+.detail-label{color:var(--text-muted)}
+.detail-val{font-weight:600;font-family:monospace;font-size:.8rem}
+.reject-box{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);
+  border-radius:9px;padding:.85rem 1rem;margin-bottom:1.3rem;
+  font-size:.83rem;color:#EF4444;text-align:left}
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <span class="icon">⏳</span>
+  <h1>Checking payment…</h1>
+  <div class="status-badge badge-pending"><span class="spinner"></span> &nbsp;Verifying</div>
+  <p>Please wait while we confirm your payment with the bank.</p>
+</div>
+
+<script>
+  // ── Config ──────────────────────────────────────────────────────
+  // The backend URL — the Worker handles all SlickPay calls server-side.
+  // The API key is NEVER exposed here; it lives in the Worker secret.
+  window.DIGISTORE_BACKEND_URL = 'https://digital-website.digitch.workers.dev';
+
+  const POLL_INTERVAL = 3000;  // ms
+  const MAX_POLLS     = 20;    // ~60 s total
+
+  // ── Get order ID ────────────────────────────────────────────────
+  function getOrderId() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('order') || params.get('order_id') ||
+           sessionStorage.getItem('slickpay_order_id') || null;
+  }
+
+  // ── Render states ────────────────────────────────────────────────
+  function renderPaid() {
+    document.getElementById('card').innerHTML = `
+      <span class="icon">🎉</span>
+      <h1>Payment Successful!</h1>
+      <div class="status-badge badge-paid">✓ Paid</div>
+      <p>Your order has been confirmed. Check <strong>My Learning</strong> to access your content.</p>
+      <a class="btn" href="/?open=my-products">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+        View My Learning
+      </a>
+      <br/><br/>
+      <a class="btn outline" href="/">← Back to Home</a>
+    `;
+  }
+
+  function renderFailed(reason) {
+    document.getElementById('card').innerHTML = `
+      <span class="icon">❌</span>
+      <h1>Payment Not Completed</h1>
+      <div class="status-badge badge-failed">Not Paid</div>
+      ${reason ? `<div class="reject-box"><strong>Reason:</strong> ${reason}</div>` : ''}
+      <p>Your payment was not completed. No charge was made. You can try again with a different card or payment method.</p>
+      <a class="btn" href="/">← Back to Home</a>
+    `;
+  }
+
+  function renderTimeout() {
+    document.getElementById('card').innerHTML = `
+      <span class="icon">⌛</span>
+      <h1>Still Checking…</h1>
+      <div class="status-badge badge-pending">Pending</div>
+      <p>We couldn't confirm your payment status yet. If you completed the payment, it will appear in <strong>My Learning</strong> shortly. If not, no charge was made.</p>
+      <a class="btn" href="/?open=my-products">Check My Learning</a>
+      <br/><br/>
+      <a class="btn outline" href="/">← Back to Home</a>
+    `;
+  }
+
+  // ── Poll backend ─────────────────────────────────────────────────
+  async function pollStatus(orderId, attempt) {
+    if (attempt >= MAX_POLLS) { renderTimeout(); return; }
+
+    try {
+      const backendUrl = (window.DIGISTORE_BACKEND_URL || '').replace(/\/+$/, '');
+      const res  = await fetch(`${backendUrl}/api/checkout/status/${encodeURIComponent(orderId)}`);
+      const data = await res.json();
+
+      if (data.completed === 1 || data.status === 'paid' || data.status === 'delivered') {
+        renderPaid();
+        try { sessionStorage.removeItem('slickpay_order_id'); } catch {}
+        return;
+      }
+
+      // Check rejection reason — if it's a hard failure (not just "pending / waiting")
+      const reason = data.rejection_reason || '';
+      const hardFail = /annul|refus|échec|failed|error|cancel/i.test(reason);
+      if (hardFail && data.completed === 0) {
+        renderFailed(reason);
+        return;
+      }
+
+    } catch (e) {
+      console.warn('[payment-return] poll attempt', attempt, 'failed:', e.message);
+    }
+
+    setTimeout(() => pollStatus(orderId, attempt + 1), POLL_INTERVAL);
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────
+  const orderId = getOrderId();
+  if (!orderId) {
+    renderFailed('No order reference found. Please return to the store.');
+  } else {
+    pollStatus(orderId, 0);
+  }
+</script>
+</body>
+</html>
