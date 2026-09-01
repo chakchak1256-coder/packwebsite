@@ -1,0 +1,13 @@
+node_modules
+.wrangler
+backend
+.env
+.env.example
+server.js
+worker.js
+wrangler.jsonc
+package.json
+package-lock.json
+bun.lockb
+README.md
+seed.html

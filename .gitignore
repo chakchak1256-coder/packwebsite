@@ -1,0 +1,19 @@
+# Environment variables — NEVER commit these
+.env
+*.env
+
+# Firebase service account key files
+serviceAccountKey.json
+*-service-account*.json
+firebase-sa.json
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Cloudflare Wrangler local cache/session — regenerates automatically
+.wrangler/
+
+# OS
+.DS_Store
+Thumbs.db

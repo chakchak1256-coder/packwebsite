@@ -1,0 +1,44 @@
+{
+  "name": "digital-website",
+  "main": "worker.js",
+  "compatibility_date": "2024-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+"assets": {
+  "directory": "./public",
+  "binding": "ASSETS",
+  "not_found_handling": "404-page"
+},
+
+  "vars": {
+    "APP_URL": "https://digital-website.digitch.workers.dev",
+    // Same value as firebaseConfig.apiKey in firebase.js — this is NOT a
+    // secret (Firebase's client apiKey is meant to be public), it just
+    // identifies the Firebase project when the Worker verifies an admin
+    // login token via Google's Identity Toolkit (see requireAdminAuth()
+    // in worker.js). Without this, every admin-only route (upload-file,
+    // delete-file, delete-user, login-history, log-access) fails auth.
+    "FIREBASE_API_KEY": "AIzaSyAz6LUNMFRHOo4_pvLoB9UMg_u-VRc_RHA",
+    "FIREBASE_PROJECT_ID": "generalwebsite-580f9",
+    "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@generalwebsite-580f9.iam.gserviceaccount.com",
+    // "sandbox" uses devapi.slick-pay.com  |  "production" uses prodapi.slick-pay.com
+    "SLICKPAY_ENV": "production",
+    // NOTE: admin-only routes (upload-file, delete-file, delete-user,
+    // login-history, log-access) are protected by requireAdminAuth() in
+    // worker.js, which verifies a Firebase ID token (Authorization: Bearer
+    // <token>) against ADMIN_EMAIL — not a static API key. There is no
+    // ADMIN_API_KEY in this codebase; don't set one expecting it to do
+    // anything.
+    // Public base URL of your R2 bucket (r2.dev URL or connected custom domain,
+    // NO trailing slash) — required by POST /api/upload-file in worker.js.
+    // Example: "https://pub-xxxxxxxxxxxxxxxx.r2.dev"
+    "R2_PUBLIC_URL": "https://pub-3b114b0bb0f949b4a20eafa3911ee64c.r2.dev"
+  },
+
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "digitalproducts"
+    }
+  ]
+}
