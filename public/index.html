@@ -1177,6 +1177,57 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:2.5rem 0
 @media(max-width:700px){.mp-grid{grid-template-columns:1fr 1fr}.mp-search{display:none}.mp-stats{grid-template-columns:1fr 1fr}}
 @media(max-width:420px){.mp-grid{grid-template-columns:1fr}}
 
+/* ===== ACCOUNT AREA ===== */
+#account-page{display:none;position:fixed;inset:0;z-index:830;background:var(--bg);overflow-y:auto}
+#account-page.active{display:block}
+.acct-inner{max-width:1160px;margin:0 auto;padding:160px 5vw 60px}
+.acct-layout{display:grid;grid-template-columns:250px 1fr;gap:2rem;align-items:start}
+.acct-side{position:sticky;top:160px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:.6rem;display:flex;flex-direction:column}
+.acct-side-user{display:flex;align-items:center;gap:.7rem;padding:.8rem .7rem 1rem;border-bottom:1px solid var(--border);margin-bottom:.5rem}
+.acct-avatar{width:42px;height:42px;border-radius:50%;background:rgba(var(--accent-rgb),.15);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:800;font-size:1rem;flex-shrink:0}
+.acct-side-name{font-size:.86rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acct-side-email{font-size:.72rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acct-nav-item{display:flex;align-items:center;gap:.65rem;padding:.65rem .8rem;border-radius:8px;font-size:.86rem;font-weight:600;
+  color:var(--text-muted);cursor:pointer;transition:all var(--transition);width:100%;text-align:left;background:none;border:none;font-family:inherit}
+.acct-nav-item i{width:16px;text-align:center;color:var(--text-muted);transition:color var(--transition)}
+.acct-nav-item:hover{background:var(--bg3);color:var(--text)}
+.acct-nav-item.active{background:rgba(var(--accent-rgb),.1);color:var(--accent)}
+.acct-nav-item.active i{color:var(--accent)}
+.acct-nav-divider{height:1px;background:var(--border);margin:.5rem .3rem}
+.acct-content{min-width:0}
+.acct-hdr{margin-bottom:1.6rem}
+.acct-hdr h2{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:800;margin-bottom:.25rem;color:var(--text)}
+.acct-hdr p{color:var(--text-muted);font-size:.87rem}
+.acct-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem 1.5rem;margin-bottom:1.1rem}
+.acct-card h3{font-family:'Fraunces',serif;font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--text)}
+.acct-field{margin-bottom:1rem}
+.acct-field:last-child{margin-bottom:0}
+.acct-field label{display:block;font-size:.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.4rem}
+.acct-field-static{font-size:.9rem;color:var(--text);padding:.6rem .8rem;background:var(--bg3);border-radius:var(--radius-sm)}
+.acct-row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+.acct-order{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.2rem;margin-bottom:.8rem}
+.acct-order-hdr{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;cursor:pointer}
+.acct-order-id{font-family:monospace;font-size:.72rem;color:var(--text-muted)}
+.acct-order-name{font-weight:700;font-size:.9rem;color:var(--text)}
+.acct-order-status{padding:3px 10px;border-radius:99px;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+.acct-status-completed{background:rgba(16,185,129,.12);color:var(--accent)}
+.acct-status-pending{background:rgba(245,158,11,.12);color:#F59E0B}
+.acct-status-other{background:rgba(113,113,122,.15);color:var(--text-muted)}
+.acct-order-body{display:none;margin-top:.9rem;padding-top:.9rem;border-top:1px solid var(--border)}
+.acct-order.open .acct-order-body{display:block}
+.acct-order.open .acct-order-caret{transform:rotate(180deg)}
+.acct-order-caret{transition:transform var(--transition);color:var(--text-muted);font-size:.75rem}
+.acct-help-cat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem 1.3rem;margin-bottom:.8rem}
+.acct-help-cat h4{font-family:'Fraunces',serif;font-size:.92rem;font-weight:700;margin-bottom:.5rem;display:flex;align-items:center;gap:.5rem;color:var(--text)}
+.acct-help-cat p{font-size:.85rem;color:var(--text-muted);line-height:1.7}
+@media(max-width:820px){
+  .acct-layout{grid-template-columns:1fr}
+  .acct-side{position:static;display:flex;flex-direction:row;overflow-x:auto;gap:.3rem;padding:.5rem}
+  .acct-side-user{display:none}
+  .acct-nav-item{white-space:nowrap;flex-shrink:0;width:auto}
+  .acct-nav-divider{display:none}
+}
 
 /* ===== WHATSAPP FLOAT BUTTON ===== */
 #wa-float {
@@ -1879,7 +1930,7 @@ footer::before{
     <a href="#best-sellers" data-section="best-sellers" onclick="closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">Most Popular</a>
     <a href="#about" data-section="about" onclick="closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">About</a>
     <a href="#warranty" data-section="warranty" onclick="closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">Warranty</a>
-    <a href="#" id="my-products-link" onclick="closeWishlist();openMyProducts();return false;">My Learning</a>
+    <a href="#" id="my-products-link" onclick="closeWishlist();openMyProducts();return false;">My Library</a>
   </div>
   <div class="nav-actions">
     <!-- Wishlist -->
@@ -1892,7 +1943,13 @@ footer::before{
     </button>
     <div id="user-menu" style="display:none;position:absolute;top:144px;right:5vw;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:.5rem;min-width:200px;z-index:1000;box-shadow:0 12px 35px rgba(0,0,0,.5)">
       <div id="user-menu-info" style="padding:.6rem .9rem;margin-bottom:.3rem;border-bottom:1px solid var(--border)"></div>
-      <button onclick="openMyProducts();document.getElementById('user-menu').style.display='none';" style="display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;width:100%;transition:background var(--transition)" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''"><i class="fa-solid fa-box-archive" style="color:var(--primary)"></i> My Learning</button>
+      <button onclick="openAccount('profile');document.getElementById('user-menu').style.display='none';" style="display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;width:100%;transition:background var(--transition)" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''"><i class="fa-solid fa-user" style="color:var(--primary)"></i> Profile</button>
+      <button onclick="openAccount('library');document.getElementById('user-menu').style.display='none';" style="display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;width:100%;transition:background var(--transition)" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''"><i class="fa-solid fa-box-archive" style="color:var(--primary)"></i> My Library</button>
+      <button onclick="openAccount('orders');document.getElementById('user-menu').style.display='none';" style="display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;width:100%;transition:background var(--transition)" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''"><i class="fa-solid fa-receipt" style="color:var(--primary)"></i> Orders</button>
+      <button onclick="openAccount('wishlist');document.getElementById('user-menu').style.display='none';" style="display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;width:100%;transition:background var(--transition)" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''"><i class="fa-regular fa-heart" style="color:var(--primary)"></i> Wishlist</button>
+      <button onclick="openAccount('settings');document.getElementById('user-menu').style.display='none';" style="display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;width:100%;transition:background var(--transition)" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''"><i class="fa-solid fa-gear" style="color:var(--primary)"></i> Settings</button>
+      <button onclick="openAccount('help');document.getElementById('user-menu').style.display='none';" style="display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;width:100%;transition:background var(--transition)" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''"><i class="fa-solid fa-circle-question" style="color:var(--primary)"></i> Help</button>
+      <div style="height:1px;background:var(--border);margin:.35rem .2rem"></div>
       <button onclick="doUserLogout()" style="width:100%;display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;color:var(--text-muted);transition:all var(--transition);text-align:left" onmouseover="this.style.color='#ff4d6d'" onmouseout="this.style.color='var(--text-muted)'"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
     </div>
     <button id="login-nav-btn" onclick="openLoginModal()" style="padding:8px 16px;border-radius:var(--radius-sm);background:rgba(var(--primary-rgb),.12);border:1px solid rgba(var(--primary-rgb),.3);color:var(--primary);font-size:.83rem;font-weight:700;transition:all var(--transition);white-space:nowrap"><i class="fa-solid fa-user"></i> Sign In</button>
@@ -1934,7 +1991,7 @@ footer::before{
   <a href="#best-sellers" onclick="closeMobileNav();closeMyProducts();closeAllProducts();closeWishlist();">Most Popular</a>
   <a href="#about" onclick="closeMobileNav();closeMyProducts();closeAllProducts();closeWishlist();">About</a>
   <a href="#warranty" onclick="closeMobileNav();closeMyProducts();closeAllProducts();closeWishlist();">Warranty</a>
-  <a href="#" id="my-products-link-mobile" onclick="closeMobileNav();closeWishlist();openMyProducts();return false;">My Learning</a>
+  <a href="#" id="my-products-link-mobile" onclick="closeMobileNav();closeWishlist();openMyProducts();return false;">My Library</a>
 </div>
 
 <!-- ===== HERO ===== -->
@@ -2145,7 +2202,7 @@ footer::before{
       <a href="#best-sellers" onclick="closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">Most Popular</a>
       <a href="#about" onclick="closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">About</a>
       <a href="#warranty" onclick="closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">Warranty</a>
-      <a href="#" onclick="closeWishlist();openMyProducts();return false;">My Learning</a>
+      <a href="#" onclick="closeWishlist();openMyProducts();return false;">My Library</a>
     </div>
     <p class="footer-copy" id="footer-copy">© 2025 DIGITCH · All rights reserved</p>
   </div>
@@ -2163,6 +2220,34 @@ footer::before{
   </div>
 </div>
 
+<!-- ===== ACCOUNT AREA ===== -->
+<div id="account-page">
+  <div class="acct-inner">
+    <button class="back-btn" onclick="closeAccount()"><i class="fa-solid fa-arrow-left"></i> Back to Home</button>
+    <div class="acct-layout">
+      <aside class="acct-side">
+        <div class="acct-side-user">
+          <div class="acct-avatar" id="acct-avatar">?</div>
+          <div style="min-width:0">
+            <div class="acct-side-name" id="acct-side-name">—</div>
+            <div class="acct-side-email" id="acct-side-email">—</div>
+          </div>
+        </div>
+        <button class="acct-nav-item" data-tab="profile" onclick="acctSetTab('profile')"><i class="fa-solid fa-user"></i> Profile</button>
+        <button class="acct-nav-item" data-tab="library" onclick="acctSetTab('library')"><i class="fa-solid fa-box-archive"></i> My Library</button>
+        <button class="acct-nav-item" data-tab="orders" onclick="acctSetTab('orders')"><i class="fa-solid fa-receipt"></i> Orders</button>
+        <button class="acct-nav-item" data-tab="wishlist" onclick="acctSetTab('wishlist')"><i class="fa-regular fa-heart"></i> Wishlist</button>
+        <div class="acct-nav-divider"></div>
+        <button class="acct-nav-item" data-tab="settings" onclick="acctSetTab('settings')"><i class="fa-solid fa-gear"></i> Settings</button>
+        <button class="acct-nav-item" data-tab="help" onclick="acctSetTab('help')"><i class="fa-solid fa-circle-question"></i> Help</button>
+        <div class="acct-nav-divider"></div>
+        <button class="acct-nav-item" onclick="doUserLogout()" style="color:#EF4444"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+      </aside>
+      <div class="acct-content" id="acct-content"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== AUTH MODAL ===== -->
 <div id="auth-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1200;backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:1rem">
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;width:100%;max-width:400px;position:relative">
@@ -2170,7 +2255,7 @@ footer::before{
 
     <div id="am-checkout-note" style="display:none;align-items:center;gap:.6rem;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:var(--radius-sm);padding:.65rem 1rem;font-size:.82rem;color:#10B981;margin-bottom:1rem">
       <i class="fa-solid fa-box-archive" style="flex-shrink:0"></i>
-      <span>Sign in so your purchase is saved to <strong>My Learning</strong> forever.</span>
+      <span>Sign in so your purchase is saved to <strong>My Library</strong> forever.</span>
     </div>
     <div id="am-error" style="display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:var(--radius-sm);padding:.65rem 1rem;font-size:.83rem;color:#EF4444;margin-bottom:1rem"></div>
 
@@ -2362,9 +2447,9 @@ footer::before{
       <div style="font-size:2.4rem;margin-bottom:.6rem">🎉</div>
       <i class="fa-solid fa-circle-check" style="color:var(--accent);font-size:2rem;display:block;margin-bottom:.7rem"></i>
       <h3>Order Placed!</h3>
-      <p>Your purchase has been saved.<br/>Check <strong>My Learning</strong> for your access link once delivered.</p>
+      <p>Your purchase has been saved.<br/>Check <strong>My Library</strong> for your access link once delivered.</p>
       <div style="display:flex;gap:.6rem;justify-content:center;margin-top:1.4rem;flex-wrap:wrap">
-        <button class="btn btn-primary" id="co-success-myprods-btn"><i class="fa-solid fa-box-archive"></i> My Learning</button>
+        <button class="btn btn-primary" id="co-success-myprods-btn"><i class="fa-solid fa-box-archive"></i> My Library</button>
         <button class="btn btn-outline" id="co-success-continue-btn">Continue Shopping</button>
       </div>
     </div>
@@ -2397,7 +2482,7 @@ footer::before{
     <div class="mp-hdr">
       <div class="mp-hdr-left">
         <div class="mp-badge"><i class="fa-solid fa-graduation-cap"></i> My Library</div>
-        <h2>My Learning</h2>
+        <h2>My Library</h2>
         <p id="mp-hdr-sub">Your enrolled courses &amp; unlocked packs</p>
       </div>
       <div style="display:flex;gap:.6rem;flex-wrap:wrap">
@@ -2422,7 +2507,7 @@ footer::before{
 <div id="course-player-page">
   <div class="cp-topbar">
     <button class="cp-mobile-toggle btn btn-sm btn-outline" onclick="document.getElementById('cp-sidebar').classList.toggle('open')"><i class="fa-solid fa-bars"></i></button>
-    <button class="back-btn" style="position:static" onclick="closeCoursePlayer()"><i class="fa-solid fa-arrow-left"></i> <span class="cp-back-label">My Learning</span></button>
+    <button class="back-btn" style="position:static" onclick="closeCoursePlayer()"><i class="fa-solid fa-arrow-left"></i> <span class="cp-back-label">My Library</span></button>
     <div class="cp-topbar-title" id="cp-course-title">Loading…</div>
     <div class="cp-progress-wrap">
       <div class="cp-progress-bar"><div class="cp-progress-fill" id="cp-progress-fill" style="width:0%"></div></div>
@@ -2439,7 +2524,7 @@ footer::before{
   </div>
 </div>
 
-<!-- My Learning Detail Modal -->
+<!-- My Library Detail Modal -->
 <div id="mp-detail-modal">
   <div class="modal-box">
     <button onclick="document.getElementById('mp-detail-modal').classList.remove('open')" style="position:absolute;top:1rem;right:1rem;width:30px;height:30px;border-radius:50%;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-muted);cursor:pointer;font-size:.8rem"><i class="fa-solid fa-xmark"></i></button>
@@ -2480,7 +2565,7 @@ footer::before{
         <div class="pd-actions">
           <button class="btn-add-cart" id="pd-add-btn"><i class="fa-solid fa-bag-shopping"></i> Add to Cart</button>
           <button class="btn-buy-now" id="pd-buy-btn"><i class="fa-solid fa-bolt"></i> Buy Now</button>
-          <button class="btn-buy-now" id="pd-free-btn" style="display:none"><i class="fa-solid fa-gift"></i> Add to My Learning</button>
+          <button class="btn-buy-now" id="pd-free-btn" style="display:none"><i class="fa-solid fa-gift"></i> Add to My Library</button>
           <button class="pd-wish-btn" id="pd-wish-btn" title="Add to Wishlist"><i class="fa-regular fa-heart"></i></button>
         </div>
         <div class="pd-meta" id="pd-meta"></div>
@@ -2534,7 +2619,7 @@ footer::before{
     <p id="co-owned-msg"></p>
     <div class="co-owned-actions">
       <button class="btn btn-primary" onclick="closeCoOwnedModal();openMyProducts();closeCheckout()">
-        <i class="fa-solid fa-box-archive"></i> My Learning
+        <i class="fa-solid fa-box-archive"></i> My Library
       </button>
       <button class="btn btn-outline" onclick="closeCoOwnedModal()">OK</button>
     </div>
@@ -2785,7 +2870,7 @@ function makeProductCard(prod) {
 function addToCart(prod) { Cart.add(prod); Analytics.logCart(prod.id, prod.name); showToast(`"${prod.name}" added to cart`); }
 
 // ── FREE products (price === 0) — no cart, no payment ──────────────
-// Delivers the product straight to My Learning for a signed-in user.
+// Delivers the product straight to My Library for a signed-in user.
 // If auto-delivery (a link/PDF) is configured on the product, the
 // purchase is created already completed; otherwise it's queued as
 // pending, same as any manually-fulfilled order.
@@ -2796,7 +2881,7 @@ async function claimFreeProduct(prod) {
   // Don't hand out a second copy of a free product someone already owns.
   // "Owns" here means any existing purchase record for this product (and
   // variant, if it has one) — pending or delivered — since that's the
-  // real source of truth for My Learning, not anything stored locally.
+  // real source of truth for My Library, not anything stored locally.
   try {
     const existing = await Purchases.forUser(user.id);
     const already = existing.find(p =>
@@ -2804,7 +2889,7 @@ async function claimFreeProduct(prod) {
       (p.variantLabel || '') === (prod.variantLabel || '')
     );
     if (already) {
-      showToast(`ℹ️ You already have "${prod.name}" — check My Learning`);
+      showToast(`ℹ️ You already have "${prod.name}" — check My Library`);
       closeProductDetail();
       openMyProducts();
       return;
@@ -2835,9 +2920,9 @@ async function claimFreeProduct(prod) {
     }
 
     if (data.alreadyOwned) {
-      showToast(`ℹ️ You already have "${prod.name}" — check My Learning`);
+      showToast(`ℹ️ You already have "${prod.name}" — check My Library`);
     } else if (data.purchase && data.purchase.status === 'completed') {
-      showToast(`✅ "${prod.name}" is free — added to My Learning!`);
+      showToast(`✅ "${prod.name}" is free — added to My Library!`);
     } else {
       showToast(`✅ "${prod.name}" added — the seller will deliver it shortly.`);
     }
@@ -3046,7 +3131,7 @@ function openProductDetail(id, fromAllPage = true) {
   }
 
   // Free products (price <= 0) skip cart/payment entirely — only action
-  // is claiming it straight into "My Learning". Re-run whenever the
+  // is claiming it straight into "My Library". Re-run whenever the
   // selected variant changes price, in case a variant makes it free (or not).
   function updatePdActionButtons() {
     const isFree = (Number(activeProd.price) || 0) <= 0;
@@ -3054,7 +3139,7 @@ function openProductDetail(id, fromAllPage = true) {
     document.getElementById('pd-buy-btn').style.display  = isFree ? 'none' : '';
     document.getElementById('pd-free-btn').style.display = isFree ? '' : 'none';
     const buyLabel = prod.contentType === 'course' ? 'Enroll Now' : prod.contentType === 'pack' ? 'Unlock Pack' : 'Buy Now';
-    const freeLabel = prod.contentType === 'course' ? 'Enroll for Free' : prod.contentType === 'pack' ? 'Unlock for Free' : 'Add to My Learning';
+    const freeLabel = prod.contentType === 'course' ? 'Enroll for Free' : prod.contentType === 'pack' ? 'Unlock for Free' : 'Add to My Library';
     document.getElementById('pd-buy-btn').innerHTML = `<i class="fa-solid fa-bolt"></i> ${buyLabel}`;
     document.getElementById('pd-free-btn').innerHTML = `<i class="fa-solid fa-gift"></i> ${freeLabel}`;
   }
@@ -3726,7 +3811,7 @@ function coValidatePhone(input) {
 }
 
 // Returns the cart items (if any) the signed-in user already owns, by
-// cross-checking against their existing "My Learning" purchase records
+// cross-checking against their existing "My Library" purchase records
 // (same product id + variant). Used to stop someone from re-buying
 // something they already have.
 async function coGetAlreadyOwnedCartItems(userId) {
@@ -3755,8 +3840,8 @@ function coShowAlreadyOwnedError(ownedItems) {
   const modal = document.getElementById('co-owned-modal');
   if (!msgEl || !modal) return;
   msgEl.textContent = ownedItems.length === 1
-    ? `You already have "${ownedItems[0].name}". It's been removed from your cart — check My Learning to access it.`
-    : `You already have ${ownedItems.length} of the products in your cart. They've been removed — check My Learning to access them.`;
+    ? `You already have "${ownedItems[0].name}". It's been removed from your cart — check My Library to access it.`
+    : `You already have ${ownedItems.length} of the products in your cart. They've been removed — check My Library to access them.`;
   modal.classList.add('open');
   // Drop the already-owned line items from the cart so the person isn't
   // stuck re-hitting this same warning on their next checkout attempt.
@@ -4240,7 +4325,7 @@ async function doCompleteGoogleSignup() {
 function doUserLogout() {
   UserAuth.logout(); initUserAuth();
   document.getElementById('user-menu').style.display = 'none';
-  // If My Learning (or any other overlay page) is open, signing out should
+  // If My Library (or any other overlay page) is open, signing out should
   // land back on the main storefront, not leave the person stranded on a
   // now-inaccessible "logged in" page.
   showMain();
@@ -4351,7 +4436,10 @@ function openMyProducts() {
   page.scrollTo(0, 0);
   _mpFilter = 'all';
   mpLoadContent();
-  // Mark My Learning as active in nav
+  // Default back button — overridden by acctSetTab('library') when opened from the Account area
+  const mpBackBtn = page.querySelector('.back-btn');
+  if (mpBackBtn) { mpBackBtn.innerHTML = '<i class="fa-solid fa-arrow-left"></i> Back to Home'; mpBackBtn.onclick = closeMyProducts; }
+  // Mark My Library as active in nav
   document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
   const mpLink = document.getElementById('my-products-link');
   if (mpLink) mpLink.classList.add('active');
@@ -4359,7 +4447,7 @@ function openMyProducts() {
   if (mpLinkMobile) mpLinkMobile.classList.add('active');
 }
 
-// If My Learning is open when Firebase finally resolves, re-render
+// If My Library is open when Firebase finally resolves, re-render
 window.addEventListener('auth:change', () => {
   if (document.getElementById('my-products-page').classList.contains('active')) {
     mpLoadContent();
@@ -4735,7 +4823,7 @@ async function openCoursePlayer(productId) {
       <div class="empty-state" style="padding:3rem">
         <i class="fa-solid fa-lock"></i>
         <p>${escapeHtml(result.error)}</p>
-        <button class="btn btn-outline" onclick="closeCoursePlayer()" style="margin-top:1rem">Back to My Learning</button>
+        <button class="btn btn-outline" onclick="closeCoursePlayer()" style="margin-top:1rem">Back to My Library</button>
       </div>`;
     return;
   }
@@ -4947,9 +5035,13 @@ function updateWishlistBadge() {
 }
 
 function openWishlist() {
-  document.getElementById('wishlist-page').classList.add('active');
+  const page = document.getElementById('wishlist-page');
+  page.classList.add('active');
   document.body.classList.add('no-scroll');
   renderWishlist();
+  // Default back button — overridden by acctSetTab('wishlist') when opened from the Account area
+  const wlBackBtn = page.querySelector('.back-btn');
+  if (wlBackBtn) { wlBackBtn.innerHTML = '<i class="fa-solid fa-arrow-left"></i> Back'; wlBackBtn.onclick = closeWishlist; }
 }
 function closeWishlist() {
   document.getElementById('wishlist-page').classList.remove('active');
@@ -4978,6 +5070,252 @@ function renderWishlist() {
 window.addEventListener('wishlist:update', () => {
   updateWishlistBadge();
   if (document.getElementById('wishlist-page').classList.contains('active')) renderWishlist();
+});
+
+// ================================================================
+// ===== FEATURE: ACCOUNT AREA =====
+// Single hub for everything tied to the signed-in user: Profile,
+// My Library, Orders, Wishlist, Settings, Help. "My Library" and
+// "Wishlist" reuse their existing dedicated full-page views (so their
+// grids/filters/realtime listeners keep working untouched) — this hub
+// just routes to them and patches their back button to return here.
+// ================================================================
+let _acctTab = 'profile';
+let _acctOrders = null;
+let _acctOrdersUnsub = null;
+
+function openAccount(tab) {
+  if (!UserAuth.current()) { openLoginModal(); return; }
+  const t = tab || _acctTab || 'profile';
+  if (t === 'library') { acctOpenLibrary(); return; }
+  if (t === 'wishlist') { acctOpenWishlist(); return; }
+  closeProductDetail(); closeAllProducts(); closeMyProducts(); closeWishlist();
+  const page = document.getElementById('account-page');
+  page.classList.add('active');
+  document.body.classList.add('no-scroll');
+  page.scrollTo(0, 0);
+  acctRenderSidebarUser();
+  acctSetTab(t);
+}
+
+function closeAccount() {
+  document.getElementById('account-page').classList.remove('active');
+  document.body.classList.remove('no-scroll');
+  if (_acctOrdersUnsub) { _acctOrdersUnsub(); _acctOrdersUnsub = null; }
+}
+
+function acctOpenLibrary() {
+  document.getElementById('account-page').classList.remove('active');
+  openMyProducts();
+  const btn = document.querySelector('#my-products-page .back-btn');
+  if (btn) {
+    btn.innerHTML = '<i class="fa-solid fa-arrow-left"></i> Back to Account';
+    btn.onclick = () => { closeMyProducts(); openAccount('library'); };
+  }
+}
+
+function acctOpenWishlist() {
+  document.getElementById('account-page').classList.remove('active');
+  openWishlist();
+  const btn = document.querySelector('#wishlist-page .back-btn');
+  if (btn) {
+    btn.innerHTML = '<i class="fa-solid fa-arrow-left"></i> Back to Account';
+    btn.onclick = () => { closeWishlist(); openAccount('wishlist'); };
+  }
+}
+
+function acctRenderSidebarUser() {
+  const u = UserAuth.current();
+  if (!u) return;
+  document.getElementById('acct-avatar').textContent = (u.name || u.email || '?').trim().charAt(0).toUpperCase();
+  document.getElementById('acct-side-name').textContent = u.name || u.email;
+  document.getElementById('acct-side-email').textContent = u.email || '';
+}
+
+function acctSetTab(tab) {
+  if (tab === 'library') { acctOpenLibrary(); return; }
+  if (tab === 'wishlist') { acctOpenWishlist(); return; }
+  _acctTab = tab;
+  document.querySelectorAll('.acct-nav-item[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  const c = document.getElementById('acct-content');
+  if (_acctOrdersUnsub && tab !== 'orders') { _acctOrdersUnsub(); _acctOrdersUnsub = null; }
+  if (tab === 'profile') acctRenderProfile(c);
+  else if (tab === 'orders') acctRenderOrders(c);
+  else if (tab === 'settings') acctRenderSettings(c);
+  else if (tab === 'help') acctRenderHelp(c);
+}
+
+function acctRenderProfile(c) {
+  const u = UserAuth.current();
+  c.innerHTML = `
+    <div class="acct-hdr"><h2>Profile</h2><p>Your account details.</p></div>
+    <div class="acct-card">
+      <h3>Basic info</h3>
+      <div class="acct-field"><label>Name</label><div class="acct-field-static">${escapeHtml(u?.name || '—')}</div></div>
+      <div class="acct-field"><label>Email</label><div class="acct-field-static">${escapeHtml(u?.email || '—')}</div></div>
+      <div class="acct-field"><label>Phone</label><div class="acct-field-static" id="acct-phone-val">Loading…</div></div>
+      <div class="acct-row" style="margin-top:1rem">
+        <button class="btn btn-outline btn-sm" onclick="acctSetTab('settings')"><i class="fa-solid fa-pen"></i> Edit Profile</button>
+      </div>
+    </div>`;
+  if (u) {
+    _db.collection('users').doc(u.id).get().then(doc => {
+      const el = document.getElementById('acct-phone-val');
+      if (el) el.textContent = (doc.exists && doc.data().phone) ? doc.data().phone : '—';
+    }).catch(() => { const el = document.getElementById('acct-phone-val'); if (el) el.textContent = '—'; });
+  }
+}
+
+function acctRenderOrders(c) {
+  c.innerHTML = `<div class="acct-hdr"><h2>Orders</h2><p>Your purchase history — separate from My Library, which shows what you currently own.</p></div><div id="acct-orders-list"><div class="mp-empty"><i class="fa-solid fa-spinner fa-spin"></i><h3>Loading orders…</h3></div></div>`;
+  const u = UserAuth.current();
+  if (!u) return;
+  if (_acctOrdersUnsub) { _acctOrdersUnsub(); _acctOrdersUnsub = null; }
+  try {
+    _acctOrdersUnsub = Purchases.onSnapshotForUser(u.id, (purchases) => {
+      _acctOrders = purchases;
+      acctRenderOrdersList();
+    });
+  } catch (e) {
+    Purchases.forUser(u.id).then(purchases => { _acctOrders = purchases; acctRenderOrdersList(); });
+  }
+}
+
+function acctRenderOrdersList() {
+  const list = document.getElementById('acct-orders-list');
+  if (!list) return;
+  if (!_acctOrders || !_acctOrders.length) {
+    list.innerHTML = `<div class="mp-empty">
+      <i class="fa-solid fa-receipt"></i>
+      <h3>No orders yet</h3>
+      <p>Your purchases will show up here.</p>
+      <button class="btn btn-primary" onclick="closeAccount();document.getElementById('products').scrollIntoView({behavior:'smooth'})"><i class="fa-solid fa-store"></i> Browse Products</button>
+    </div>`;
+    return;
+  }
+  // Group purchase records by orderId — a single checkout can contain several items
+  const groups = {};
+  _acctOrders.forEach(p => {
+    const key = p.orderId || p.id;
+    (groups[key] = groups[key] || []).push(p);
+  });
+  const s = Settings.get();
+  list.innerHTML = Object.entries(groups).map(([orderId, items]) => {
+    const first = items[0];
+    const ts = first.purchaseDate?.toDate?.() || first.purchaseDate || first.createdAt;
+    const date = new Date(ts).toLocaleDateString('en-DZ', { year: 'numeric', month: 'long', day: 'numeric' });
+    const statusKey = first.status === 'completed' ? 'completed' : (first.status === 'pending' ? 'pending' : 'other');
+    const statusLabel = first.status === 'completed' ? 'Delivered' : (first.status === 'pending' ? 'Processing' : (first.status || '—'));
+    const title = items.length === 1 ? items[0].productName : `${items.length} items`;
+    const safeId = escapeHtml(String(orderId).replace(/[^a-zA-Z0-9_-]/g, ''));
+    const rowsHtml = items.map(it => {
+      const prod = (typeof DB !== 'undefined' && DB.getAll) ? DB.getAll('products').find(p => p.id === it.productId) : null;
+      const price = prod ? formatPrice(prod.price, s.currency) : '';
+      return `<div style="display:flex;justify-content:space-between;gap:1rem;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.84rem">
+        <span>${escapeHtml(it.productName || '')}</span><span style="color:var(--text-muted)">${price}</span>
+      </div>`;
+    }).join('');
+    return `<div class="acct-order" id="ord-${safeId}">
+      <div class="acct-order-hdr" onclick="document.getElementById('ord-${safeId}').classList.toggle('open')">
+        <div>
+          <div class="acct-order-name">${escapeHtml(title)}</div>
+          <div class="acct-order-id">Order #${escapeHtml(String(orderId).slice(-8).toUpperCase())} · ${date}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:.6rem">
+          <span class="acct-order-status acct-status-${statusKey}">${escapeHtml(statusLabel)}</span>
+          <i class="fa-solid fa-chevron-down acct-order-caret"></i>
+        </div>
+      </div>
+      <div class="acct-order-body">
+        ${rowsHtml}
+        <div class="acct-row" style="margin-top:.9rem">
+          <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openAccount('library')"><i class="fa-solid fa-box-archive"></i> View in My Library</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function acctRenderSettings(c) {
+  const u = UserAuth.current();
+  c.innerHTML = `
+    <div class="acct-hdr"><h2>Settings</h2><p>Manage your account.</p></div>
+    <div class="acct-card">
+      <h3>Edit name</h3>
+      <div class="acct-field">
+        <label>Display name</label>
+        <input type="text" id="acct-name-input" class="form-input" value="${escapeHtml(u?.name || '')}" style="width:100%"/>
+      </div>
+      <div class="acct-row" style="margin-top:.8rem">
+        <button class="btn btn-primary btn-sm" onclick="acctSaveName()"><i class="fa-solid fa-check"></i> Save</button>
+        <span id="acct-name-msg" style="font-size:.8rem;color:var(--text-muted)"></span>
+      </div>
+      <p style="font-size:.75rem;color:var(--text-muted);margin-top:.7rem">To change your phone number, contact support.</p>
+    </div>
+    <div class="acct-card">
+      <h3>Password</h3>
+      <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.8rem">We'll email you a link to reset your password.</p>
+      <div class="acct-row">
+        <button class="btn btn-outline btn-sm" onclick="acctSendPasswordReset()"><i class="fa-solid fa-key"></i> Send Reset Link</button>
+        <span id="acct-pw-msg" style="font-size:.8rem;color:var(--text-muted)"></span>
+      </div>
+    </div>
+    <div class="acct-card">
+      <h3>Appearance</h3>
+      <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.8rem">Switch between light and dark mode anytime from the toggle in the top navigation bar.</p>
+      <button class="btn btn-outline btn-sm" onclick="toggleTheme()"><i class="fa-solid fa-circle-half-stroke"></i> Toggle Theme</button>
+    </div>`;
+}
+
+async function acctSaveName() {
+  const input = document.getElementById('acct-name-input');
+  const msg = document.getElementById('acct-name-msg');
+  const name = (input.value || '').trim();
+  if (!name) { msg.textContent = 'Name cannot be empty.'; msg.style.color = '#EF4444'; return; }
+  msg.textContent = 'Saving…'; msg.style.color = 'var(--text-muted)';
+  try {
+    await UserAuth.updateName(name);
+    msg.textContent = 'Saved.'; msg.style.color = 'var(--accent)';
+    acctRenderSidebarUser();
+  } catch (e) {
+    msg.textContent = e.message || 'Could not save.'; msg.style.color = '#EF4444';
+  }
+}
+
+async function acctSendPasswordReset() {
+  const msg = document.getElementById('acct-pw-msg');
+  msg.textContent = 'Sending…'; msg.style.color = 'var(--text-muted)';
+  try {
+    const email = await UserAuth.sendPasswordReset();
+    msg.textContent = `Sent to ${email}`; msg.style.color = 'var(--accent)';
+  } catch (e) {
+    msg.textContent = e.message || 'Could not send email.'; msg.style.color = '#EF4444';
+  }
+}
+
+function acctRenderHelp(c) {
+  const cats = [
+    { icon: 'fa-box-archive', title: 'Orders & Purchases', body: 'Every purchase creates an order you can review any time from the Orders tab, including its status and date.' },
+    { icon: 'fa-download', title: 'Downloads & Access', body: 'Completed purchases unlock permanently in My Library. If a file or link is missing, contact support with your order number.' },
+    { icon: 'fa-user-gear', title: 'Account', body: 'Update your display name and password from Settings. To change your phone number or email, contact support.' },
+    { icon: 'fa-credit-card', title: 'Payments', body: 'We use secure third-party payment processing. No payment details are stored on our servers.' },
+    { icon: 'fa-rotate-left', title: 'Refunds', body: 'See the Guarantee section for details on refunds and what happens if a download does not work.' },
+    { icon: 'fa-headset', title: 'Contact Support', body: 'Reach us via WhatsApp or Telegram — links are in the site footer — and we typically respond within hours.' },
+  ];
+  c.innerHTML = `<div class="acct-hdr"><h2>Help &amp; Support</h2><p>Answers to common questions.</p></div>` +
+    cats.map(cat => `<div class="acct-help-cat"><h4><i class="fa-solid ${cat.icon}" style="color:var(--accent)"></i> ${escapeHtml(cat.title)}</h4><p>${escapeHtml(cat.body)}</p></div>`).join('') +
+    `<div class="acct-card" style="text-align:center">
+      <p style="margin-bottom:.8rem">Still need help?</p>
+      <button class="btn btn-primary btn-sm" onclick="document.getElementById('wa-float')?.querySelector('a')?.click()"><i class="fa-brands fa-whatsapp"></i> Chat with us</button>
+    </div>`;
+}
+
+window.addEventListener('auth:change', () => {
+  const page = document.getElementById('account-page');
+  if (!page.classList.contains('active')) return;
+  if (!UserAuth.current()) { closeAccount(); return; }
+  acctRenderSidebarUser();
+  acctSetTab(_acctTab);
 });
 
 // ================================================================

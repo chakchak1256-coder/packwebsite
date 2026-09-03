@@ -455,6 +455,38 @@ const UserAuth = {
 
   logout() { _auth.signOut(); this._current = null; window.dispatchEvent(new Event('auth:change')); },
 
+  // Updates the signed-in user's display name — used by the Account →
+  // Settings panel. Writes to both Firebase Auth (source of truth for
+  // displayName) and the Firestore 'users' doc (so admin views / other
+  // reads that pull from Firestore stay in sync), then updates the
+  // in-memory _current record and notifies the UI.
+  async updateName(newName) {
+    const user = _auth.currentUser;
+    if (!user) throw new Error('You must be signed in.');
+    const name = (newName || '').trim();
+    if (!name) throw new Error('Name cannot be empty.');
+    try {
+      await user.updateProfile({ displayName: name });
+    } catch (e) { throw new Error(this._msg(e.code)); }
+    try { await _db.collection('users').doc(user.uid).set({ name }, { merge: true }); } catch (e) { /* non-fatal */ }
+    if (this._current) this._current = { ...this._current, name };
+    window.dispatchEvent(new Event('auth:change'));
+    return name;
+  },
+
+  // Sends a "reset your password" email via Firebase Auth to the
+  // signed-in user's own address — used by the Account → Settings panel.
+  // There's no in-app password-change form; this is the standard,
+  // safest flow (no need to collect/verify the current password here).
+  async sendPasswordReset() {
+    const email = (this._current && this._current.email) || (_auth.currentUser && _auth.currentUser.email);
+    if (!email) throw new Error('No email on file for this account.');
+    try {
+      await _auth.sendPasswordResetEmail(email);
+    } catch (e) { throw new Error(this._msg(e.code)); }
+    return email;
+  },
+
   async getAll() {
     try {
       const snap = await _db.collection('users').get();
