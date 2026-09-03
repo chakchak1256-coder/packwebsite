@@ -1190,7 +1190,7 @@ const Learning = {
 const Settings = {
   _defaults: {
     storeName:'DIGITCH', logo:null, logoLight:null, logoDark:null,
-    primary:'#10B981', secondary:'#10B981', accent:'#10B981', currency:'DA',
+    primary:'#3454D1', secondary:'#3454D1', accent:'#3454D1', currency:'DA',
     social:{ facebook:'', instagram:'', whatsapp:'', telegram:'', tiktok:'', youtube:'' }
   },
   _data: null,

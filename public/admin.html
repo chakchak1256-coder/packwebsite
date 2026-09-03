@@ -25,8 +25,8 @@
    DIGITCH — Admin Panel (Clean Redesign)
    ============================================================ */
 :root{
-  --accent:#10B981;--accent-rgb:16,185,129;--accent-dark:#059669;
-  --primary:#10B981;--primary-rgb:16,185,129;
+  --accent:#3454D1;--accent-rgb:52,84,209;--accent-dark:#2A43A8;
+  --primary:#3454D1;--primary-rgb:52,84,209;
   --bg:#0C0C0C;--bg2:#141414;--bg3:#1E1E1E;
   --text:#F2F2F2;--text-muted:#71717A;
   --border:rgba(255,255,255,.08);--border-strong:rgba(255,255,255,.12);
@@ -932,8 +932,8 @@ select.form-input option{background:var(--bg2)}
           <div class="form-group">
             <label class="form-label">Primary Color</label>
             <div style="display:flex;align-items:center;gap:.6rem">
-              <input type="color" id="brand-primary-picker" value="#10B981" style="width:44px;height:38px;padding:2px;border:1px solid var(--border);border-radius:8px;background:none;cursor:pointer"/>
-              <input class="form-input" id="brand-primary" placeholder="#10B981" style="max-width:160px"/>
+              <input type="color" id="brand-primary-picker" value="#3454D1" style="width:44px;height:38px;padding:2px;border:1px solid var(--border);border-radius:8px;background:none;cursor:pointer"/>
+              <input class="form-input" id="brand-primary" placeholder="#3454D1" style="max-width:160px"/>
             </div>
           </div>
           <div style="margin-top:1.2rem;padding-top:1.2rem;border-top:1px solid var(--border);display:flex;gap:.7rem">
@@ -3003,7 +3003,7 @@ function renderRevenueChart(days) {
   const maxVal = Math.max(...values, 1);
 
   // Get accent color
-  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#10B981';
+  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#3454D1';
   const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
   const textMuted = isDark ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.3)';
   const gridLine = isDark ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.05)';
@@ -3146,9 +3146,9 @@ const BRANDING_DEFAULTS = {
   logoLight: '/logo.png',
   logoDark: null,
   logo: null,
-  primary: '#10B981',
-  secondary: '#10B981',
-  accent: '#10B981',
+  primary: '#3454D1',
+  secondary: '#3454D1',
+  accent: '#3454D1',
 };
 
 function loadBrandingForm() {
@@ -3158,7 +3158,7 @@ function loadBrandingForm() {
   document.getElementById('brand-logo-dark').value = s.logoDark || '';
   const primary = s.primary || BRANDING_DEFAULTS.primary;
   document.getElementById('brand-primary').value = primary;
-  document.getElementById('brand-primary-picker').value = /^#([a-f\d]{6})$/i.test(primary) ? primary : '#10B981';
+  document.getElementById('brand-primary-picker').value = /^#([a-f\d]{6})$/i.test(primary) ? primary : '#3454D1';
 
   // Show what's actually live right now, so it's obvious if this doesn't
   // match what you expect the repo's default to look like.
@@ -3181,7 +3181,7 @@ async function saveBranding() {
   const logoDark = document.getElementById('brand-logo-dark').value.trim() || null;
   let primary = document.getElementById('brand-primary').value.trim() || BRANDING_DEFAULTS.primary;
   if (!/^#([a-f\d]{3}|[a-f\d]{6})$/i.test(primary)) {
-    showToast('⚠️ Primary color must be a valid hex code, e.g. #10B981');
+    showToast('⚠️ Primary color must be a valid hex code, e.g. #3454D1');
     return;
   }
   const patch = {

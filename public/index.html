@@ -38,7 +38,7 @@
 <meta name="robots" content="index, follow"/>
 <link rel="canonical" href="https://digital-website.digitch.workers.dev/"/>
 <link rel="icon" type="image/png" href="/logo.png"/>
-<meta name="theme-color" content="#10B981"/>
+<meta name="theme-color" content="#3454D1"/>
 
 <!-- Open Graph -->
 <meta property="og:type" content="website"/>
@@ -376,29 +376,29 @@ body.flash-on #topbar{top:56px}
 /* ===== DECORATIVE SCENE (reference-image background system — emerald palette) ===== */
 .dig-scene{display:none}
 .dig-orb{position:absolute;border-radius:50%;opacity:.9;filter:blur(1px);animation:digOrbFloat 22s ease-in-out infinite}
-.dig-orb-bright{background:radial-gradient(circle at 32% 28%,rgba(220,255,236,.92),rgba(52,211,153,.6) 42%,rgba(16,185,129,0) 76%)}
+.dig-orb-bright{background:radial-gradient(circle at 32% 28%,rgba(220,255,236,.92),rgba(96,165,250,.6) 42%,rgba(52,84,209,0) 76%)}
 .dig-orb-deep{background:radial-gradient(circle at 32% 28%,rgba(190,255,222,.82),rgba(6,150,110,.55) 46%,rgba(5,90,68,0) 78%)}
 @keyframes digOrbFloat{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(22px,-18px) scale(1.04)}}
-.dig-ring{position:absolute;border-radius:50%;border:1px solid rgba(16,185,129,.32)}
-.dig-ring.dig-ring-soft{border-color:rgba(16,185,129,.18)}
+.dig-ring{position:absolute;border-radius:50%;border:1px solid rgba(52,84,209,.32)}
+.dig-ring.dig-ring-soft{border-color:rgba(52,84,209,.18)}
 .dig-sphere{position:absolute;border-radius:50%;
-  box-shadow:0 6px 18px -4px rgba(6,120,90,.45),inset -3px -3px 8px rgba(255,255,255,.6);
+  box-shadow:0 6px 18px -4px rgba(26,42,110,.45),inset -3px -3px 8px rgba(255,255,255,.6);
   animation:digSphereDrift 9s ease-in-out infinite}
-.dig-sphere-a{background:radial-gradient(circle at 30% 28%,#fff,#a7f3d0 42%,#10b981 100%)}
-.dig-sphere-b{background:radial-gradient(circle at 30% 28%,#fff,#6ee7b7 42%,#059669 100%)}
+.dig-sphere-a{background:radial-gradient(circle at 30% 28%,#fff,#93c5fd 42%,#3454D1 100%)}
+.dig-sphere-b{background:radial-gradient(circle at 30% 28%,#fff,#60a5fa 42%,#2A43A8 100%)}
 @keyframes digSphereDrift{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
-.dig-twinkle{position:absolute;width:5px;height:5px;border-radius:50%;background:#eafff5;
-  box-shadow:0 0 9px 3px rgba(52,211,153,.85);animation:digTwinkle 3.4s ease-in-out infinite}
+.dig-twinkle{position:absolute;width:5px;height:5px;border-radius:50%;background:#eaf1ff;
+  box-shadow:0 0 9px 3px rgba(96,165,250,.85);animation:digTwinkle 3.4s ease-in-out infinite}
 @keyframes digTwinkle{0%,100%{opacity:.35;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
-.dig-ringdot{position:absolute;width:7px;height:7px;border:1px solid rgba(16,185,129,.5);border-radius:50%}
+.dig-ringdot{position:absolute;width:7px;height:7px;border:1px solid rgba(52,84,209,.5);border-radius:50%}
 .dig-dotgrid{position:absolute;width:130px;height:130px;background-image:radial-gradient(circle,var(--border-strong) 1.2px,transparent 1.6px);
   background-size:18px 18px;opacity:.6}
-.dig-star{position:absolute;filter:drop-shadow(0 0 7px rgba(16,185,129,.65));
+.dig-star{position:absolute;filter:drop-shadow(0 0 7px rgba(52,84,209,.65));
   animation:digTwinkle 4.2s ease-in-out infinite}
 .dig-star path{fill:rgba(110,231,183,.95)}
-[data-theme="light"] .dig-star path{fill:rgba(16,185,129,.6)}
+[data-theme="light"] .dig-star path{fill:rgba(52,84,209,.6)}
 .dig-cross{position:absolute;width:11px;height:11px;opacity:.5}
-.dig-cross::before,.dig-cross::after{content:'';position:absolute;background:rgba(16,185,129,.55)}
+.dig-cross::before,.dig-cross::after{content:'';position:absolute;background:rgba(52,84,209,.55)}
 .dig-cross::before{top:50%;left:0;width:100%;height:1px;transform:translateY(-50%)}
 .dig-cross::after{left:50%;top:0;height:100%;width:1px;transform:translateX(-50%)}
 .dig-sparkline{position:absolute;inset:0;width:100%;height:100%}
@@ -407,7 +407,7 @@ body.flash-on #topbar{top:56px}
 @keyframes digSparkPulse{0%,100%{opacity:.4}50%{opacity:.95}}
 .dig-spark{filter:drop-shadow(0 0 7px rgba(110,231,183,1))}
 [data-theme="light"] .dig-orb{opacity:1}
-[data-theme="light"] .dig-ring,[data-theme="light"] .dig-ringdot{border-color:rgba(16,185,129,.38)}
+[data-theme="light"] .dig-ring,[data-theme="light"] .dig-ringdot{border-color:rgba(52,84,209,.38)}
 
 /* ===== ABOUT / STATS ===== */
 #about{padding:130px 0;position:relative;overflow:hidden;background:var(--bg2)}
@@ -763,7 +763,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:2.5rem 0
   white-space:nowrap;
 }
 .co-copy-btn:hover{background:rgba(var(--accent-rgb),.18);transform:translateY(-1px)}
-.co-copy-btn.copied{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.4);color:#10B981}
+.co-copy-btn.copied{background:rgba(var(--accent-rgb),.15);border-color:rgba(var(--accent-rgb),.4);color:var(--accent)}
 
 /* ── Payment method selector ───────────────────────────── */
 .co-pay-method-btn {
@@ -773,7 +773,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:2.5rem 0
   color:var(--text);cursor:pointer;font-family:inherit;
   transition:all var(--transition);text-align:left;
 }
-.co-pay-method-btn:hover{border-color:var(--accent);background:rgba(16,185,129,.06);transform:translateY(-1px)}
+.co-pay-method-btn:hover{border-color:var(--accent);background:rgba(52,84,209,.06);transform:translateY(-1px)}
 .co-pay-method-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
 .co-pay-icon{width:42px;height:42px;border-radius:10px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;font-size:1.1rem}
@@ -1211,7 +1211,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:2.5rem 0
 .acct-order-id{font-family:monospace;font-size:.72rem;color:var(--text-muted)}
 .acct-order-name{font-weight:700;font-size:.9rem;color:var(--text)}
 .acct-order-status{padding:3px 10px;border-radius:99px;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
-.acct-status-completed{background:rgba(16,185,129,.12);color:var(--accent)}
+.acct-status-completed{background:rgba(52,84,209,.12);color:var(--accent)}
 .acct-status-pending{background:rgba(245,158,11,.12);color:#F59E0B}
 .acct-status-other{background:rgba(113,113,122,.15);color:var(--text-muted)}
 .acct-order-body{display:none;margin-top:.9rem;padding-top:.9rem;border-top:1px solid var(--border)}
@@ -1517,9 +1517,9 @@ body.flash-on #mobile-nav{top:182px}
 }
 .dig-tool-card:hover {
   border-color: var(--tool-color, var(--accent)) !important;
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--tool-color, #10B981) 30%, transparent),
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--tool-color, var(--accent)) 30%, transparent),
               0 8px 28px rgba(0,0,0,.25),
-              0 0 20px color-mix(in srgb, var(--tool-color, #10B981) 20%, transparent) !important;
+              0 0 20px color-mix(in srgb, var(--tool-color, var(--accent)) 20%, transparent) !important;
   transform: scale(1.08) translateY(-5px) !important;
 }
 [data-theme="light"] .dig-tool-card {
@@ -2253,7 +2253,7 @@ footer::before{
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;width:100%;max-width:400px;position:relative">
     <button onclick="closeLoginModal()" style="position:absolute;top:1rem;right:1rem;width:30px;height:30px;border-radius:50%;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-muted);cursor:pointer;font-size:.8rem"><i class="fa-solid fa-xmark"></i></button>
 
-    <div id="am-checkout-note" style="display:none;align-items:center;gap:.6rem;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:var(--radius-sm);padding:.65rem 1rem;font-size:.82rem;color:#10B981;margin-bottom:1rem">
+    <div id="am-checkout-note" style="display:none;align-items:center;gap:.6rem;background:rgba(var(--accent-rgb),.08);border:1px solid rgba(var(--accent-rgb),.2);border-radius:var(--radius-sm);padding:.65rem 1rem;font-size:.82rem;color:var(--accent);margin-bottom:1rem">
       <i class="fa-solid fa-box-archive" style="flex-shrink:0"></i>
       <span>Sign in so your purchase is saved to <strong>My Library</strong> forever.</span>
     </div>
@@ -3800,8 +3800,8 @@ function coValidatePhone(input) {
   }
   if (val.length === 8) {
     hint.style.display = 'none';
-    input.style.borderColor = 'rgba(16,185,129,.6)';
-    icon.textContent = '✓'; icon.style.color = '#10B981';
+    input.style.borderColor = 'rgba(52,84,209,.6)';
+    icon.textContent = '✓'; icon.style.color = '#3454D1';
   } else {
     // Don't show a hint while typing — just no border feedback
     hint.style.display = 'none';
@@ -4280,7 +4280,7 @@ function gsValidatePhone(input) {
     icon.textContent = ''; input.style.borderColor = ''; return;
   }
   if (/^\d{8}$/.test(val)) {
-    hint.style.display = 'none'; input.style.borderColor = 'rgba(16,185,129,.6)'; icon.textContent = '✓'; icon.style.color = '#10B981';
+    hint.style.display = 'none'; input.style.borderColor = 'rgba(52,84,209,.6)'; icon.textContent = '✓'; icon.style.color = '#3454D1';
   } else {
     hint.style.display = 'none'; input.style.borderColor = ''; icon.textContent = '';
   }
