@@ -826,6 +826,10 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:2.5rem 0
   font-family:inherit;transition:border-color var(--transition)}
 .sort-select:hover{border-color:var(--border-strong)}
 .sort-select:focus{outline:none;border-color:rgba(var(--accent-rgb),.5)}
+.price-range{display:flex;align-items:center;gap:.4rem;background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:.3rem .6rem;color:var(--text-muted);font-size:.83rem}
+.price-range input{width:64px;background:none;border:none;color:var(--text);font-size:.83rem;outline:none;font-family:inherit}
+.price-range input::-webkit-outer-spin-button,.price-range input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .filter-chips{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1.5rem}
 .type-tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
 .type-tab{display:flex;align-items:center;gap:.5rem;padding:.55rem 1rem;border-radius:var(--radius-sm);
@@ -958,6 +962,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:2.5rem 0
 .pd-disc{padding:3px 8px;border-radius:4px;background:rgba(var(--accent-rgb),.12);
   color:var(--accent);font-size:.72rem;font-weight:700}
 .pd-badges{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1.1rem}
+.pd-viewing{display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:var(--text-muted);margin-bottom:.9rem}
 .pd-badge-pill{
   padding:4px 10px;border-radius:99px;font-size:.7rem;font-weight:600;
   background:var(--card);border:1px solid var(--border);color:var(--text-muted);
@@ -1568,6 +1573,24 @@ body.flash-on #mobile-nav{top:150px}
 .rv-star-picker i.empty{color:var(--border-strong)}
 
 .pd-reviews-section{margin-top:2.5rem;padding-top:2rem;border-top:1px solid var(--border)}
+.pd-related-section{margin-top:2.5rem;padding-top:2rem;border-top:1px solid var(--border)}
+.pd-related-section h3{font-family:'Fraunces',serif;font-size:1.2rem;font-weight:700;margin-bottom:1.2rem}
+
+/* Sticky mobile buy bar — hidden by default (JS shows/hides it on scroll),
+   and hidden entirely above mobile widths where the main pd-actions are
+   already always in view within a comfortable scroll distance. */
+#pd-sticky-bar{
+  position:fixed;left:0;right:0;bottom:0;z-index:850;display:none;
+  align-items:center;justify-content:space-between;gap:1rem;
+  background:var(--bg2);border-top:1px solid var(--border);
+  padding:.7rem 1rem;box-shadow:0 -4px 20px rgba(0,0,0,.25);
+}
+#pd-sticky-bar.visible{display:flex}
+.pd-sticky-info{display:flex;flex-direction:column;min-width:0;flex:1}
+.pd-sticky-name{font-size:.8rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pd-sticky-price{font-size:.85rem;font-weight:700;color:var(--accent)}
+#pd-sticky-bar .btn-buy-now{width:auto;padding:.65rem 1.3rem;white-space:nowrap}
+@media(min-width:900px){#pd-sticky-bar{display:none!important}}
 .pd-reviews-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.8rem;margin-bottom:1.4rem}
 .pd-reviews-hdr h3{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:700;color:var(--text)}
 .pd-reviews-summary{display:flex;align-items:center;gap:.7rem;margin-bottom:1.4rem;color:var(--text-muted);font-size:.85rem}
@@ -1877,7 +1900,7 @@ footer::before{
     </div>
     <div id="topbar-search-results"></div>
   </div>
-  <button id="cart-btn" onclick="toggleCart()">
+  <button id="cart-btn" onclick="toggleCart()" aria-label="Open cart">
     <i class="fa-solid fa-bag-shopping"></i>
     <span id="cart-badge">0</span>
   </button>
@@ -1902,7 +1925,7 @@ footer::before{
     <a href="#warranty" data-section="warranty" onclick="closeAccount();closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">Warranty</a>
   </div>
   <div class="nav-actions">
-    <button id="user-btn" onclick="toggleUserMenu()" style="position:relative;width:42px;height:42px;border-radius:50%;background:var(--card);border:1px solid var(--border);align-items:center;justify-content:center;font-size:1rem;transition:all var(--transition)">
+    <button id="user-btn" onclick="toggleUserMenu()" aria-label="Account menu" style="position:relative;width:42px;height:42px;border-radius:50%;background:var(--card);border:1px solid var(--border);align-items:center;justify-content:center;font-size:1rem;transition:all var(--transition)">
       <i class="fa-solid fa-user" id="user-icon"></i>
     </button>
     <div id="user-menu" style="display:none;position:absolute;top:112px;right:5vw;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:.5rem;min-width:200px;z-index:1000;box-shadow:0 12px 35px rgba(0,0,0,.5)">
@@ -1918,7 +1941,7 @@ footer::before{
       <button onclick="doUserLogout()" style="width:100%;display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;color:var(--text-muted);transition:all var(--transition);text-align:left" onmouseover="this.style.color='#ff4d6d'" onmouseout="this.style.color='var(--text-muted)'"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
     </div>
     <button id="login-nav-btn" onclick="openLoginModal()" style="padding:8px 16px;border-radius:var(--radius-sm);background:rgba(var(--primary-rgb),.12);border:1px solid rgba(var(--primary-rgb),.3);color:var(--primary);font-size:.83rem;font-weight:700;transition:all var(--transition);white-space:nowrap"><i class="fa-solid fa-user"></i> Sign In</button>
-    <button class="hamburger" onclick="toggleMobileNav()" id="hamburger-btn">
+    <button class="hamburger" onclick="toggleMobileNav()" id="hamburger-btn" aria-label="Open menu">
       <span></span><span></span><span></span>
     </button>
   </div>
@@ -2339,7 +2362,7 @@ footer::before{
 <div id="cart-drawer">
   <div class="cart-hdr">
     <h3><i class="fa-solid fa-bag-shopping"></i> Your Cart</h3>
-    <button class="cart-close" onclick="toggleCart()"><i class="fa-solid fa-xmark"></i></button>
+    <button class="cart-close" onclick="toggleCart()" aria-label="Close cart"><i class="fa-solid fa-xmark"></i></button>
   </div>
   <div class="cart-body" id="cart-body"></div>
   <div class="cart-foot" id="cart-foot" style="display:none">
@@ -2498,6 +2521,11 @@ footer::before{
           <option value="price-asc">Price: Low to High</option>
           <option value="price-desc">Price: High to Low</option>
         </select>
+        <div class="price-range">
+          <input type="number" id="price-min" placeholder="Min" min="0" oninput="renderAllProducts()"/>
+          <span>–</span>
+          <input type="number" id="price-max" placeholder="Max" min="0" oninput="renderAllProducts()"/>
+        </div>
       </div>
     </div>
     <div class="type-tabs" id="type-tabs">
@@ -2593,6 +2621,7 @@ footer::before{
           <span class="pd-disc" id="pd-disc" style="display:none"></span>
         </div>
         <div class="pd-badges" id="pd-badges"></div>
+        <div id="pd-viewing" class="pd-viewing" style="display:none"><i class="fa-solid fa-circle" style="font-size:.5rem;color:var(--success)"></i> <span id="pd-viewing-text"></span></div>
         <div id="pd-stars-row"></div>
         <p class="pd-desc" id="pd-desc"></p>
         <!-- Variant selector — shown only if product has variants -->
@@ -2603,7 +2632,7 @@ footer::before{
           <button class="btn-add-cart" id="pd-add-btn"><i class="fa-solid fa-bag-shopping"></i> Add to Cart</button>
           <button class="btn-buy-now" id="pd-buy-btn"><i class="fa-solid fa-bolt"></i> Buy Now</button>
           <button class="btn-buy-now" id="pd-free-btn" style="display:none"><i class="fa-solid fa-gift"></i> Add to My Library</button>
-          <button class="pd-wish-btn" id="pd-wish-btn" title="Add to Wishlist"><i class="fa-regular fa-heart"></i></button>
+          <button class="pd-wish-btn" id="pd-wish-btn" title="Add to Wishlist" aria-label="Add to Wishlist"><i class="fa-regular fa-heart"></i></button>
         </div>
         <div class="pd-meta" id="pd-meta"></div>
       </div>
@@ -2620,7 +2649,23 @@ footer::before{
         <div class="pd-reviews-empty">Loading reviews…</div>
       </div>
     </div>
+
+    <!-- Related Products -->
+    <div class="pd-related-section" id="pd-related-section" style="display:none">
+      <h3>You Might Also Like</h3>
+      <div class="products-grid" id="pd-related-grid"></div>
+    </div>
   </div>
+</div>
+
+<!-- Sticky mobile buy bar — mirrors the main pd-actions buttons for a product
+     open long enough to scroll the primary buttons out of view -->
+<div id="pd-sticky-bar">
+  <div class="pd-sticky-info">
+    <span class="pd-sticky-name" id="pd-sticky-name"></span>
+    <span class="pd-sticky-price" id="pd-sticky-price"></span>
+  </div>
+  <button class="btn-buy-now" id="pd-sticky-btn"><i class="fa-solid fa-bolt"></i> Buy Now</button>
 </div>
 
 <!-- ===== IMAGE ZOOM LIGHTBOX ===== -->
@@ -2913,7 +2958,7 @@ function makeProductCard(prod) {
       ${prod.badge ? `<span class="prod-badge ${badgeCls}">${prod.badge}</span>` : ''}
       ${discountPct > 0 ? `<span class="prod-discount">-${discountPct}%</span>` : ''}
       <img src="${img}" alt="${prod.name}" loading="lazy"/>
-      <button class="prod-heart ${wishlisted?'active':''}" onclick="event.stopPropagation();toggleWishlist('${prod.id}',this)" title="${wishlisted?'Remove from wishlist':'Add to wishlist'}">
+      <button class="prod-heart ${wishlisted?'active':''}" onclick="event.stopPropagation();toggleWishlist('${prod.id}',this)" title="${wishlisted?'Remove from wishlist':'Add to wishlist'}" aria-label="${wishlisted?'Remove from wishlist':'Add to wishlist'}">
         <i class="${wishlisted?'fa-solid':'fa-regular'} fa-heart"></i>
       </button>
     </div>
@@ -3021,6 +3066,8 @@ function openAllProducts(filterCat = 'all', filterType = 'all') {
   renderAllProducts(filterCat);
   document.getElementById('all-products-page').scrollTo(0,0);
   const si = document.getElementById('search-input'); if (si) si.value = '';
+  const pmin = document.getElementById('price-min'); if (pmin) pmin.value = '';
+  const pmax = document.getElementById('price-max'); if (pmax) pmax.value = '';
   document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
   const prodLink = document.querySelector('.nav-links a[data-section="products"]');
   if (prodLink) prodLink.classList.add('active');
@@ -3059,6 +3106,10 @@ function renderAllProducts(filterCat) {
   if (_typeFilter && _typeFilter !== 'all') prods = prods.filter(p => (p.contentType || 'product') === _typeFilter);
   if (filterCat !== 'all') prods = prods.filter(p => p.category === filterCat);
   if (q) prods = prods.filter(p => p.name.toLowerCase().includes(q) || (p.description||'').toLowerCase().includes(q));
+  const minVal = parseFloat((document.getElementById('price-min')||{}).value);
+  const maxVal = parseFloat((document.getElementById('price-max')||{}).value);
+  if (!isNaN(minVal)) prods = prods.filter(p => (Number(p.price)||0) >= minVal);
+  if (!isNaN(maxVal)) prods = prods.filter(p => (Number(p.price)||0) <= maxVal);
   const sortVal = (document.getElementById('sort-select')||{}).value || 'newest';
   if (sortVal === 'price-asc') prods = [...prods].sort((a,b) => (Number(a.price)||0) - (Number(b.price)||0));
   else if (sortVal === 'price-desc') prods = [...prods].sort((a,b) => (Number(b.price)||0) - (Number(a.price)||0));
@@ -3170,6 +3221,8 @@ function openProductDetail(id, fromAllPage = true) {
     const price = selectedByGroup[0] ? (selectedByGroup[0].price ?? prod.price) : prod.price;
     activeProd = { ...prod, price, variantLabel };
     document.getElementById('pd-price').textContent = formatPrice(price, s.currency);
+    const stickyPrice = document.getElementById('pd-sticky-price');
+    if (stickyPrice) stickyPrice.textContent = formatPrice(price, s.currency);
     updatePdActionButtons();
   }
 
@@ -3243,6 +3296,7 @@ function openProductDetail(id, fromAllPage = true) {
     wBtn.innerHTML = w ? '<i class="fa-solid fa-heart"></i>' : '<i class="fa-regular fa-heart"></i>';
     wBtn.style.color = w ? '#EF4444' : '';
     wBtn.title = w ? 'Remove from Wishlist' : 'Add to Wishlist';
+    wBtn.setAttribute('aria-label', wBtn.title);
   };
   updateWBtn();
   wBtn.onclick = () => { toggleWishlist(activeProd.id, wBtn); updateWBtn(); };
@@ -3250,12 +3304,16 @@ function openProductDetail(id, fromAllPage = true) {
 
   // Load reviews
   renderProductReviews(prod.id);
+  renderRelatedProducts(prod);
+  renderPdViewingCount(prod.id);
+  setupPdStickyBar();
 }
 
 function closeProductDetail() {
   document.getElementById('product-page').classList.remove('active');
   document.body.classList.remove('no-scroll');
   Presence.setProduct(null);
+  teardownPdStickyBar();
   // Drop the ?product= param when leaving the detail page
   if (new URLSearchParams(window.location.search).has('product')) {
     history.replaceState(null, '', window.location.pathname + window.location.hash);
@@ -3263,6 +3321,65 @@ function closeProductDetail() {
   document.title = 'Orvyn — Digital Products Store in Algeria';
   const metaDesc = document.querySelector('meta[name="description"]');
   if (metaDesc) metaDesc.setAttribute('content', 'Orvyn — buy digital products online in Algeria: subscriptions, software, templates and more, with secure CIB/EDAHABIA payment and instant delivery.');
+}
+
+// ===== RELATED PRODUCTS — same category, excluding the current item =====
+function renderRelatedProducts(prod) {
+  const section = document.getElementById('pd-related-section');
+  const grid = document.getElementById('pd-related-grid');
+  if (!section || !grid) return;
+  const related = DB.getAll('products')
+    .filter(p => p.id !== prod.id && p.category && p.category === prod.category)
+    .slice(0, 4);
+  grid.innerHTML = '';
+  if (!related.length) { section.style.display = 'none'; return; }
+  related.forEach(p => grid.appendChild(makeProductCard(p)));
+  section.style.display = '';
+}
+
+// ===== LIVE VIEWER COUNT — built on the existing Presence system =====
+async function renderPdViewingCount(productId) {
+  const wrap = document.getElementById('pd-viewing');
+  const textEl = document.getElementById('pd-viewing-text');
+  if (!wrap || !textEl) return;
+  wrap.style.display = 'none';
+  try {
+    const active = await Presence.getActive();
+    // -1 for this tab's own presence doc, since we already set our own
+    // productId to this same id right before calling this function.
+    const count = active.filter(p => p.productId === productId).length - 1;
+    if (count > 0) {
+      textEl.textContent = count === 1 ? '1 person viewing this right now' : `${count} people viewing this right now`;
+      wrap.style.display = 'flex';
+    }
+  } catch (e) { /* best-effort — presence is a nice-to-have, never block the page on it */ }
+}
+
+// ===== STICKY MOBILE BUY BAR =====
+let _pdStickyObserver = null;
+function setupPdStickyBar() {
+  teardownPdStickyBar();
+  const bar = document.getElementById('pd-sticky-bar');
+  const actions = document.querySelector('#product-page .pd-actions');
+  if (!bar || !actions) return;
+  document.getElementById('pd-sticky-name').textContent = document.getElementById('pd-name').textContent;
+  document.getElementById('pd-sticky-price').textContent = document.getElementById('pd-price').textContent;
+  document.getElementById('pd-sticky-btn').onclick = () => {
+    // Defer to whichever real action button is currently the right one
+    // (Buy Now vs free "Add to My Library") rather than duplicating that logic.
+    const freeBtn = document.getElementById('pd-free-btn');
+    const buyBtn = document.getElementById('pd-buy-btn');
+    (freeBtn.style.display !== 'none' ? freeBtn : buyBtn).click();
+  };
+  _pdStickyObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => bar.classList.toggle('visible', !entry.isIntersecting));
+  }, { threshold: 0 });
+  _pdStickyObserver.observe(actions);
+}
+function teardownPdStickyBar() {
+  if (_pdStickyObserver) { _pdStickyObserver.disconnect(); _pdStickyObserver = null; }
+  const bar = document.getElementById('pd-sticky-bar');
+  if (bar) bar.classList.remove('visible');
 }
 
 // ===== IMAGE ZOOM LIGHTBOX =====
