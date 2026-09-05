@@ -144,7 +144,7 @@ body{background:var(--bg2)}
 [data-theme="dark"] body{background:var(--bg)}
 #nav{
   position:fixed;top:60px;left:5vw;right:5vw;z-index:900;
-  height:62px;padding:0 1.6rem;border-radius:18px;max-width:1320px;margin:0 auto;
+  height:52px;padding:0 1.6rem;border-radius:18px;max-width:1320px;margin:0 auto;
   display:flex;align-items:center;justify-content:space-between;
   background:#FFFFFF;
   border:1px solid rgba(0,0,0,.06);
@@ -195,6 +195,7 @@ body.flash-on #topbar{top:56px}
   background:var(--bg2);border:1px solid var(--border-strong);border-radius:var(--radius);
   box-shadow:var(--shadow-md);z-index:999;max-height:320px;overflow-y:auto;display:none}
 #topbar-search-results.show{display:block}
+#topbar #cart-btn{flex-shrink:0}
 #topbar-socials{display:flex;align-items:center;gap:.5rem;flex-shrink:0}
 .topbar-soc-btn{width:32px;height:32px;border-radius:50%;
   background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);
@@ -235,13 +236,13 @@ body.flash-on #topbar{top:56px}
   body.flash-on #mobile-search-bar{top:108px}
   #nav{top:112px}
   body.flash-on #nav{top:150px}
-  #mobile-nav{top:174px}
-  body.flash-on #mobile-nav{top:212px}
-  #user-menu{top:174px !important}
-  #hero{padding:266px 5vw 0}
-  .all-products-inner,.product-page-inner,.mp-inner,.wishlist-inner{padding-top:194px}
+  #mobile-nav{top:164px}
+  body.flash-on #mobile-nav{top:202px}
+  #user-menu{top:164px !important}
+  #hero{padding:256px 5vw 0}
+  .all-products-inner,.product-page-inner,.mp-inner,.wishlist-inner{padding-top:184px}
   body.flash-on .all-products-inner,body.flash-on .product-page-inner,
-  body.flash-on .mp-inner,body.flash-on .wishlist-inner{padding-top:232px}
+  body.flash-on .mp-inner,body.flash-on .wishlist-inner{padding-top:222px}
 }
 @media(max-width:480px){
   .topbar-logo-text{display:none}
@@ -285,7 +286,7 @@ body.flash-on #topbar{top:56px}
 .hamburger span{display:block;width:18px;height:1.5px;background:var(--text-muted);
   border-radius:2px;transition:var(--transition)}
 #mobile-nav{
-  position:fixed;top:122px;left:0;right:0;bottom:0;z-index:850;
+  position:fixed;top:112px;left:0;right:0;bottom:0;z-index:850;
   background:var(--bg);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.8rem;
   transform:translateX(100%);transition:transform .25s ease;
@@ -328,11 +329,11 @@ body.flash-on #topbar{top:56px}
 /* ===== HERO ===== */
 #hero{
   min-height:auto;display:flex;align-items:center;
-  padding:198px 5vw 60px;background:var(--bg);
+  padding:188px 5vw 60px;background:var(--bg);
   position:relative;border-bottom:1px solid var(--border);
 }
 @media(min-width:701px) and (max-width:980px){
-  #hero{padding:178px 5vw 50px;}
+  #hero{padding:168px 5vw 50px;}
 }
 .hero-inner{
   position:relative;z-index:2;max-width:900px;width:100%;
@@ -780,7 +781,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:2.5rem 0
   background:var(--bg);overflow-y:auto;
 }
 #all-products-page.active{display:block}
-.all-products-inner{max-width:1160px;margin:0 auto;padding:138px 5vw 60px}
+.all-products-inner{max-width:1160px;margin:0 auto;padding:128px 5vw 60px}
 .all-hdr{display:flex;align-items:center;gap:1rem;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap}
 .search-bar{
   display:flex;align-items:center;gap:.5rem;padding:.5rem .9rem;
@@ -814,7 +815,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:2.5rem 0
   background:var(--bg);overflow-y:auto;
 }
 #product-page.active{display:block}
-.product-page-inner{max-width:1060px;margin:0 auto;padding:138px 5vw 60px}
+.product-page-inner{max-width:1060px;margin:0 auto;padding:128px 5vw 60px}
 .back-btn{
   display:inline-flex;align-items:center;gap:.4rem;color:var(--text-muted);
   font-size:.85rem;margin-bottom:2rem;cursor:pointer;transition:color var(--transition);
@@ -1013,7 +1014,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:2.5rem 0
   background:var(--bg);overflow-y:auto;
 }
 #my-products-page.active{display:block}
-.mp-inner{max-width:1160px;margin:0 auto;padding:138px 5vw 60px}
+.mp-inner{max-width:1160px;margin:0 auto;padding:128px 5vw 60px}
 
 /* ===== COURSE PLAYER ===== */
 #course-player-page{
@@ -1170,7 +1171,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:2.5rem 0
 /* ===== ACCOUNT AREA ===== */
 #account-page{display:none;position:fixed;inset:0;z-index:830;background:var(--bg);overflow-y:auto}
 #account-page.active{display:block}
-.acct-inner{max-width:1160px;margin:0 auto;padding:138px 5vw 60px}
+.acct-inner{max-width:1160px;margin:0 auto;padding:128px 5vw 60px}
 .acct-layout{display:grid;grid-template-columns:250px 1fr;gap:2rem;align-items:start}
 .acct-side{position:sticky;top:138px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:.6rem;display:flex;flex-direction:column}
 .acct-side-user{display:flex;align-items:center;gap:.7rem;padding:.8rem .7rem 1rem;border-bottom:1px solid var(--border);margin-bottom:.5rem}
@@ -1282,10 +1283,10 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:2.5rem 0
 #flash-banner-close{background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;padding:0 0 0 .5rem;font-size:.9rem;line-height:1}
 /* push nav down when banner visible */
 body.flash-on #nav{top:98px}
-body.flash-on #mobile-nav{top:160px}
+body.flash-on #mobile-nav{top:150px}
 @media(min-width:701px){
   body.flash-on .all-products-inner,body.flash-on .product-page-inner,
-  body.flash-on .mp-inner,body.flash-on .wishlist-inner{padding-top:176px}
+  body.flash-on .mp-inner,body.flash-on .wishlist-inner{padding-top:166px}
 }
 
 /* ===== NAV SEARCH ===== */
@@ -1339,7 +1340,7 @@ body.flash-on #mobile-nav{top:160px}
   background:var(--bg);overflow-y:auto;
 }
 #wishlist-page.active{display:block}
-.wishlist-inner{max-width:1160px;margin:0 auto;padding:138px 5vw 60px}
+.wishlist-inner{max-width:1160px;margin:0 auto;padding:128px 5vw 60px}
 
 /* ===== STAR RATINGS ===== */
 .prod-stars{display:flex;align-items:center;gap:2px;margin-bottom:.45rem}
@@ -1832,6 +1833,10 @@ footer::before{
     </div>
     <div id="topbar-search-results"></div>
   </div>
+  <button id="cart-btn" onclick="toggleCart()">
+    <i class="fa-solid fa-bag-shopping"></i>
+    <span id="cart-badge">0</span>
+  </button>
   <div id="topbar-socials"></div>
 </div>
 
@@ -1849,16 +1854,14 @@ footer::before{
   <div class="nav-links">
     <a href="#hero" data-section="hero" onclick="showMain()">Home</a>
     <a href="#" data-section="products" onclick="closeWishlist();closeMyProducts();openAllProducts();return false;">Explore</a>
-    <a href="#best-sellers" data-section="best-sellers" onclick="closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">Most Popular</a>
     <a href="#about" data-section="about" onclick="closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">About</a>
     <a href="#warranty" data-section="warranty" onclick="closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">Warranty</a>
-    <a href="#" id="my-products-link" onclick="closeWishlist();openMyProducts();return false;">My Library</a>
   </div>
   <div class="nav-actions">
     <button id="user-btn" onclick="toggleUserMenu()" style="position:relative;width:42px;height:42px;border-radius:50%;background:var(--card);border:1px solid var(--border);align-items:center;justify-content:center;font-size:1rem;transition:all var(--transition)">
       <i class="fa-solid fa-user" id="user-icon"></i>
     </button>
-    <div id="user-menu" style="display:none;position:absolute;top:122px;right:5vw;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:.5rem;min-width:200px;z-index:1000;box-shadow:0 12px 35px rgba(0,0,0,.5)">
+    <div id="user-menu" style="display:none;position:absolute;top:112px;right:5vw;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:.5rem;min-width:200px;z-index:1000;box-shadow:0 12px 35px rgba(0,0,0,.5)">
       <div id="user-menu-info" style="padding:.6rem .9rem;margin-bottom:.3rem;border-bottom:1px solid var(--border)"></div>
       <button onclick="openAccount('profile');document.getElementById('user-menu').style.display='none';" style="display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;width:100%;transition:background var(--transition)" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''"><i class="fa-solid fa-user" style="color:var(--primary)"></i> Profile</button>
       <button onclick="openAccount('library');document.getElementById('user-menu').style.display='none';" style="display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;width:100%;transition:background var(--transition)" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''"><i class="fa-solid fa-box-archive" style="color:var(--primary)"></i> My Library</button>
@@ -1871,10 +1874,6 @@ footer::before{
       <button onclick="doUserLogout()" style="width:100%;display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;color:var(--text-muted);transition:all var(--transition);text-align:left" onmouseover="this.style.color='#ff4d6d'" onmouseout="this.style.color='var(--text-muted)'"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
     </div>
     <button id="login-nav-btn" onclick="openLoginModal()" style="padding:8px 16px;border-radius:var(--radius-sm);background:rgba(var(--primary-rgb),.12);border:1px solid rgba(var(--primary-rgb),.3);color:var(--primary);font-size:.83rem;font-weight:700;transition:all var(--transition);white-space:nowrap"><i class="fa-solid fa-user"></i> Sign In</button>
-    <button id="cart-btn" onclick="toggleCart()">
-      <i class="fa-solid fa-bag-shopping"></i>
-      <span id="cart-badge">0</span>
-    </button>
     <button class="hamburger" onclick="toggleMobileNav()" id="hamburger-btn">
       <span></span><span></span><span></span>
     </button>
@@ -1884,10 +1883,8 @@ footer::before{
 <div id="mobile-nav">
   <a href="#hero" onclick="closeMobileNav();showMain()">Home</a>
   <a href="#" onclick="closeMobileNav();closeWishlist();closeMyProducts();openAllProducts();return false;">Explore</a>
-  <a href="#best-sellers" onclick="closeMobileNav();closeMyProducts();closeAllProducts();closeWishlist();">Most Popular</a>
   <a href="#about" onclick="closeMobileNav();closeMyProducts();closeAllProducts();closeWishlist();">About</a>
   <a href="#warranty" onclick="closeMobileNav();closeMyProducts();closeAllProducts();closeWishlist();">Warranty</a>
-  <a href="#" id="my-products-link-mobile" onclick="closeMobileNav();closeWishlist();openMyProducts();return false;">My Library</a>
 </div>
 
 <!-- ===== HERO ===== -->
@@ -1938,26 +1935,6 @@ footer::before{
       <div class="mp-skeleton"><div class="sk-img"></div><div class="sk-body"><div class="sk-line"></div><div class="sk-line short"></div><div class="sk-line" style="width:80%;height:28px;border-radius:6px;margin-top:.5rem"></div></div></div>
       <div class="mp-skeleton"><div class="sk-img"></div><div class="sk-body"><div class="sk-line"></div><div class="sk-line short"></div><div class="sk-line" style="width:80%;height:28px;border-radius:6px;margin-top:.5rem"></div></div></div>
       <div class="mp-skeleton"><div class="sk-img"></div><div class="sk-body"><div class="sk-line"></div><div class="sk-line short"></div><div class="sk-line" style="width:80%;height:28px;border-radius:6px;margin-top:.5rem"></div></div></div>
-    </div>
-  </div>
-</section>
-
-<!-- ===== BEST SELLERS ===== -->
-<section id="best-sellers">
-  <div class="container">
-    <div class="products-hdr">
-      <div>
-        <div class="section-tag">Top rated</div>
-        <h2 class="section-title" style="margin-bottom:0">Most Popular</h2>
-      </div>
-      <button class="btn btn-outline" onclick="openAllProducts()">
-        View All <i class="fa-solid fa-arrow-right"></i>
-      </button>
-    </div>
-    <div class="bs-list" id="best-sellers-list">
-      <div class="bs-row" style="pointer-events:none"><div class="mp-skeleton" style="width:30px;height:30px;border-radius:50%;flex-shrink:0"></div><div class="mp-skeleton" style="width:56px;height:56px;border-radius:9px;flex-shrink:0"></div><div style="flex:1"><div class="mp-skeleton sk-line" style="width:50%"></div><div class="mp-skeleton sk-line short"></div></div></div>
-      <div class="bs-row" style="pointer-events:none"><div class="mp-skeleton" style="width:30px;height:30px;border-radius:50%;flex-shrink:0"></div><div class="mp-skeleton" style="width:56px;height:56px;border-radius:9px;flex-shrink:0"></div><div style="flex:1"><div class="mp-skeleton sk-line" style="width:50%"></div><div class="mp-skeleton sk-line short"></div></div></div>
-      <div class="bs-row" style="pointer-events:none"><div class="mp-skeleton" style="width:30px;height:30px;border-radius:50%;flex-shrink:0"></div><div class="mp-skeleton" style="width:56px;height:56px;border-radius:9px;flex-shrink:0"></div><div style="flex:1"><div class="mp-skeleton sk-line" style="width:50%"></div><div class="mp-skeleton sk-line short"></div></div></div>
     </div>
   </div>
 </section>
@@ -2095,10 +2072,8 @@ footer::before{
     <div class="footer-links">
       <a href="#hero" onclick="showMain()">Home</a>
       <a href="#" onclick="closeWishlist();closeMyProducts();openAllProducts();return false;">Explore</a>
-      <a href="#best-sellers" onclick="closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">Most Popular</a>
       <a href="#about" onclick="closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">About</a>
       <a href="#warranty" onclick="closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">Warranty</a>
-      <a href="#" onclick="closeWishlist();openMyProducts();return false;">My Library</a>
     </div>
     <p class="footer-copy" id="footer-copy">© 2025 DIGITCH · All rights reserved</p>
   </div>
@@ -2634,7 +2609,6 @@ function handleDbUpdate() {
       Wishlist.prune(validIds);
     }
     renderProducts();
-    renderBestSellers();
     renderHeroPreview();
     renderTopbarSocials();
     updateFooter();
@@ -2667,10 +2641,10 @@ window.addEventListener('scroll', () => {
 
 // ===== SCROLLSPY — active nav link ====
 function initScrollSpy() {
-  const sections = ['hero','products','best-sellers','about','warranty'];
+  const sections = ['hero','products','about','warranty'];
   const navLinks = document.querySelectorAll('.nav-links a[data-section]');
   // Map section ids to nav link data-section (the "products" section shows Our Products content)
-  const map = { hero:'hero', products:'new-arrivals', 'best-sellers':'best-sellers', about:'about', warranty:'warranty' };
+  const map = { hero:'hero', products:'new-arrivals', about:'about', warranty:'warranty' };
   const obs = new IntersectionObserver(entries => {
     entries.forEach(e => {
       if (e.isIntersecting) {
@@ -2827,47 +2801,6 @@ async function claimFreeProduct(prod) {
     console.error('[claimFreeProduct]', err);
     showToast('❌ Something went wrong. Please try again.');
   }
-}
-
-// ===== BEST SELLERS =====
-function renderBestSellers() {
-  const list = document.getElementById('best-sellers-list');
-  if (!list) return;
-  // Same reasoning as renderProducts(): don't hide the section (or leave it
-  // hidden) just because the fetch hasn't resolved yet — wait for a real
-  // "loaded" signal so this doesn't flash a hidden/empty section on every
-  // page load and only pop in once the network round trip finishes.
-  if (!DB.isLoaded('products')) return;
-  const s = Settings.get();
-  let prods = DB.getAll('products').slice();
-  const sec = document.getElementById('best-sellers');
-  if (!prods.length) { if (sec) sec.style.display = 'none'; return; }
-  if (sec) sec.style.display = '';
-  prods.sort((a, b) => {
-    const bb = (b.badge === 'BEST SELLER' ? 1 : 0) - (a.badge === 'BEST SELLER' ? 1 : 0);
-    if (bb !== 0) return bb;
-    return (b.rating || 0) - (a.rating || 0);
-  });
-  prods = prods.slice(0, 5);
-  list.innerHTML = '';
-  prods.forEach((p, i) => {
-    const img = (p.images || [])[0] || generatePlaceholder(p.name, 200, 200);
-    const row = document.createElement('div');
-    row.className = 'bs-row';
-    row.innerHTML = `
-      <div class="bs-rank">${i + 1}</div>
-      <div class="bs-img"><img src="${img}" alt="${p.name}" loading="lazy"/></div>
-      <div class="bs-info">
-        <div class="bs-name">${p.name}</div>
-        <div class="bs-meta">
-          ${p.rating ? `<span><i class="fa-solid fa-star"></i> ${p.rating}</span>` : ''}
-          <span>${p.category || ''}</span>
-        </div>
-      </div>
-      <div class="bs-price">${(p.oldPrice && p.oldPrice > p.price) ? `<span class="bs-old">${p.oldPrice.toLocaleString()} ${s.currency}</span>` : ''}${formatPrice(p.price, s.currency)}</div>`;
-    row.onclick = () => { trackRecentlyViewed(p); openProductDetail(p.id, false); };
-    list.appendChild(row);
-  });
 }
 
 // ===== ALL PRODUCTS PAGE =====
