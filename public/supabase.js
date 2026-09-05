@@ -1374,7 +1374,11 @@ const Settings = {
   _defaults: {
     storeName:'Orvyn', logo:null, logoLight:null, logoDark:null,
     primary:'#3454D1', secondary:'#3454D1', accent:'#3454D1', currency:'DA',
-    social:{ facebook:'', instagram:'', whatsapp:'', telegram:'', tiktok:'', youtube:'' }
+    social:{ facebook:'', instagram:'', whatsapp:'', telegram:'', tiktok:'', youtube:'' },
+    // Cover images for the 3 homepage "Three ways to level up" cards,
+    // one per content type — set from the admin panel's "Content Types &
+    // Topics" page (see admin.html renderCategoriesList/handleTypeImage).
+    contentTypeImages:{ product:null, pack:null, course:null }
   },
   _data: null,
 

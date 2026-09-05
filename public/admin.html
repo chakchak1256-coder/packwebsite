@@ -521,8 +521,7 @@ select.form-input option{background:var(--bg2)}
         <div class="nav-group-label">Content</div>
         <div class="nav-item" onclick="showPanel('products')"><i class="fa-solid fa-graduation-cap"></i> Courses &amp; Packs</div>
         <div class="nav-item" onclick="showPanel('add-product')"><i class="fa-solid fa-plus-circle"></i> Add Course / Pack</div>
-        <div class="nav-item" onclick="showPanel('categories')"><i class="fa-solid fa-tags"></i> Topics &amp; Collections</div>
-        <div class="nav-item" onclick="showPanel('add-category')"><i class="fa-solid fa-folder-plus"></i> Add Topic</div>
+        <div class="nav-item" onclick="showPanel('categories')"><i class="fa-solid fa-tags"></i> Content Types &amp; Topics</div>
       </div>
 
       <div class="nav-group">
@@ -652,7 +651,7 @@ select.form-input option{background:var(--bg2)}
             <div class="form-grid">
               <div class="form-group full">
                 <label class="form-label">Content Type</label>
-                <select class="form-input" id="prod-content-type" onchange="toggleContentTypeUI()">
+                <select class="form-input" id="prod-content-type" onchange="populateTopicSelect(this.value, ''); toggleContentTypeUI()">
                   <option value="course">Course (modules &amp; lessons — learners progress inside the platform)</option>
                   <option value="pack">Digital Pack (a bundle of resources/files unlocked after purchase)</option>
                   <option value="product">Other / Legacy Content</option>
@@ -755,40 +754,50 @@ select.form-input option{background:var(--bg2)}
         </form>
       </div>
 
-      <!-- CATEGORIES LIST -->
+      <!-- CONTENT TYPES & TOPICS -->
       <div class="panel" id="panel-categories">
         <div class="sec-header">
-          <span class="sec-title">Topics &amp; Collections</span>
-          <button class="btn btn-primary" onclick="showPanel('add-category')"><i class="fa-solid fa-plus"></i> Add Topic</button>
+          <span class="sec-title">Content Types &amp; Topics</span>
         </div>
-        <div class="table-wrap">
-          <table><thead><tr><th>Image</th><th>Name</th><th>Emoji</th><th>Content</th><th>Actions</th></tr></thead><tbody id="cats-tbody"></tbody></table>
-        </div>
+        <p style="color:var(--text-muted);font-size:.85rem;margin:-.6rem 0 1.5rem;max-width:680px;line-height:1.6">
+          Digital Products, Digital Packs, and Courses are the three formats on the storefront. Set a cover image for
+          each one below — it's used on the homepage's "Three ways to level up" cards — then add topics under the
+          format they belong to. Topics filter by their format on the Explore page, so keep each one under the right type.
+        </p>
+        <div id="content-type-groups"></div>
       </div>
 
       <!-- ADD/EDIT CATEGORY -->
       <div class="panel" id="panel-add-category">
-        <div class="sec-header"><span class="sec-title" id="add-cat-title">Add New Category</span></div>
+        <div class="sec-header"><span class="sec-title" id="add-cat-title">Add New Topic</span></div>
         <form id="category-form" onsubmit="saveCategory(event)" style="max-width:560px">
           <input type="hidden" id="edit-cat-id"/>
           <div class="form-section">
-            <div class="form-section-title"><i class="fa-solid fa-tag"></i> Category Details</div>
-            <div class="form-group" style="margin-bottom:1rem"><label class="form-label">Category Name</label><input class="form-input" id="cat-name" placeholder="e.g. Streaming" required/></div>
+            <div class="form-section-title"><i class="fa-solid fa-tag"></i> Topic Details</div>
+            <div class="form-group" style="margin-bottom:1rem">
+              <label class="form-label">Content Type</label>
+              <select class="form-input" id="cat-type">
+                <option value="product">Digital Products</option>
+                <option value="pack">Digital Packs</option>
+                <option value="course">Courses</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:1rem"><label class="form-label">Topic Name</label><input class="form-input" id="cat-name" placeholder="e.g. Streaming" required/></div>
             <div class="form-group" style="margin-bottom:1rem"><label class="form-label">Emoji Icon <span>(optional)</span></label><input class="form-input" id="cat-emoji" placeholder="🎬" maxlength="4"/></div>
             <div class="form-group">
-              <label class="form-label">Category Image</label>
+              <label class="form-label">Topic Image <span>(optional)</span></label>
               <div class="img-upload-zone">
                 <input type="file" id="cat-img-input" accept="image/*" onchange="handleCatImage(this)"/>
                 <div class="img-upload-icon"><i class="fa-solid fa-image"></i></div>
                 <div class="img-upload-text"><strong>Click to upload</strong> one image</div>
-                <div class="img-upload-sub">JPG, PNG — Will show as category background</div>
+                <div class="img-upload-sub">JPG, PNG — Will show as topic background</div>
               </div>
               <div class="img-previews" id="cat-img-preview"></div>
             </div>
           </div>
           <div style="display:flex;gap:.75rem">
-            <button type="submit" id="save-cat-btn" class="btn btn-primary"><i class="fa-solid fa-check"></i> <span id="save-cat-btn-text">Save Category</span></button>
-            <button type="button" class="btn btn-outline" onclick="resetCategoryForm()"><i class="fa-solid fa-xmark"></i> Reset</button>
+            <button type="submit" id="save-cat-btn" class="btn btn-primary"><i class="fa-solid fa-check"></i> <span id="save-cat-btn-text">Save Topic</span></button>
+            <button type="button" class="btn btn-outline" onclick="resetCategoryForm(); showPanel('categories')"><i class="fa-solid fa-xmark"></i> Cancel</button>
           </div>
         </form>
       </div>
@@ -1284,7 +1293,7 @@ function showPanel(name) {
   const el = document.getElementById('panel-' + name);
   if (el) el.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  const titles = { dashboard:'Dashboard', analytics:'Analytics', products:'Courses & Packs', 'add-product':'Add Course / Pack', categories:'Topics & Collections', 'add-category':'Add Topic', purchases:'Enrollments & Access', users:'Members', 'login-activity':'Login Activity', announcement:'Announcement Banner', reviews:'Reviews', 'social-links':'Social Media Links', 'branding':'Platform Branding' };
+  const titles = { dashboard:'Dashboard', analytics:'Analytics', products:'Courses & Packs', 'add-product':'Add Course / Pack', categories:'Content Types & Topics', 'add-category':'Add Topic', purchases:'Enrollments & Access', users:'Members', 'login-activity':'Login Activity', announcement:'Announcement Banner', reviews:'Reviews', 'social-links':'Social Media Links', 'branding':'Platform Branding' };
   document.getElementById('topbar-title').textContent = titles[name] || name;
   currentPanel = name;
   if (name === 'add-product') loadProductForm();
@@ -1476,18 +1485,30 @@ function renderProductsList() {
     </tr>`;
   }).join('');
 }
+// Fills #prod-cat with only the topics that belong to the given content
+// type (product/pack/course) — topics are type-scoped (see "Content Types
+// & Topics"). If keepValue is a topic saved under a different/no type
+// (legacy data), it's kept as an extra option so editing an old product
+// doesn't silently wipe its topic.
+function populateTopicSelect(type, keepValue) {
+  const cats = DB.getAll('categories');
+  const matching = cats.filter(c => c.contentType === type);
+  const sel = document.getElementById('prod-cat');
+  sel.innerHTML = '<option value="">No topic</option>';
+  matching.forEach(c => { const o = document.createElement('option'); o.value = c.name; o.textContent = c.name; sel.appendChild(o); });
+  if (keepValue && !matching.some(c => c.name === keepValue)) {
+    const o = document.createElement('option'); o.value = keepValue; o.textContent = keepValue + ' (different type)'; sel.appendChild(o);
+  }
+  sel.value = keepValue || '';
+}
 function loadProductForm() {
-  const cats = DB.getAll('categories'); const sel = document.getElementById('prod-cat'); const current = sel.value;
-  sel.innerHTML = '<option value="">Select topic...</option>';
-  cats.forEach(c => { const o = document.createElement('option'); o.value = c.name; o.textContent = c.name; sel.appendChild(o); });
-  if (current) sel.value = current;
   if (editProductData) {
     const p = editProductData;
     document.getElementById('edit-prod-id').value = p.id;
     document.getElementById('prod-content-type').value = p.contentType || 'course';
+    populateTopicSelect(p.contentType || 'course', p.category || '');
     toggleContentTypeUI();
     document.getElementById('prod-name').value = p.name||'';
-    document.getElementById('prod-cat').value = p.category||'';
     document.getElementById('prod-price').value = p.price||'';
     document.getElementById('prod-old-price').value = p.oldPrice||'';
     document.getElementById('prod-badge').value = p.badge||'';
@@ -1532,6 +1553,8 @@ function loadProductForm() {
     document.getElementById('add-prod-title').textContent = 'Edit Content';
     const btnText = document.getElementById('save-prod-btn-text');
     if (btnText) btnText.textContent = 'Update Content';
+  } else {
+    populateTopicSelect(document.getElementById('prod-content-type').value, '');
   }
 }
 // ── Content Type switch (Course / Pack / Legacy) ─────────────────────
@@ -1724,6 +1747,7 @@ function resetProductForm() {
   document.getElementById('variable-groups-list').innerHTML = '';
   document.getElementById('curriculum-modules-list').innerHTML = '';
   document.getElementById('prod-content-type').value = 'course';
+  populateTopicSelect('course', '');
   toggleContentTypeUI();
   document.getElementById('add-prod-title').textContent = 'Add New Course';
   const btnText = document.getElementById('save-prod-btn-text');
@@ -1995,52 +2019,168 @@ async function saveProduct(e) {
 }
 function deleteProduct(id) { confirmAction('Delete this content?', 'This action cannot be undone. Learners who already have access will keep it, but it will no longer be listed.', () => { DB.delete('products', id); renderProductsList(); showToast('Content deleted'); }); }
 
-// ===== CATEGORIES =====
+// ===== CONTENT TYPES & TOPICS =====
+// A topic ("category" in the data — the field is still named `category` on
+// products for backward compatibility) now belongs to exactly one content
+// type: 'product' (Digital Products), 'pack' (Digital Packs) or 'course'
+// (Courses). Topics saved before this existed have no `contentType` and
+// show up in the "Unsorted" group below until an admin edits them and
+// picks one.
+const CONTENT_TYPES = [
+  { key: 'product', label: 'Digital Products', icon: 'fa-cube',          desc: 'Individual resources for your next project.' },
+  { key: 'pack',    label: 'Digital Packs',    icon: 'fa-layer-group',   desc: 'Curated bundles with more value in one place.' },
+  { key: 'course',  label: 'Courses',          icon: 'fa-graduation-cap',desc: 'Learn practical skills through structured content.' },
+];
+let _addCatDefaultType = 'product';
+let _typeImagePending = {}; // { product|pack|course: base64 } — staged uploads not yet saved
+
 function renderCategoriesList() {
   const cats = DB.getAll('categories'); const prods = DB.getAll('products');
-  const tbody = document.getElementById('cats-tbody');
-  if (!cats.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><i class="fa-solid fa-tags"></i><p>No categories yet.</p></div></td></tr>`; return; }
-  tbody.innerHTML = cats.map(c => {
-    const count = prods.filter(p => p.category === c.name).length;
-    const img = c.image && c.image.length > 0 ? c.image : null;
-    return `<tr>
-      <td><div class="td-img">${img?`<img src="${img}" alt=""/>`:`<div style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:1.5rem">${c.emoji||'📦'}</div>`}</div></td>
-      <td><strong>${c.name}</strong></td>
-      <td style="font-size:1.3rem">${c.emoji||'—'}</td>
-      <td><span style="color:var(--secondary)">${count}</span></td>
-      <td><div class="td-actions">
-        <button class="btn btn-sm btn-outline" onclick="editCategory('${c.id}')"><i class="fa-solid fa-pen"></i></button>
-        <button class="btn btn-sm btn-danger" onclick="deleteCategory('${c.id}')"><i class="fa-solid fa-trash"></i></button>
-      </div></td>
-    </tr>`;
+  const settings = (typeof Settings !== 'undefined') ? Settings.get() : {};
+  const typeImages = settings.contentTypeImages || {};
+  const wrap = document.getElementById('content-type-groups');
+  if (!wrap) return;
+
+  const groupHtml = CONTENT_TYPES.map(t => {
+    const topics = cats.filter(c => c.contentType === t.key);
+    const img = _typeImagePending[t.key] !== undefined ? _typeImagePending[t.key] : (typeImages[t.key] || null);
+    const rows = topics.length ? topics.map(c => {
+      const count = prods.filter(p => p.category === c.name).length;
+      const cimg = c.image && c.image.length > 0 ? c.image : null;
+      return `<tr>
+        <td><div class="td-img">${cimg?`<img src="${cimg}" alt=""/>`:`<div style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:1.5rem">${c.emoji||'📦'}</div>`}</div></td>
+        <td><strong>${c.name}</strong></td>
+        <td style="font-size:1.3rem">${c.emoji||'—'}</td>
+        <td><span style="color:var(--secondary)">${count}</span></td>
+        <td><div class="td-actions">
+          <button class="btn btn-sm btn-outline" onclick="editCategory('${c.id}')"><i class="fa-solid fa-pen"></i></button>
+          <button class="btn btn-sm btn-danger" onclick="deleteCategory('${c.id}')"><i class="fa-solid fa-trash"></i></button>
+        </div></td>
+      </tr>`;
+    }).join('') : `<tr><td colspan="5"><div class="empty-state"><i class="fa-solid fa-tags"></i><p>No topics yet under ${t.label}.</p></div></td></tr>`;
+
+    return `
+      <div class="form-section" style="margin-bottom:1.5rem">
+        <div class="form-section-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem">
+          <span><i class="fa-solid ${t.icon}"></i> ${t.label}</span>
+          <button class="btn btn-sm btn-primary" onclick="addTopicForType('${t.key}')"><i class="fa-solid fa-plus"></i> Add Topic</button>
+        </div>
+        <div style="display:flex;gap:1.2rem;flex-wrap:wrap;align-items:flex-start;margin:1rem 0 1.3rem">
+          <div>
+            <label class="form-label" style="display:block;margin-bottom:.5rem">Cover Image <span>(shown on the homepage card)</span></label>
+            <div class="img-upload-zone" style="width:220px">
+              <input type="file" accept="image/*" onchange="handleTypeImage('${t.key}', this)"/>
+              <div class="img-upload-icon"><i class="fa-solid fa-image"></i></div>
+              <div class="img-upload-text"><strong>Click to upload</strong></div>
+              <div class="img-upload-sub">JPG, PNG</div>
+            </div>
+          </div>
+          ${img ? `<div class="img-previews"><div class="img-preview-item"><img src="${img}" alt="" style="width:120px;height:80px;object-fit:cover"/><button type="button" class="img-preview-remove" onclick="removeTypeImage('${t.key}')"><i class="fa-solid fa-xmark"></i></button></div></div>` : `<p style="color:var(--text-muted);font-size:.82rem;margin-top:1.8rem">No cover image set — the homepage card falls back to a plain icon.</p>`}
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Image</th><th>Name</th><th>Emoji</th><th>Content</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>
+        </div>
+      </div>`;
   }).join('');
+
+  const unsorted = cats.filter(c => !c.contentType);
+  const unsortedHtml = unsorted.length ? `
+    <div class="form-section" style="margin-bottom:1.5rem;border-color:rgba(245,158,11,.35)">
+      <div class="form-section-title" style="color:#F59E0B"><i class="fa-solid fa-triangle-exclamation"></i> Unsorted Topics — needs a content type</div>
+      <p style="color:var(--text-muted);font-size:.82rem;margin:.5rem 0 1rem">These topics were created before content types existed. They won't appear on the Explore page's type-specific tabs until you edit each one and pick Digital Products, Digital Packs, or Courses.</p>
+      <div class="table-wrap">
+        <table><thead><tr><th>Image</th><th>Name</th><th>Emoji</th><th>Content</th><th>Actions</th></tr></thead><tbody>
+          ${unsorted.map(c => {
+            const count = prods.filter(p => p.category === c.name).length;
+            const cimg = c.image && c.image.length > 0 ? c.image : null;
+            return `<tr>
+              <td><div class="td-img">${cimg?`<img src="${cimg}" alt=""/>`:`<div style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:1.5rem">${c.emoji||'📦'}</div>`}</div></td>
+              <td><strong>${c.name}</strong></td>
+              <td style="font-size:1.3rem">${c.emoji||'—'}</td>
+              <td><span style="color:var(--secondary)">${count}</span></td>
+              <td><div class="td-actions">
+                <button class="btn btn-sm btn-outline" onclick="editCategory('${c.id}')"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn btn-sm btn-danger" onclick="deleteCategory('${c.id}')"><i class="fa-solid fa-trash"></i></button>
+              </div></td>
+            </tr>`;
+          }).join('')}
+        </tbody></table>
+      </div>
+    </div>` : '';
+
+  wrap.innerHTML = groupHtml + unsortedHtml;
 }
+
+// Stages a type-cover image, compresses it, then saves immediately to
+// Settings (settings/store doc) so it's live on the homepage right away —
+// no separate "Save" step, matching how the logo/branding upload behaves.
+async function handleTypeImage(type, input) {
+  const f = input.files[0]; if (!f) return;
+  input.disabled = true;
+  try {
+    const compressed = await compressImage(f, 900, 0.78);
+    _typeImagePending[type] = compressed;
+    renderCategoriesList();
+    const current = Settings.get().contentTypeImages || {};
+    await Settings.save({ contentTypeImages: { ...current, [type]: compressed } });
+    delete _typeImagePending[type];
+    renderCategoriesList();
+    showToast('Cover image updated!');
+  } catch (err) {
+    delete _typeImagePending[type];
+    showToast('\u274C Image upload failed: ' + (err.message || err));
+    console.error('handleTypeImage:', err);
+  }
+}
+async function removeTypeImage(type) {
+  confirmAction('Remove this cover image?', 'The homepage card will fall back to a plain icon.', async () => {
+    try {
+      const current = Settings.get().contentTypeImages || {};
+      await Settings.save({ contentTypeImages: { ...current, [type]: null } });
+      renderCategoriesList();
+      showToast('Cover image removed');
+    } catch (err) { showToast('\u274C Failed: ' + (err.message || err)); }
+  });
+}
+
+function addTopicForType(type) {
+  editCategoryData = null;
+  _addCatDefaultType = type;
+  showPanel('add-category');
+}
+
 function loadCategoryForm() {
+  const typeSel = document.getElementById('cat-type');
   if (editCategoryData) {
     const c = editCategoryData;
     document.getElementById('edit-cat-id').value = c.id;
     document.getElementById('cat-name').value = c.name||'';
     document.getElementById('cat-emoji').value = c.emoji||'';
+    if (typeSel) typeSel.value = c.contentType || 'product';
     catImage = c.image||null;
     if (catImage) document.getElementById('cat-img-preview').innerHTML = `<div class="img-preview-item"><img src="${catImage}" alt=""/><button type="button" class="img-preview-remove" onclick="removeCatImage()"><i class="fa-solid fa-xmark"></i></button></div>`;
-    document.getElementById('add-cat-title').textContent = 'Edit Category';
-    document.getElementById('save-cat-btn-text').textContent = 'Update Category';
+    document.getElementById('add-cat-title').textContent = 'Edit Topic';
+    document.getElementById('save-cat-btn-text').textContent = 'Update Topic';
+  } else {
+    if (typeSel) typeSel.value = _addCatDefaultType || 'product';
+    document.getElementById('add-cat-title').textContent = 'Add New Topic';
+    document.getElementById('save-cat-btn-text').textContent = 'Save Topic';
   }
 }
 function editCategory(id) { editCategoryData = DB.getById('categories', id); showPanel('add-category'); }
 function resetCategoryForm() {
-  editCategoryData = null; catImage = null;
+  editCategoryData = null; catImage = null; _addCatDefaultType = 'product';
   document.getElementById('category-form').reset();
   document.getElementById('edit-cat-id').value = '';
   document.getElementById('cat-img-preview').innerHTML = '';
   const title = document.getElementById('add-cat-title');
-  if (title) title.textContent = 'Add New Category';
+  if (title) title.textContent = 'Add New Topic';
   // save-cat-btn-text can momentarily not exist: while saveCategory() is
   // in flight it swaps the button's innerHTML for a spinner, which removes
   // this span from the DOM until the save finishes. Guard against that so
   // a successful save doesn't crash here and get reported as a failure.
   const btnText = document.getElementById('save-cat-btn-text');
-  if (btnText) btnText.textContent = 'Save Category';
+  if (btnText) btnText.textContent = 'Save Topic';
 }
 async function handleCatImage(input) {
   const f = input.files[0]; if (!f) return;
@@ -2052,21 +2192,26 @@ function removeCatImage() { catImage = null; document.getElementById('cat-img-pr
 async function saveCategory(e) {
   e.preventDefault();
   const id = document.getElementById('edit-cat-id').value;
-  const data = { name: document.getElementById('cat-name').value.trim(), emoji: document.getElementById('cat-emoji').value.trim(), image: catImage||null };
-  if (!data.name) { showToast('Category name is required'); return; }
+  const data = {
+    name: document.getElementById('cat-name').value.trim(),
+    emoji: document.getElementById('cat-emoji').value.trim(),
+    contentType: document.getElementById('cat-type').value,
+    image: catImage||null,
+  };
+  if (!data.name) { showToast('Topic name is required'); return; }
   const btn = document.getElementById('save-cat-btn');
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving\u2026'; }
   try {
     if (id) await DB.update('categories', id, data); else await DB.add('categories', data);
-    resetCategoryForm(); showPanel('categories'); showToast(id ? 'Category updated!' : 'Category added!');
+    resetCategoryForm(); showPanel('categories'); showToast(id ? 'Topic updated!' : 'Topic added!');
   } catch(err) {
     showToast('\u274C Save failed: ' + (err.message || err));
     console.error('saveCategory:', err);
   } finally {
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> <span id="save-cat-btn-text">' + (id ? 'Update Category' : 'Save Category') + '</span>'; }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> <span id="save-cat-btn-text">' + (id ? 'Update Topic' : 'Save Topic') + '</span>'; }
   }
 }
-function deleteCategory(id) { confirmAction('Delete this category?', 'Products in this category will remain but unlinked.', () => { DB.delete('categories', id); renderCategoriesList(); showToast('Category deleted'); }); }
+function deleteCategory(id) { confirmAction('Delete this topic?', 'Content using this topic will remain but unlinked.', () => { DB.delete('categories', id); renderCategoriesList(); showToast('Topic deleted'); }); }
 
 // ===== STORAGE MANAGER =====
 

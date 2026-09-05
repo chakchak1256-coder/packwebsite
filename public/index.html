@@ -320,6 +320,13 @@ body.flash-on #topbar{top:56px}
 .cat-card p{color:var(--text-muted);font-size:.88rem;margin-bottom:1.1rem;line-height:1.5}
 .cat-cta{color:var(--accent);font-size:.85rem;font-weight:700;display:inline-flex;align-items:center;gap:.4rem}
 @media(max-width:820px){.cat-grid{grid-template-columns:1fr}}
+/* Admin-uploaded cover image per content type (Digital Products/Packs/Courses) */
+.cat-card{position:relative;overflow:hidden;background-size:cover;background-position:center}
+.cat-card.has-img::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(12,12,12,.45) 0%,rgba(12,12,12,.88) 100%);z-index:0}
+.cat-card.has-img>*{position:relative;z-index:1}
+.cat-card.has-img h3,.cat-card.has-img p{color:#fff}
+.cat-card.has-img .cat-icon{background:rgba(255,255,255,.18);color:#fff}
 
 /* ---- How It Works ---- */
 #how-it-works{padding:4rem 0}
@@ -1993,19 +2000,19 @@ footer::before{
       <p class="section-sub">One catalog, three formats — pick what fits how you like to learn.</p>
     </div>
     <div class="cat-grid">
-      <div class="cat-card" onclick="openAllProducts('all','product')">
+      <div class="cat-card" id="cat-card-product" onclick="openAllProducts('all','product')">
         <div class="cat-icon"><i class="fa-solid fa-cube"></i></div>
         <h3>Digital Products</h3>
         <p>Individual resources for your next project.</p>
         <span class="cat-cta">Browse Products <i class="fa-solid fa-arrow-right"></i></span>
       </div>
-      <div class="cat-card" onclick="openAllProducts('all','pack')">
+      <div class="cat-card" id="cat-card-pack" onclick="openAllProducts('all','pack')">
         <div class="cat-icon"><i class="fa-solid fa-layer-group"></i></div>
         <h3>Digital Packs</h3>
         <p>Curated bundles with more value in one place.</p>
         <span class="cat-cta">Browse Packs <i class="fa-solid fa-arrow-right"></i></span>
       </div>
-      <div class="cat-card" onclick="openAllProducts('all','course')">
+      <div class="cat-card" id="cat-card-course" onclick="openAllProducts('all','course')">
         <div class="cat-icon"><i class="fa-solid fa-graduation-cap"></i></div>
         <h3>Courses</h3>
         <p>Learn practical skills through structured content.</p>
@@ -2769,6 +2776,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // again every time Settings.load() resolves fresh data from Supabase
   // (settings:update fires on both the initial load and any admin edit).
   Settings.applyTheme();
+  applyContentTypeCardImages();
   renderTopbarSocials();
   updateWaFloat();
   // renderTopbarSocials() and updateWaFloat() both read Settings.get().social,
@@ -2784,7 +2792,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // cached/defaulted) and again whenever settings:update actually fires
   // (fresh data in) makes them track their OWN data source instead of
   // hitching a ride on an unrelated one.
-  window.addEventListener('settings:update', () => { Settings.applyTheme(); renderTopbarSocials(); updateWaFloat(); });
+  window.addEventListener('settings:update', () => { Settings.applyTheme(); applyContentTypeCardImages(); renderTopbarSocials(); updateWaFloat(); });
   // Handle ?open= param (e.g. redirects from payment-return.html)
   (function handleOpenParam() {
     const p = new URLSearchParams(window.location.search).get('open');
@@ -3060,15 +3068,33 @@ async function claimFreeProduct(prod) {
   }
 }
 
+// Applies the admin-uploaded cover image (Settings.get().contentTypeImages)
+// to the three "Three ways to level up" cards on the homepage. Falls back
+// to the plain icon design (see CSS .cat-card) when no image is set yet.
+function applyContentTypeCardImages() {
+  const imgs = (Settings.get().contentTypeImages) || {};
+  [['product', 'cat-card-product'], ['pack', 'cat-card-pack'], ['course', 'cat-card-course']].forEach(([type, id]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const url = imgs[type];
+    if (url) { el.classList.add('has-img'); el.style.backgroundImage = `url('${url}')`; }
+    else { el.classList.remove('has-img'); el.style.backgroundImage = ''; }
+  });
+}
+
 // ===== ALL PRODUCTS PAGE =====
 // _typeFilter groups by contentType (product/pack/course — matches the three
-// Orvyn business lines), independent from the admin-defined topic chips
-// (filter-chips, which group by p.category). Both can be active together.
+// Orvyn business lines). The topic chips (filter-chips, admin-managed under
+// "Content Types & Topics") are now SCOPED to the active type: each topic
+// belongs to exactly one of product/pack/course, so switching the type tab
+// re-renders the chip row to only that type's topics and resets the topic
+// filter back to "All" (a topic from a different type can't stay selected).
 let _typeFilter = 'all';
 function setTypeFilter(type) {
   _typeFilter = type;
   document.querySelectorAll('#type-tabs .type-tab').forEach(t => t.classList.toggle('active', t.dataset.type === type));
-  renderAllProducts();
+  renderAllFilters('all');
+  renderAllProducts('all');
 }
 function openAllProducts(filterCat = 'all', filterType = 'all') {
   document.getElementById('all-products-page').classList.add('active');
@@ -3092,7 +3118,12 @@ function closeAllProducts() {
 }
 
 function renderAllFilters(activeCat = 'all') {
-  const cats = DB.getAll('categories');
+  // Topics are type-scoped (each has a contentType of product/pack/course,
+  // set in the admin panel). On a specific type tab, only show that type's
+  // topics. On "All", show every topic regardless of type — including any
+  // legacy topic saved before types existed (no contentType set).
+  const allCats = DB.getAll('categories');
+  const cats = _typeFilter === 'all' ? allCats : allCats.filter(c => c.contentType === _typeFilter);
   const f = document.getElementById('filter-chips'); f.innerHTML = '';
   const makeChip = (label, val) => {
     const c = document.createElement('div');
