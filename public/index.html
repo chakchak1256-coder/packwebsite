@@ -1380,7 +1380,7 @@ body.flash-on #mobile-nav{top:150px}
   content: '';
   position: absolute;
   top: 0; bottom: 0;
-  width: 120px;
+  width: 90px;
   z-index: 2;
   pointer-events: none;
 }
@@ -1402,14 +1402,14 @@ body.flash-on #mobile-nav{top:150px}
 }
 .carousel-track {
   display: flex;
-  gap: 14px;
+  gap: 10px;
   width: max-content;
 }
 .carousel-item {
   flex-shrink: 0;
-  width: 130px;
-  height: 130px;
-  border-radius: 18px;
+  width: 100px;
+  height: 100px;
+  border-radius: 14px;
   overflow: hidden;
   border: 1px solid var(--border);
   background: var(--bg3);
@@ -1478,14 +1478,14 @@ body.flash-on #mobile-nav{top:150px}
 }
 /* Responsive */
 @media(max-width: 768px) {
-  .carousel-item { width: 100px; height: 100px; border-radius: 14px; }
+  .carousel-item { width: 78px; height: 78px; border-radius: 11px; }
   #game-carousel-section::before, #game-carousel-section::after { width: 60px; }
-  .carousel-track { gap: 10px; animation-duration: 24s; }
+  .carousel-track { gap: 8px; animation-duration: 24s; }
   .carousel-label { padding: 1rem 0 .7rem; }
 }
 @media(max-width: 480px) {
-  .carousel-item { width: 84px; height: 84px; border-radius: 12px; }
-  .carousel-track { gap: 8px; animation-duration: 20s; }
+  .carousel-item { width: 64px; height: 64px; border-radius: 10px; }
+  .carousel-track { gap: 6px; animation-duration: 20s; }
 }
 @media(prefers-reduced-motion: reduce) {
   .carousel-track { animation: none; }
@@ -4256,6 +4256,7 @@ let _mpPurchases = null; // cache for this session
 
 function openMyProducts() {
   closeProductDetail(); // close product detail first (it's fixed z-index:810 and blocks nav)
+  _mpCtx = 'page';
   const page = document.getElementById('my-products-page');
   page.classList.add('active');
   document.body.classList.add('no-scroll');
@@ -4276,6 +4277,11 @@ function openMyProducts() {
 // If My Library is open when auth state finally resolves, re-render
 window.addEventListener('auth:change', () => {
   if (document.getElementById('my-products-page').classList.contains('active')) {
+    _mpCtx = 'page';
+    mpLoadContent();
+  }
+  if (document.getElementById('account-page').classList.contains('active') && _acctTab === 'library') {
+    _mpCtx = 'account';
     mpLoadContent();
   }
 });
@@ -4295,6 +4301,13 @@ function closeMyProducts() {
 // Holds the Supabase Realtime unsubscribe function for the live listener
 let _mpUnsubscribe = null;
 
+// The My Library UI is shared between the standalone "My Library" page and
+// the "My Library" tab embedded in the Account area — same data, same card
+// markup, just a different set of container ids depending on where it's
+// rendered. _mpCtx picks which id set mpId() resolves to.
+let _mpCtx = 'page'; // 'page' = standalone #my-products-page | 'account' = embedded in #acct-content
+function mpId(base) { return _mpCtx === 'account' ? 'acct-' + base : base; }
+
 async function mpLoadContent() {
   const user = UserAuth.current();
 
@@ -4307,7 +4320,7 @@ async function mpLoadContent() {
     return;
   }
 
-  document.getElementById('mp-hdr-sub').textContent = 'Welcome back, ' + user.name;
+  document.getElementById(mpId('mp-hdr-sub')).textContent = 'Welcome back, ' + user.name;
 
   // Tear down any existing listener before creating a new one
   if (_mpUnsubscribe) { _mpUnsubscribe(); _mpUnsubscribe = null; }
@@ -4347,7 +4360,7 @@ async function mpLoadContent() {
 }
 
 function mpShowSkeleton() {
-  const grid = document.getElementById('mp-products-grid');
+  const grid = document.getElementById(mpId('mp-products-grid'));
   grid.innerHTML = [1,2,3,4,5,6].map(() => `
     <div class="mp-skeleton">
       <div class="sk-img"></div>
@@ -4360,10 +4373,10 @@ function mpShowSkeleton() {
 }
 
 function mpRenderGuest() {
-  document.getElementById('mp-stats-row').innerHTML = '';
-  document.getElementById('mp-type-chips').innerHTML = '';
-  document.getElementById('mp-hdr-sub').textContent = 'Sign in to access your learning';
-  document.getElementById('mp-products-grid').innerHTML = `
+  document.getElementById(mpId('mp-stats-row')).innerHTML = '';
+  document.getElementById(mpId('mp-type-chips')).innerHTML = '';
+  document.getElementById(mpId('mp-hdr-sub')).textContent = 'Sign in to access your learning';
+  document.getElementById(mpId('mp-products-grid')).innerHTML = `
     <div class="mp-empty" style="grid-column:1/-1">
       <i class="fa-solid fa-lock"></i>
       <h3>Sign in to see your library</h3>
@@ -4375,7 +4388,7 @@ function mpRenderGuest() {
 function mpRenderStats(purchases) {
   const types = [...new Set(purchases.map(p => p.productType))];
   const courses = purchases.filter(p => p.contentType === 'course').length;
-  document.getElementById('mp-stats-row').innerHTML = `
+  document.getElementById(mpId('mp-stats-row')).innerHTML = `
     <div class="mp-stat">
       <div class="mp-stat-icon"><i class="fa-solid fa-graduation-cap"></i></div>
       <div><div class="mp-stat-num">${purchases.length}</div><div class="mp-stat-label">Total Enrolled</div></div>
@@ -4392,7 +4405,7 @@ function mpRenderStats(purchases) {
 
 function mpRenderChips(purchases) {
   const types = [...new Set(purchases.map(p => p.productType).filter(Boolean))];
-  const container = document.getElementById('mp-type-chips');
+  const container = document.getElementById(mpId('mp-type-chips'));
   container.innerHTML = '';
   types.forEach(t => {
     const chip = document.createElement('button');
@@ -4404,24 +4417,27 @@ function mpRenderChips(purchases) {
 
 function mpSetFilter(el, val) {
   _mpFilter = val;
-  document.querySelectorAll('#mp-filter-bar .chip').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('#' + mpId('mp-filter-bar') + ' .chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
   mpRenderList();
 }
 
 function mpRenderList() {
   if (!_mpPurchases) return;
-  const q = (document.getElementById('mp-search-input').value || '').toLowerCase();
+  const q = (document.getElementById(mpId('mp-search-input')).value || '').toLowerCase();
   let list = _mpPurchases;
   if (_mpFilter !== 'all') list = list.filter(p => p.productType === _mpFilter);
   if (q) list = list.filter(p => (p.productName + ' ' + (p.productType||'')).toLowerCase().includes(q));
-  const grid = document.getElementById('mp-products-grid');
+  const grid = document.getElementById(mpId('mp-products-grid'));
   if (!list.length) {
+    const exploreOnClick = _mpCtx === 'account'
+      ? "closeAccount();document.getElementById('products').scrollIntoView({behavior:'smooth'})"
+      : "closeMyProducts()";
     grid.innerHTML = `<div class="mp-empty">
       <i class="fa-solid fa-book-open"></i>
       <h3>${_mpFilter === 'all' && !q ? 'Nothing here yet' : 'No results found'}</h3>
       <p>${_mpFilter === 'all' && !q ? 'Courses and packs you unlock appear here.' : 'Try a different filter or search term.'}</p>
-      ${_mpFilter === 'all' && !q ? '<button class="btn btn-primary" onclick="closeMyProducts()"><i class="fa-solid fa-compass"></i> Explore Content</button>' : ''}
+      ${_mpFilter === 'all' && !q ? `<button class="btn btn-primary" onclick="${exploreOnClick}"><i class="fa-solid fa-compass"></i> Explore Content</button>` : ''}
     </div>`;
     return;
   }
@@ -4861,6 +4877,7 @@ function updateWishlistBadge() {
 }
 
 function openWishlist() {
+  _wlCtx = 'page';
   const page = document.getElementById('wishlist-page');
   page.classList.add('active');
   document.body.classList.add('no-scroll');
@@ -4876,17 +4893,22 @@ function closeWishlist() {
 function toggleWishlistPanel() {
   document.getElementById('wishlist-page').classList.contains('active') ? closeWishlist() : openWishlist();
 }
+// Same wishlist data, rendered either in the standalone #wishlist-page or
+// embedded in the Account area's Wishlist tab — _wlCtx picks the container id.
+let _wlCtx = 'page'; // 'page' = standalone #wishlist-page | 'account' = embedded in #acct-content
 function renderWishlist() {
   const ids = Wishlist.get();
-  const grid = document.getElementById('wishlist-grid');
+  const grid = document.getElementById(_wlCtx === 'account' ? 'acct-wishlist-grid' : 'wishlist-grid');
+  if (!grid) return;
   const prods = DB.getAll('products').filter(p => ids.includes(p.id));
   grid.innerHTML = '';
   if (!prods.length) {
+    const browseOnClick = _wlCtx === 'account' ? 'closeAccount();openAllProducts()' : 'closeWishlist();openAllProducts()';
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:4rem 2rem;border:1px dashed var(--border);border-radius:var(--radius)">
       <i class="fa-regular fa-heart" style="font-size:2.5rem;opacity:.2;display:block;margin-bottom:1rem"></i>
       <h3 style="color:var(--text-muted);font-size:1.1rem;margin-bottom:.4rem">Your wishlist is empty</h3>
       <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:1rem">Save products you like by clicking the ❤ on any card.</p>
-      <button class="btn btn-primary" onclick="closeWishlist();openAllProducts()"><i class="fa-solid fa-store"></i> Browse Products</button>
+      <button class="btn btn-primary" onclick="${browseOnClick}"><i class="fa-solid fa-store"></i> Browse Products</button>
     </div>`;
     return;
   }
@@ -4895,16 +4917,16 @@ function renderWishlist() {
 
 window.addEventListener('wishlist:update', () => {
   updateWishlistBadge();
-  if (document.getElementById('wishlist-page').classList.contains('active')) renderWishlist();
+  if (document.getElementById('wishlist-page').classList.contains('active')) { _wlCtx = 'page'; renderWishlist(); }
+  if (document.getElementById('account-page').classList.contains('active') && _acctTab === 'wishlist') { _wlCtx = 'account'; renderWishlist(); }
 });
 
 // ================================================================
 // ===== FEATURE: ACCOUNT AREA =====
-// Single hub for everything tied to the signed-in user: Profile,
-// My Library, Orders, Wishlist, Settings, Help. "My Library" and
-// "Wishlist" reuse their existing dedicated full-page views (so their
-// grids/filters/realtime listeners keep working untouched) — this hub
-// just routes to them and patches their back button to return here.
+// Single hub for everything tied to the signed-in user: Profile, My
+// Library, Orders, Wishlist, History, Settings, Help — all rendered as
+// tabs inside the same account layout (sidebar + content), so every item
+// in the account menu opens the same type of page.
 // ================================================================
 let _acctTab = 'profile';
 let _acctOrders = null;
@@ -4913,8 +4935,6 @@ let _acctOrdersUnsub = null;
 function openAccount(tab) {
   if (!UserAuth.current()) { openLoginModal(); return; }
   const t = tab || _acctTab || 'profile';
-  if (t === 'library') { acctOpenLibrary(); return; }
-  if (t === 'wishlist') { acctOpenWishlist(); return; }
   closeProductDetail(); closeAllProducts(); closeMyProducts(); closeWishlist();
   const page = document.getElementById('account-page');
   page.classList.add('active');
@@ -4928,26 +4948,7 @@ function closeAccount() {
   document.getElementById('account-page').classList.remove('active');
   document.body.classList.remove('no-scroll');
   if (_acctOrdersUnsub) { _acctOrdersUnsub(); _acctOrdersUnsub = null; }
-}
-
-function acctOpenLibrary() {
-  document.getElementById('account-page').classList.remove('active');
-  openMyProducts();
-  const btn = document.querySelector('#my-products-page .back-btn');
-  if (btn) {
-    btn.innerHTML = '<i class="fa-solid fa-arrow-left"></i> Back to Account';
-    btn.onclick = () => { closeMyProducts(); openAccount('library'); };
-  }
-}
-
-function acctOpenWishlist() {
-  document.getElementById('account-page').classList.remove('active');
-  openWishlist();
-  const btn = document.querySelector('#wishlist-page .back-btn');
-  if (btn) {
-    btn.innerHTML = '<i class="fa-solid fa-arrow-left"></i> Back to Account';
-    btn.onclick = () => { closeWishlist(); openAccount('wishlist'); };
-  }
+  if (_mpUnsubscribe) { _mpUnsubscribe(); _mpUnsubscribe = null; }
 }
 
 function acctRenderSidebarUser() {
@@ -4959,17 +4960,55 @@ function acctRenderSidebarUser() {
 }
 
 function acctSetTab(tab) {
-  if (tab === 'library') { acctOpenLibrary(); return; }
-  if (tab === 'wishlist') { acctOpenWishlist(); return; }
   _acctTab = tab;
   document.querySelectorAll('.acct-nav-item[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   const c = document.getElementById('acct-content');
   if (_acctOrdersUnsub && tab !== 'orders') { _acctOrdersUnsub(); _acctOrdersUnsub = null; }
+  if (_mpUnsubscribe && tab !== 'library') { _mpUnsubscribe(); _mpUnsubscribe = null; }
   if (tab === 'profile') acctRenderProfile(c);
+  else if (tab === 'library') acctRenderLibrary(c);
   else if (tab === 'orders') acctRenderOrders(c);
+  else if (tab === 'wishlist') acctRenderWishlist(c);
   else if (tab === 'history') acctRenderHistory(c);
   else if (tab === 'settings') acctRenderSettings(c);
   else if (tab === 'help') acctRenderHelp(c);
+}
+
+// "My Library" tab — same header/stats/filter/grid layout and the same
+// mpLoadContent()/mpMakeCard() logic as the standalone page, just rendered
+// inside the Account layout so it matches the other tabs (Profile, Orders, etc).
+function acctRenderLibrary(c) {
+  c.innerHTML = `
+    <div class="acct-hdr" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+      <div><h2>My Library</h2><p id="acct-mp-hdr-sub">Your enrolled courses &amp; unlocked packs</p></div>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="closeAccount();document.getElementById('products').scrollIntoView({behavior:'smooth'})"><i class="fa-solid fa-compass"></i> Explore Content</button>
+        <button class="btn btn-primary btn-sm" onclick="openReviewModal()"><i class="fa-solid fa-star"></i> Write a Review</button>
+      </div>
+    </div>
+    <div class="mp-stats" id="acct-mp-stats-row"></div>
+    <div class="mp-filter" id="acct-mp-filter-bar">
+      <button class="chip active" data-filter="all" onclick="mpSetFilter(this,'all')">Everything</button>
+      <div id="acct-mp-type-chips"></div>
+      <div class="mp-search">
+        <i class="fa-solid fa-search" style="color:var(--text-muted);font-size:.85rem"></i>
+        <input type="text" id="acct-mp-search-input" placeholder="Search your library..." oninput="mpRenderList()"/>
+      </div>
+    </div>
+    <div class="mp-grid" id="acct-mp-products-grid"></div>`;
+  _mpCtx = 'account';
+  _mpFilter = 'all';
+  mpLoadContent();
+}
+
+// "Wishlist" tab — same product-card grid and Wishlist.get() data as the
+// standalone page, rendered inside the Account layout to match the other tabs.
+function acctRenderWishlist(c) {
+  c.innerHTML = `
+    <div class="acct-hdr"><h2>Wishlist</h2><p>Products you've saved to check out later.</p></div>
+    <div class="products-grid" id="acct-wishlist-grid"></div>`;
+  _wlCtx = 'account';
+  renderWishlist();
 }
 
 function acctRenderProfile(c) {
