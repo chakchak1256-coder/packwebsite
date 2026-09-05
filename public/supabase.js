@@ -361,6 +361,7 @@ const UserAuth = {
     // (created via register()/login() below, which already write/verify
     // the users doc themselves) skip straight to the normal path.
     const isGoogle = user.app_metadata && user.app_metadata.provider === 'google';
+    console.log('[AuthDebug] auth event:', event, '| provider:', isGoogle ? 'google' : 'email', '| email:', user.email);
     if (isGoogle) {
       // On the page load right after Google redirects back, Supabase fires
       // onAuthStateChange TWICE: once immediately as 'INITIAL_SESSION' (it
@@ -380,19 +381,34 @@ const UserAuth = {
       // normally below, it just doesn't consume the flag meant for the
       // actual redirect completion.
       let consumingRedirect = false;
+      let pendingFlagRaw = null;
       if (event !== 'INITIAL_SESSION') {
-        try { consumingRedirect = sessionStorage.getItem('_googleOAuthPending') === '1'; } catch (e) {}
+        try { pendingFlagRaw = sessionStorage.getItem('_googleOAuthPending'); consumingRedirect = pendingFlagRaw === '1'; } catch (e) {}
         if (consumingRedirect) { try { sessionStorage.removeItem('_googleOAuthPending'); } catch (e) {} }
       }
+      console.log('[AuthDebug] isGoogle branch | pendingFlag:', pendingFlagRaw, '| consumingRedirect:', consumingRedirect);
 
-      const result = await this._afterGoogleAuth(user);
+      let result;
+      try {
+        result = await this._afterGoogleAuth(user);
+        console.log('[AuthDebug] _afterGoogleAuth resolved:', JSON.stringify(result));
+      } catch (e) {
+        console.error('[AuthDebug] _afterGoogleAuth THREW (this is likely the bug):', e);
+        if (consumingRedirect) {
+          window.dispatchEvent(new CustomEvent('google-redirect-result', { detail: { error: 'Something went wrong finishing sign-in: ' + (e.message || e) } }));
+        }
+        return;
+      }
       // Only fire the 'google-redirect-result' event (which the login
       // modal listens for — see index.html) when this session change was
       // actually caused by the redirect-back from loginWithGoogle(), not
       // every time a page loads with an existing Google session already
       // signed in (which would otherwise re-pop the modal on every visit).
       if (consumingRedirect) {
+        console.log('[AuthDebug] dispatching google-redirect-result with:', JSON.stringify(result));
         window.dispatchEvent(new CustomEvent('google-redirect-result', { detail: result }));
+      } else {
+        console.log('[AuthDebug] NOT dispatching google-redirect-result (consumingRedirect was false) — this is why nothing visibly happens, if you just came back from Google.');
       }
       return;
     }
@@ -447,7 +463,7 @@ const UserAuth = {
             const res = await fetch(`${backendUrl}/api/complete-google-registration`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-              body: JSON.stringify({ username: displayName, phone, checkUsername: false }),
+              body: JSON.stringify({ username: displayName, phone, checkUsername: true }),
             });
             const data = await res.json();
             if (!res.ok || data.error) {
@@ -636,6 +652,29 @@ const UserAuth = {
     if (!user) throw new Error('You must be signed in.');
     const name = (newName || '').trim();
     if (!name) throw new Error('Name cannot be empty.');
+
+    // Names double as usernames elsewhere (checkout, order history, admin
+    // views), so two accounts sharing the exact same one causes real
+    // confusion — block a rename to a name someone ELSE already has.
+    // Case-insensitive; a user re-saving their own current name is fine.
+    // Note: this is a best-effort client-side check (there's a small race
+    // window if two people save the same name at the exact same instant —
+    // a real guarantee needs a case-insensitive unique index on the
+    // database side too), but it stops the common case outright.
+    try {
+      const snap = await _db.collection('users').get();
+      const taken = snap.docs.some(d => {
+        if (d.id === user.uid) return false;
+        const data = d.data();
+        return data && typeof data.name === 'string' && data.name.trim().toLowerCase() === name.toLowerCase();
+      });
+      if (taken) throw new Error('That name is already taken. Please choose another.');
+    } catch (e) {
+      if (e.message === 'That name is already taken. Please choose another.') throw e;
+      // Couldn't even run the check (network hiccup, etc.) — don't block
+      // the rename over an unrelated failure just to read the list.
+    }
+
     try {
       await user.updateProfile({ displayName: name });
     } catch (e) { throw new Error(this._msg(e.message)); }

@@ -2769,7 +2769,22 @@ document.addEventListener('DOMContentLoaded', () => {
   // again every time Settings.load() resolves fresh data from Supabase
   // (settings:update fires on both the initial load and any admin edit).
   Settings.applyTheme();
-  window.addEventListener('settings:update', () => Settings.applyTheme());
+  renderTopbarSocials();
+  updateWaFloat();
+  // renderTopbarSocials() and updateWaFloat() both read Settings.get().social,
+  // but that only used to get (re)rendered from handleDbUpdate() below —
+  // which runs on *product* data arriving, not on Settings data arriving.
+  // On a first-time visit (no localStorage cache for either yet), the
+  // products fetch and the settings fetch are two independent network
+  // round-trips that don't finish at the same time. Whichever one happened
+  // to finish first before was what decided whether the social icons showed
+  // up looking "instant" or "delayed" — purely by accident of network
+  // timing, not because products don't have the same fetch delay. Calling
+  // these two directly here (immediately, with the settings currently
+  // cached/defaulted) and again whenever settings:update actually fires
+  // (fresh data in) makes them track their OWN data source instead of
+  // hitching a ride on an unrelated one.
+  window.addEventListener('settings:update', () => { Settings.applyTheme(); renderTopbarSocials(); updateWaFloat(); });
   // Handle ?open= param (e.g. redirects from payment-return.html)
   (function handleOpenParam() {
     const p = new URLSearchParams(window.location.search).get('open');
@@ -4503,6 +4518,7 @@ function doUserLogout() {
 // doGoogleSignIn()/doCompleteGoogleSignup() do above.
 window.addEventListener('google-redirect-result', (evt) => {
   const r = evt.detail || {};
+  console.log('[AuthDebug] index.html received google-redirect-result:', JSON.stringify(r));
   if (r.redirecting) return; // shouldn't happen here, but ignore defensively
 
   if (r.error) {
