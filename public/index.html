@@ -1930,7 +1930,6 @@ footer::before{
     </button>
     <div id="user-menu" style="display:none;position:absolute;top:112px;right:5vw;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:.5rem;min-width:200px;z-index:1000;box-shadow:0 12px 35px rgba(0,0,0,.5)">
       <div id="user-menu-info" style="padding:.6rem .9rem;margin-bottom:.3rem;border-bottom:1px solid var(--border)"></div>
-      <button onclick="openAccount('profile');document.getElementById('user-menu').style.display='none';" style="display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;width:100%;transition:background var(--transition)" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''"><i class="fa-solid fa-user" style="color:var(--primary)"></i> Profile</button>
       <button onclick="openAccount('library');document.getElementById('user-menu').style.display='none';" style="display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;width:100%;transition:background var(--transition)" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''"><i class="fa-solid fa-box-archive" style="color:var(--primary)"></i> My Library</button>
       <button onclick="openAccount('orders');document.getElementById('user-menu').style.display='none';" style="display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;width:100%;transition:background var(--transition)" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''"><i class="fa-solid fa-receipt" style="color:var(--primary)"></i> Orders</button>
       <button onclick="openAccount('wishlist');document.getElementById('user-menu').style.display='none';" style="display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;width:100%;transition:background var(--transition)" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''"><i class="fa-regular fa-heart" style="color:var(--primary)"></i> Wishlist</button>
@@ -2279,7 +2278,6 @@ footer::before{
             <div class="acct-side-email" id="acct-side-email">—</div>
           </div>
         </div>
-        <button class="acct-nav-item" data-tab="profile" onclick="acctSetTab('profile')"><i class="fa-solid fa-user"></i> Profile</button>
         <button class="acct-nav-item" data-tab="library" onclick="acctSetTab('library')"><i class="fa-solid fa-box-archive"></i> My Library</button>
         <button class="acct-nav-item" data-tab="orders" onclick="acctSetTab('orders')"><i class="fa-solid fa-receipt"></i> Orders</button>
         <button class="acct-nav-item" data-tab="wishlist" onclick="acctSetTab('wishlist')"><i class="fa-regular fa-heart"></i> Wishlist</button>
@@ -5262,13 +5260,13 @@ window.addEventListener('wishlist:update', () => {
 // tabs inside the same account layout (sidebar + content), so every item
 // in the account menu opens the same type of page.
 // ================================================================
-let _acctTab = 'profile';
+let _acctTab = 'settings';
 let _acctOrders = null;
 let _acctOrdersUnsub = null;
 
 function openAccount(tab) {
   if (!UserAuth.current()) { openLoginModal(); return; }
-  const t = tab || _acctTab || 'profile';
+  const t = tab || _acctTab || 'settings';
   closeProductDetail(); closeAllProducts(); closeMyProducts(); closeWishlist();
   const page = document.getElementById('account-page');
   page.classList.add('active');
@@ -5299,8 +5297,7 @@ function acctSetTab(tab) {
   const c = document.getElementById('acct-content');
   if (_acctOrdersUnsub && tab !== 'orders') { _acctOrdersUnsub(); _acctOrdersUnsub = null; }
   if (_mpUnsubscribe && tab !== 'library') { _mpUnsubscribe(); _mpUnsubscribe = null; }
-  if (tab === 'profile') acctRenderProfile(c);
-  else if (tab === 'library') acctRenderLibrary(c);
+  if (tab === 'library') acctRenderLibrary(c);
   else if (tab === 'orders') acctRenderOrders(c);
   else if (tab === 'wishlist') acctRenderWishlist(c);
   else if (tab === 'history') acctRenderHistory(c);
@@ -5343,27 +5340,6 @@ function acctRenderWishlist(c) {
     <div class="products-grid" id="acct-wishlist-grid"></div>`;
   _wlCtx = 'account';
   renderWishlist();
-}
-
-function acctRenderProfile(c) {
-  const u = UserAuth.current();
-  c.innerHTML = `
-    <div class="acct-hdr"><h2>Profile</h2><p>Your account details.</p></div>
-    <div class="acct-card">
-      <h3>Basic info</h3>
-      <div class="acct-field"><label>Name</label><div class="acct-field-static">${escapeHtml(u?.name || '—')}</div></div>
-      <div class="acct-field"><label>Email</label><div class="acct-field-static">${escapeHtml(u?.email || '—')}</div></div>
-      <div class="acct-field"><label>Phone</label><div class="acct-field-static" id="acct-phone-val">Loading…</div></div>
-      <div class="acct-row" style="margin-top:1rem">
-        <button class="btn btn-outline btn-sm" onclick="acctSetTab('settings')"><i class="fa-solid fa-pen"></i> Edit Profile</button>
-      </div>
-    </div>`;
-  if (u) {
-    _db.collection('users').doc(u.id).get().then(doc => {
-      const el = document.getElementById('acct-phone-val');
-      if (el) el.textContent = (doc.exists && doc.data().phone) ? doc.data().phone : '—';
-    }).catch(() => { const el = document.getElementById('acct-phone-val'); if (el) el.textContent = '—'; });
-  }
 }
 
 function acctRenderHistory(c) {
@@ -5453,7 +5429,7 @@ function acctRenderSettings(c) {
   c.innerHTML = `
     <div class="acct-hdr"><h2>Settings</h2><p>Manage your account.</p></div>
     <div class="acct-card">
-      <h3>Edit name</h3>
+      <h3>Basic info</h3>
       <div class="acct-field">
         <label>Display name</label>
         <input type="text" id="acct-name-input" class="form-input" value="${escapeHtml(u?.name || '')}" style="width:100%"/>
@@ -5462,6 +5438,8 @@ function acctRenderSettings(c) {
         <button class="btn btn-primary btn-sm" onclick="acctSaveName()"><i class="fa-solid fa-check"></i> Save</button>
         <span id="acct-name-msg" style="font-size:.8rem;color:var(--text-muted)"></span>
       </div>
+      <div class="acct-field" style="margin-top:1.1rem"><label>Email</label><div class="acct-field-static">${escapeHtml(u?.email || '—')}</div></div>
+      <div class="acct-field"><label>Phone</label><div class="acct-field-static" id="acct-phone-val">Loading…</div></div>
       <p style="font-size:.75rem;color:var(--text-muted);margin-top:.7rem">To change your phone number, contact support.</p>
     </div>
     <div class="acct-card">
@@ -5479,6 +5457,12 @@ function acctRenderSettings(c) {
       <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.8rem">Switch between light and dark mode.</p>
       <button class="btn btn-outline btn-sm" onclick="toggleTheme()"><i class="fa-solid fa-circle-half-stroke"></i> Toggle Theme</button>
     </div>`;
+  if (u) {
+    _db.collection('users').doc(u.id).get().then(doc => {
+      const el = document.getElementById('acct-phone-val');
+      if (el) el.textContent = (doc.exists && doc.data().phone) ? doc.data().phone : '—';
+    }).catch(() => { const el = document.getElementById('acct-phone-val'); if (el) el.textContent = '—'; });
+  }
 }
 
 async function acctSaveName() {
