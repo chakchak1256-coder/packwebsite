@@ -277,8 +277,13 @@ _client.auth.onAuthStateChange((_event, session) => { _cachedAuthUser = session 
 
 const _auth = {
   get currentUser() { return _wrapUser(_cachedAuthUser); },
+  // Passes the Supabase auth event name (e.g. 'INITIAL_SESSION', 'SIGNED_IN')
+  // through to the callback as a second argument — UserAuth._handleAuthChange
+  // needs it to tell "session restored from storage on page load" apart from
+  // "a sign-in just actually happened" (see the Google-redirect handling
+  // below for why that distinction matters).
   onAuthStateChanged(cb) {
-    const { data: sub } = _client.auth.onAuthStateChange((_event, session) => cb(_wrapUser(session ? session.user : null)));
+    const { data: sub } = _client.auth.onAuthStateChange((event, session) => cb(_wrapUser(session ? session.user : null), event));
     return () => sub.subscription.unsubscribe();
   },
   async signOut() { await _client.auth.signOut(); },
@@ -321,10 +326,10 @@ const UserAuth = {
   },
 
   init() {
-    _auth.onAuthStateChanged(user => this._handleAuthChange(user));
+    _auth.onAuthStateChanged((user, event) => this._handleAuthChange(user, event));
   },
 
-  async _handleAuthChange(user) {
+  async _handleAuthChange(user, event) {
     // ── Reserved-account guard (defense in depth) ─────────────────
     // Belt-and-suspenders on top of the checks in loginWithGoogle() and
     // _afterGoogleAuth(): the STOREFRONT (UserAuth) must never treat a
@@ -357,9 +362,28 @@ const UserAuth = {
     // the users doc themselves) skip straight to the normal path.
     const isGoogle = user.app_metadata && user.app_metadata.provider === 'google';
     if (isGoogle) {
+      // On the page load right after Google redirects back, Supabase fires
+      // onAuthStateChange TWICE: once immediately as 'INITIAL_SESSION' (it
+      // restores whatever session was already sitting in storage from a
+      // previous login — the account signed in on this device last time),
+      // and then again as 'SIGNED_IN' once it finishes exchanging the OAuth
+      // code for the NEW session actually being signed in right now.
+      //
+      // '_googleOAuthPending' is a one-shot flag: whichever of those two
+      // events reads it first "claims" it and fires 'google-redirect-result'.
+      // If we let the spurious INITIAL_SESSION restore of the OLD account
+      // claim it, the flag is gone by the time the real SIGNED_IN event for
+      // a genuinely new account arrives — so that account's sign-in (and
+      // its username/phone signup step, for new users) silently does
+      // nothing. Restricting this to the real 'SIGNED_IN' event is what
+      // fixes that: the old account still gets restored and logged in
+      // normally below, it just doesn't consume the flag meant for the
+      // actual redirect completion.
       let consumingRedirect = false;
-      try { consumingRedirect = sessionStorage.getItem('_googleOAuthPending') === '1'; } catch (e) {}
-      if (consumingRedirect) { try { sessionStorage.removeItem('_googleOAuthPending'); } catch (e) {} }
+      if (event !== 'INITIAL_SESSION') {
+        try { consumingRedirect = sessionStorage.getItem('_googleOAuthPending') === '1'; } catch (e) {}
+        if (consumingRedirect) { try { sessionStorage.removeItem('_googleOAuthPending'); } catch (e) {} }
+      }
 
       const result = await this._afterGoogleAuth(user);
       // Only fire the 'google-redirect-result' event (which the login
