@@ -860,8 +860,8 @@ select.form-input option{background:var(--bg2)}
         <div class="sec-header"><span class="sec-title">Admin Login Activity <span id="login-activity-count" style="font-size:.8rem;color:var(--text-muted)"></span></span></div>
         <p style="color:var(--text-muted);font-size:.82rem;margin-bottom:1rem;max-width:680px">
           Every successful sign-in to this admin panel is recorded here — IP address, approximate location, device, and time.
-          If a sign-in shows up that wasn't you, change the admin password immediately (Firebase Console → Authentication → Users).
-          Note: this can only show <strong>successful</strong> sign-ins — a wrong password is rejected by Firebase itself before this site is involved, so failed attempts won't appear.
+          If a sign-in shows up that wasn't you, change the admin password immediately (Supabase dashboard → Authentication → Users).
+          Note: this can only show <strong>successful</strong> sign-ins — a wrong password is rejected by Supabase itself before this site is involved, so failed attempts won't appear.
         </p>
         <div class="table-wrap">
           <table><thead><tr><th>Date &amp; Time</th><th>IP Address</th><th>Location</th><th>Device</th></tr></thead><tbody id="login-activity-tbody"></tbody></table>
@@ -908,7 +908,7 @@ select.form-input option{background:var(--bg2)}
         <div class="form-section">
           <div class="form-section-title"><i class="fa-solid fa-palette"></i> Logo, Name &amp; Color</div>
           <div style="font-size:.82rem;color:var(--text-muted);margin-bottom:1.2rem">
-            This is the branding actually being served to visitors right now (read live from Firestore). If your storefront doesn't match your repo's default look, this is why — edit the fields below and save, or hit "Reset to Repo Defaults" to wipe any stray branding data and restore the shipped green DIGITCH look.
+            This is the branding actually being served to visitors right now (read live from the database). If your storefront doesn't match your repo's default look, this is why — edit the fields below and save, or hit "Reset to Repo Defaults" to wipe any stray branding data and restore the shipped green DIGITCH look.
           </div>
           <div id="branding-current" style="display:flex;align-items:center;gap:1rem;margin-bottom:1.4rem;padding:.9rem 1rem;background:var(--bg3);border-radius:var(--radius-sm)">
             <img id="branding-current-logo" src="" alt="" style="height:40px;width:auto;display:none;border-radius:6px"/>
@@ -1114,15 +1114,12 @@ select.form-input option{background:var(--bg2)}
 <!-- Toast -->
 <div id="toast"><i class="fa-solid fa-check-circle"></i> <span id="toast-msg"></span></div>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
   window.DIGISTORE_BACKEND_URL = 'https://digital-website.digitch.workers.dev';
-  window.__IS_ADMIN = true; // tells firebase.js to also load the (unbounded) orders collection — the storefront never needs it
+  window.__IS_ADMIN = true; // tells supabase.js to also load the (unbounded) orders collection — the storefront never needs it
 </script>
-<script src="firebase.js"></script>
+<script src="supabase.js"></script>
 <script>
 'use strict';
 
@@ -1140,9 +1137,9 @@ select.form-input option{background:var(--bg2)}
 })();
 
 // ===== AUTH =====
-// Real sign-in happens through Firebase Auth (see the `Auth` object in
-// firebase.js). This just wires the login form to it and shows/hides
-// the admin shell based on Firebase's own auth state — not a flag in
+// Real sign-in happens through Supabase Auth (see the `Auth` object in
+// supabase.js). This just wires the login form to it and shows/hides
+// the admin shell based on Supabase's own auth state — not a flag in
 // localStorage/sessionStorage that anyone could set by hand from the
 // browser console to bypass the login screen.
 
@@ -1172,19 +1169,17 @@ function doLogin() {
     setTimeout(() => document.getElementById('login-pass').classList.remove('error'), 1500);
   }
 
-  const AUTH_ERROR_MESSAGES = {
-    'auth/wrong-password':        'Incorrect password. Please try again.',
-    'auth/invalid-login-credentials': 'Incorrect email or password.',
-    'auth/invalid-credential':    'Incorrect email or password.',
-    'auth/user-not-found':        'No account exists for the configured ADMIN_EMAIL. Check firebase.js / redeploy.',
-    'auth/user-disabled':         'This admin account has been disabled in Firebase Authentication.',
-    'auth/too-many-requests':     'Too many failed attempts — Firebase has temporarily locked this account. Try again later or reset the password.',
-    'auth/network-request-failed':'Network error reaching Firebase. Check your connection.',
-    'auth/api-key-not-valid.-please-pass-a-valid-api-key.': 'Firebase API key is invalid or restricted.',
-  };
+  const AUTH_ERROR_PATTERNS = [
+    [/invalid login credentials|invalid.*credential/i, 'Incorrect email or password.'],
+    [/user not found/i,          'No account exists for the configured ADMIN_EMAIL. Check supabase.js / the Supabase dashboard.'],
+    [/user.*disabled|banned/i,   'This admin account has been disabled in Supabase Authentication.'],
+    [/rate limit|too many/i,     'Too many failed attempts — Supabase has temporarily rate-limited this account. Try again later.'],
+    [/network/i,                 'Network error reaching Supabase. Check your connection.'],
+    [/api key|apikey/i,          'Supabase anon key is invalid — check supabaseConfig in supabase.js.'],
+  ];
 
   _auth.setPersistence(
-    remember ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION
+    remember ? _auth.Persistence.LOCAL : _auth.Persistence.SESSION
   ).then(() => Auth.login(pass)).then(ok => {
     if (btn) btn.disabled = false;
     if (ok) {
@@ -1194,9 +1189,10 @@ function doLogin() {
     }
   }).catch(e => {
     if (btn) btn.disabled = false;
-    const code = e && e.code;
-    const friendly = (code && AUTH_ERROR_MESSAGES[code]) || (e && e.message) || 'Sign-in failed. Check the browser console for details.';
-    showLoginError(friendly + (code ? ` <span style="opacity:.6">(${code})</span>` : ''));
+    const message = (e && e.message) || '';
+    const match = AUTH_ERROR_PATTERNS.find(([re]) => re.test(message));
+    const friendly = (match && match[1]) || message || 'Sign-in failed. Check the browser console for details.';
+    showLoginError(friendly);
   });
 }
 
@@ -1213,7 +1209,7 @@ function toggleEye() {
   else { inp.type = 'password'; icon.className = 'fa-solid fa-eye login-eye'; }
 }
 
-// Firebase restores its own session on reload (per the persistence set
+// Supabase restores its own session on reload (per the persistence set
 // at login) — wait for it to report whether the admin is already
 // signed in, instead of trusting a locally-set flag.
 _auth.onAuthStateChanged(function(user) {
@@ -1236,7 +1232,7 @@ let variableGroups = []; // [{title:'', items:[{label:'', price:''}]}]
 let catImage = null;
 // Curriculum builder state for the currently-open Course. Lives only in
 // products/{id}/private/curriculum (see DB.getProductCurriculum /
-// DB.setProductCurriculum in firebase.js) — never on the public product
+// DB.setProductCurriculum in supabase.js) — never on the public product
 // doc, so it never reaches a visitor who hasn't bought the course.
 let courseCurriculum = { modules: [] };
 let _curriculumUidSeq = 1;
@@ -1955,9 +1951,9 @@ async function saveProduct(e) {
   // Delivery fields (deliveryLink / deliveryType / deliveryFiles / autoDeliver)
   // are saved separately to products/{id}/private/delivery instead of onto
   // the public product doc — that doc is what every storefront visitor's
-  // Firestore read (and DB._load()'s localStorage cache) picks up, so
+  // database read (and DB._load()'s localStorage cache) picks up, so
   // download links/files no longer belong on it. See DB.setProductDelivery
-  // in firebase.js and the matching Firestore security rule. Courses don't
+  // in supabase.js and the matching Row Level Security policy. Courses don't
   // use this at all — their content lives in the curriculum subdoc instead.
   const deliveryData = {
     autoDeliver: autoDeliver && !!(deliveryLink || deliveryFiles.length),
@@ -2444,7 +2440,7 @@ function restoreOrder(id) {
 
 // ===== USERS ADMIN =====
 
-// Firestore Timestamp objects (from the client SDK) have a toDate()
+// Firestore Timestamp objects (from the old client SDK) used to have a toDate()
 // method — plain `new Date(timestamp)` doesn't parse them correctly, so
 // this handles both that and ISO-string timestamps, and missing values.
 function _userTsToDate(ts) {
@@ -2725,7 +2721,7 @@ function removeDeliverField(suffix, idx) {
   if (row) row.remove();
 }
 
-// ── PDF / File upload (Firebase Storage) ───────────────────────
+// ── PDF / File upload (Cloudflare R2, via the Worker) ───────────
 
 const MAX_DELIVER_PDF_FILES = 4;
 let deliverPdfFiles = []; // [{url, path, name, size}]
@@ -3134,11 +3130,11 @@ async function saveAnnouncement() {
 // ================================================================
 // ===== FEATURE: STORE BRANDING =====
 // The whole reason a storefront can end up showing a different logo/color
-// than what's in the repo: Settings.get() reads live from the Firestore
+// than what's in the repo: Settings.get() reads live from the database
 // settings/store document, and applyTheme() overrides the default markup
 // with whatever is saved there. This panel shows exactly what's currently
 // live and lets you correct or reset it — the actual data lives in
-// Firestore, not in any file in this repo, so editing files alone can't
+// database, not in any file in this repo, so editing files alone can't
 // fix a bad value already saved there.
 // ================================================================
 const BRANDING_DEFAULTS = {
@@ -3196,7 +3192,7 @@ async function saveBranding() {
 }
 
 async function resetBrandingToDefaults() {
-  if (!confirm('Reset branding to the repo defaults (DIGITCH, green, /logo.png)? This overwrites whatever is currently saved in Firestore.')) return;
+  if (!confirm('Reset branding to the repo defaults (DIGITCH, green, /logo.png)? This overwrites whatever is currently saved in the database.')) return;
   await Settings.save({ ...BRANDING_DEFAULTS });
   Settings.applyTheme();
   loadBrandingForm();
@@ -3243,7 +3239,7 @@ function initOrderNotifications() {
     }
   }
 
-  // Watch for new purchases in real-time via Firestore
+  // Watch for new purchases in real-time via Supabase Realtime
   try {
     _db.collection('purchases')
       .orderBy('createdAt', 'desc')
@@ -3462,7 +3458,7 @@ function confirmDeleteReview(id) {
   confirmAction('Delete Review', 'Are you sure you want to permanently delete this review?', async () => {
     const ok = await Reviews.delete(id);
     if (!ok) {
-      showToast('Failed to delete review — check console (likely a Firestore permissions issue).');
+      showToast('Failed to delete review — check console (likely a Row Level Security issue).');
       return;
     }
     _allReviews = _allReviews.filter(r => r.id !== id);

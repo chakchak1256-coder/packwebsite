@@ -70,15 +70,16 @@
 </script>
 
 <!-- Connection warm-up: these origins are needed within the first second
-     of load (fonts, icon CSS, Firebase SDK, Firestore data). Opening the
-     TCP/TLS handshake now, before the browser even discovers the tags/
-     scripts below, saves a full round-trip per origin — this matters a
-     lot more on mobile networks with higher latency. -->
+     of load (fonts, icon CSS, the Supabase client SDK, Supabase's own
+     API). Opening the TCP/TLS handshake now, before the browser even
+     discovers the tags/scripts below, saves a full round-trip per
+     origin — this matters a lot more on mobile networks with higher
+     latency. -->
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com"/>
-<link rel="preconnect" href="https://www.gstatic.com"/>
-<link rel="preconnect" href="https://firestore.googleapis.com"/>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+<link rel="preconnect" href="https://redbcznzczspusdzbxbq.supabase.co"/>
 
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <!-- Font Awesome is only decorative icons, not needed for first paint, so
@@ -94,7 +95,7 @@
    ============================================================ */
 :root {
   /* --accent / --primary / --secondary stay admin-configurable via Settings
-     (see Settings.applyTheme in firebase.js), so their names don't change —
+     (see Settings.applyTheme in supabase.js), so their names don't change —
      only the shipped default. One color, no secondary accent, no gradients. */
   --accent:#3454D1;--accent-rgb:52,84,209;--accent-dark:#2A43A8;
   --primary:#3454D1;--primary-rgb:52,84,209;
@@ -142,8 +143,8 @@ section{position:relative;z-index:1}
 body{background:var(--bg2)}
 [data-theme="dark"] body{background:var(--bg)}
 #nav{
-  position:fixed;top:70px;left:5vw;right:5vw;z-index:900;
-  height:74px;padding:0 1.6rem;border-radius:18px;max-width:1320px;margin:0 auto;
+  position:fixed;top:60px;left:5vw;right:5vw;z-index:900;
+  height:62px;padding:0 1.6rem;border-radius:18px;max-width:1320px;margin:0 auto;
   display:flex;align-items:center;justify-content:space-between;
   background:#FFFFFF;
   border:1px solid rgba(0,0,0,.06);
@@ -232,15 +233,15 @@ body.flash-on #topbar{top:56px}
   }
   [data-theme="dark"] #mobile-search-bar{background:#FFFFFF;border-bottom:1px solid rgba(0,0,0,.06)}
   body.flash-on #mobile-search-bar{top:108px}
-  #nav{top:122px}
-  body.flash-on #nav{top:160px}
-  #mobile-nav{top:196px}
-  body.flash-on #mobile-nav{top:234px}
-  #user-menu{top:196px !important}
-  #hero{padding:288px 5vw 0}
-  .all-products-inner,.product-page-inner,.mp-inner,.wishlist-inner{padding-top:216px}
+  #nav{top:112px}
+  body.flash-on #nav{top:150px}
+  #mobile-nav{top:174px}
+  body.flash-on #mobile-nav{top:212px}
+  #user-menu{top:174px !important}
+  #hero{padding:266px 5vw 0}
+  .all-products-inner,.product-page-inner,.mp-inner,.wishlist-inner{padding-top:194px}
   body.flash-on .all-products-inner,body.flash-on .product-page-inner,
-  body.flash-on .mp-inner,body.flash-on .wishlist-inner{padding-top:254px}
+  body.flash-on .mp-inner,body.flash-on .wishlist-inner{padding-top:232px}
 }
 @media(max-width:480px){
   .topbar-logo-text{display:none}
@@ -293,7 +294,7 @@ body.flash-on #topbar{top:56px}
 .hamburger span{display:block;width:18px;height:1.5px;background:var(--text-muted);
   border-radius:2px;transition:var(--transition)}
 #mobile-nav{
-  position:fixed;top:144px;left:0;right:0;bottom:0;z-index:850;
+  position:fixed;top:122px;left:0;right:0;bottom:0;z-index:850;
   background:var(--bg);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.8rem;
   transform:translateX(100%);transition:transform .25s ease;
@@ -336,11 +337,11 @@ body.flash-on #topbar{top:56px}
 /* ===== HERO ===== */
 #hero{
   min-height:auto;display:flex;align-items:center;
-  padding:220px 5vw 60px;background:var(--bg);
+  padding:198px 5vw 60px;background:var(--bg);
   position:relative;border-bottom:1px solid var(--border);
 }
 @media(min-width:701px) and (max-width:980px){
-  #hero{padding:200px 5vw 50px;}
+  #hero{padding:178px 5vw 50px;}
 }
 .hero-inner{
   position:relative;z-index:2;max-width:900px;width:100%;
@@ -788,7 +789,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:2.5rem 0
   background:var(--bg);overflow-y:auto;
 }
 #all-products-page.active{display:block}
-.all-products-inner{max-width:1160px;margin:0 auto;padding:160px 5vw 60px}
+.all-products-inner{max-width:1160px;margin:0 auto;padding:138px 5vw 60px}
 .all-hdr{display:flex;align-items:center;gap:1rem;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap}
 .search-bar{
   display:flex;align-items:center;gap:.5rem;padding:.5rem .9rem;
@@ -805,7 +806,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:2.5rem 0
 .chip:hover,.chip.active{background:rgba(var(--accent-rgb),.1);border-color:var(--accent);color:var(--accent)}
 
 /* ===== DEEP-LINK LOADER =====
-   Shown briefly while we wait for Firestore data so a shared ?product=
+   Shown briefly while we wait for catalog data so a shared ?product=
    link opens straight into the product instead of flashing the homepage
    first. See the inline bootstrap script right after <body>. */
 #deep-link-loader{
@@ -822,7 +823,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:2.5rem 0
   background:var(--bg);overflow-y:auto;
 }
 #product-page.active{display:block}
-.product-page-inner{max-width:1060px;margin:0 auto;padding:160px 5vw 60px}
+.product-page-inner{max-width:1060px;margin:0 auto;padding:138px 5vw 60px}
 .back-btn{
   display:inline-flex;align-items:center;gap:.4rem;color:var(--text-muted);
   font-size:.85rem;margin-bottom:2rem;cursor:pointer;transition:color var(--transition);
@@ -1023,7 +1024,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:2.5rem 0
   background:var(--bg);overflow-y:auto;
 }
 #my-products-page.active{display:block}
-.mp-inner{max-width:1160px;margin:0 auto;padding:160px 5vw 60px}
+.mp-inner{max-width:1160px;margin:0 auto;padding:138px 5vw 60px}
 
 /* ===== COURSE PLAYER ===== */
 #course-player-page{
@@ -1180,9 +1181,9 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:2.5rem 0
 /* ===== ACCOUNT AREA ===== */
 #account-page{display:none;position:fixed;inset:0;z-index:830;background:var(--bg);overflow-y:auto}
 #account-page.active{display:block}
-.acct-inner{max-width:1160px;margin:0 auto;padding:160px 5vw 60px}
+.acct-inner{max-width:1160px;margin:0 auto;padding:138px 5vw 60px}
 .acct-layout{display:grid;grid-template-columns:250px 1fr;gap:2rem;align-items:start}
-.acct-side{position:sticky;top:160px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:.6rem;display:flex;flex-direction:column}
+.acct-side{position:sticky;top:138px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:.6rem;display:flex;flex-direction:column}
 .acct-side-user{display:flex;align-items:center;gap:.7rem;padding:.8rem .7rem 1rem;border-bottom:1px solid var(--border);margin-bottom:.5rem}
 .acct-avatar{width:42px;height:42px;border-radius:50%;background:rgba(var(--accent-rgb),.15);color:var(--accent);
   display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:800;font-size:1rem;flex-shrink:0}
@@ -1291,11 +1292,11 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:2.5rem 0
 .flash-seg{background:rgba(0,0,0,.25);border-radius:4px;padding:2px 6px;font-family:'Fraunces',serif;font-size:.82rem;font-weight:800;letter-spacing:.02em}
 #flash-banner-close{background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;padding:0 0 0 .5rem;font-size:.9rem;line-height:1}
 /* push nav down when banner visible */
-body.flash-on #nav{top:108px}
-body.flash-on #mobile-nav{top:182px}
+body.flash-on #nav{top:98px}
+body.flash-on #mobile-nav{top:160px}
 @media(min-width:701px){
   body.flash-on .all-products-inner,body.flash-on .product-page-inner,
-  body.flash-on .mp-inner,body.flash-on .wishlist-inner{padding-top:198px}
+  body.flash-on .mp-inner,body.flash-on .wishlist-inner{padding-top:176px}
 }
 
 /* ===== NAV SEARCH ===== */
@@ -1349,7 +1350,7 @@ body.flash-on #mobile-nav{top:182px}
   background:var(--bg);overflow-y:auto;
 }
 #wishlist-page.active{display:block}
-.wishlist-inner{max-width:1160px;margin:0 auto;padding:160px 5vw 60px}
+.wishlist-inner{max-width:1160px;margin:0 auto;padding:138px 5vw 60px}
 /* Wishlist nav btn */
 #wishlist-nav-btn{position:relative;overflow:visible;width:38px;height:38px;border-radius:8px;
   background:var(--card);border:1px solid var(--border);
@@ -1941,7 +1942,7 @@ footer::before{
     <button id="user-btn" onclick="toggleUserMenu()" style="position:relative;width:42px;height:42px;border-radius:50%;background:var(--card);border:1px solid var(--border);align-items:center;justify-content:center;font-size:1rem;transition:all var(--transition)">
       <i class="fa-solid fa-user" id="user-icon"></i>
     </button>
-    <div id="user-menu" style="display:none;position:absolute;top:144px;right:5vw;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:.5rem;min-width:200px;z-index:1000;box-shadow:0 12px 35px rgba(0,0,0,.5)">
+    <div id="user-menu" style="display:none;position:absolute;top:122px;right:5vw;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:.5rem;min-width:200px;z-index:1000;box-shadow:0 12px 35px rgba(0,0,0,.5)">
       <div id="user-menu-info" style="padding:.6rem .9rem;margin-bottom:.3rem;border-bottom:1px solid var(--border)"></div>
       <button onclick="openAccount('profile');document.getElementById('user-menu').style.display='none';" style="display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;width:100%;transition:background var(--transition)" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''"><i class="fa-solid fa-user" style="color:var(--primary)"></i> Profile</button>
       <button onclick="openAccount('library');document.getElementById('user-menu').style.display='none';" style="display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;width:100%;transition:background var(--transition)" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''"><i class="fa-solid fa-box-archive" style="color:var(--primary)"></i> My Library</button>
@@ -2638,26 +2639,23 @@ footer::before{
   </div>
 </div>
 
-<!-- defer: these 4 scripts total ~250KB+ and used to block HTML parsing
-     until fully downloaded + executed, on top of being requested this late
-     in the document. `defer` lets the browser keep parsing/painting the
-     rest of the page while these download in the background, then runs
-     them in this exact order right before DOMContentLoaded — same
-     execution order as before, just no longer blocking. Verified nothing
-     earlier in this document reads `firebase`/`_db`/`_auth` before this
+<!-- defer: these 2 scripts used to block HTML parsing until fully
+     downloaded + executed, on top of being requested this late in the
+     document. `defer` lets the browser keep parsing/painting the rest of
+     the page while these download in the background, then runs them in
+     this exact order right before DOMContentLoaded — same execution
+     order as before, just no longer blocking. Verified nothing earlier
+     in this document reads `_db`/`_auth`/`UserAuth`/etc. before this
      point, so this is safe. -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" defer></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js" defer></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js" defer></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js" defer></script>
-<script src="firebase.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
+<script src="supabase.js" defer></script>
 <script>
 // ===== STATE =====
 let fromAll = false;
 let _firebaseResolved = false; // true only after first auth:change fires
 
 // ===== INIT =====
-// Auth listener — outside DOMContentLoaded so it catches early Firebase events
+// Auth listener — outside DOMContentLoaded so it catches early auth events
 window.addEventListener('auth:change', () => {
   _firebaseResolved = true;
   initUserAuth();
@@ -2672,7 +2670,7 @@ function _hideDeepLinkLoader() {
   const el = document.getElementById('deep-link-loader');
   if (el) el.classList.remove('visible');
 }
-// Safety net: if Firestore data never arrives (offline, permissions issue,
+// Safety net: if catalog data never arrives (offline, permissions issue,
 // etc.) don't leave the visitor staring at a spinner forever — fall back
 // to showing the homepage as-is after a few seconds.
 if (_pendingProductOpen) {
@@ -2689,7 +2687,7 @@ document.addEventListener('DOMContentLoaded', () => {
   CartLive.start();
   // Apply store branding (logo, store name, brand colors) from Settings —
   // once immediately with whatever's cached in localStorage/defaults, and
-  // again every time Settings.load() resolves fresh data from Firestore
+  // again every time Settings.load() resolves fresh data from Supabase
   // (settings:update fires on both the initial load and any admin edit).
   Settings.applyTheme();
   window.addEventListener('settings:update', () => Settings.applyTheme());
@@ -2704,18 +2702,18 @@ document.addEventListener('DOMContentLoaded', () => {
     else if (p === 'my-products') { openMyProducts(); }
   })();
   window.addEventListener('cart:update', () => { updateCartBadge(); _coRefreshOrderSummary(); });
-  // db:update fires when Firestore data arrives — renders happen here.
+  // db:update fires when catalog data arrives — renders happen here.
   window.addEventListener('db:update', handleDbUpdate);
-  // firebase.js runs as a blocking <script> earlier in this page and, as
+  // supabase.js runs as a deferred <script> earlier in this page and, as
   // soon as it loads, synchronously reads the localStorage product cache
-  // and dispatches an initial 'db:update' with it (see initFirestoreData()
-  // in firebase.js). That happens *before* DOMContentLoaded fires — i.e.
+  // and dispatches an initial 'db:update' with it (see initSupabaseData()
+  // in supabase.js). That happens *before* DOMContentLoaded fires — i.e.
   // before the listener above even existed — so that first, instant,
   // cache-based dispatch was always missed. The page only ever painted
-  // products after the real Firestore network round-trip resolved and
-  // fired 'db:update' a second time, which is exactly the ~2s delay.
+  // products after the real network round-trip resolved and fired
+  // 'db:update' a second time, which is exactly the ~2s delay.
   // Calling the handler once here renders whatever's already sitting in
-  // DB._cache (the same cache firebase.js just populated) immediately,
+  // DB._cache (the same cache supabase.js just populated) immediately,
   // and the listener above still catches the later, fresher dispatch.
   handleDbUpdate();
 });
@@ -2820,7 +2818,7 @@ function renderProducts() {
   // for real. Without this check the page briefly shows "No featured
   // products yet" and then pops the real grid in right after, which reads
   // as broken/slow rather than "still loading" — especially on mobile
-  // where that whole DOMContentLoaded → Firestore round trip takes longer.
+  // where that whole DOMContentLoaded → network round trip takes longer.
   if (!DB.isLoaded('products')) return;
   const all = DB.getAll('products'); // already sorted newest first (unshift on add)
   const prods = all.filter(p => !!p.featured);
@@ -4076,7 +4074,7 @@ function _fileToBase64(file) {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (e) => {
-      // Compress via canvas to keep Firestore doc size reasonable
+      // Compress via canvas to keep the stored doc size reasonable
       const img = new Image();
       img.onload = () => {
         const MAX = 900;
@@ -4204,11 +4202,11 @@ function initUserAuth() {
     const info = document.getElementById('user-menu-info');
     if (info) info.innerHTML = `<div style="font-size:.78rem;color:var(--text-muted)">Signed in as</div><div style="font-size:.88rem;font-weight:700;margin-top:.15rem">${user.name}</div><div style="font-size:.75rem;font-family:monospace;color:var(--text-muted)">${user.email}</div>`;
   } else if (_firebaseResolved) {
-    // Firebase confirmed no user — safe to clear
+    // Supabase confirmed no user — safe to clear
     localStorage.removeItem('dz_auth');
     document.documentElement.setAttribute('data-authed', 'false');
   }
-  // else: Firebase not resolved yet — do nothing, keep CSS from head script
+  // else: auth state not resolved yet — do nothing, keep CSS from head script
 }
 
 function toggleUserMenu() {
@@ -4335,14 +4333,13 @@ function doUserLogout() {
 }
 
 // ── Redirect-fallback resume ─────────────────────────────────────
-// If loginWithGoogle()/completeGoogleRegistration() had to fall back to
-// signInWithRedirect() because the popup was blocked, the click handlers
-// above (doGoogleSignIn / doCompleteGoogleSignup) never got a normal
-// return value — the page navigated away to Google and back. This picks
-// up the result once firebase.js's _handleRedirectResult() finishes
-// processing that return, mirroring the exact same UI reactions those
-// two functions use for the popup path, so sign-in behaves identically
-// either way.
+// loginWithGoogle() (supabase.js) always redirects to Google and back —
+// Supabase's OAuth flow has no popup mode — so the click handler above
+// (doGoogleSignIn) never gets a normal return value from that call; the
+// page navigates away to Google and back instead. This listens for the
+// 'google-redirect-result' event supabase.js fires once the returning
+// page's auth state resolves, and reacts exactly the same way
+// doGoogleSignIn()/doCompleteGoogleSignup() do above.
 window.addEventListener('google-redirect-result', (evt) => {
   const r = evt.detail || {};
   if (r.redirecting) return; // shouldn't happen here, but ignore defensively
@@ -4382,7 +4379,7 @@ window.addEventListener('google-redirect-result', (evt) => {
 
 // ===== THEME TOGGLE =====
 // Swaps the navbar logo for the current theme. This always defers to
-// Settings.applyTheme() (firebase.js), which is the single source of truth
+// Settings.applyTheme() (supabase.js), which is the single source of truth
 // for logo selection: it uses the admin's custom logoLight/logoDark/logo
 // when configured, and falls back to the repo default (/logo.png or
 // /logob.png) otherwise. Previously this logic was duplicated here and
@@ -4447,7 +4444,7 @@ function openMyProducts() {
   if (mpLinkMobile) mpLinkMobile.classList.add('active');
 }
 
-// If My Library is open when Firebase finally resolves, re-render
+// If My Library is open when auth state finally resolves, re-render
 window.addEventListener('auth:change', () => {
   if (document.getElementById('my-products-page').classList.contains('active')) {
     mpLoadContent();
@@ -4466,7 +4463,7 @@ function closeMyProducts() {
   if (_mpUnsubscribe) { _mpUnsubscribe(); _mpUnsubscribe = null; }
 }
 
-// Holds the Firestore unsubscribe function for realtime listener
+// Holds the Supabase Realtime unsubscribe function for the live listener
 let _mpUnsubscribe = null;
 
 async function mpLoadContent() {
@@ -4486,7 +4483,7 @@ async function mpLoadContent() {
   // Tear down any existing listener before creating a new one
   if (_mpUnsubscribe) { _mpUnsubscribe(); _mpUnsubscribe = null; }
 
-  // Show cached data instantly while Firestore connects
+  // Show cached data instantly while Supabase connects
   const cacheKey = 'dz_mp_' + user.id;
   try {
     const cached = sessionStorage.getItem(cacheKey);
@@ -5005,7 +5002,7 @@ const Wishlist = {
   count() { return this.get().length; },
   // Drop any wishlisted id whose product no longer exists in the live
   // catalog. `validIds` is a Set of currently-existing product ids.
-  // Saves (and syncs to Firestore for logged-in users) only if something
+  // Saves (and syncs to Supabase for logged-in users) only if something
   // actually changed, which also fires 'wishlist:update' so the badge
   // count corrects itself automatically.
   prune(validIds) {
@@ -5739,36 +5736,36 @@ function updateWaFloat() {
 (function() {
   const DIGITAL_TOOLS = [
     {
-      id: 't1', label: 'Course Book', color: '#4D7A5E', bg: '#EAF2ED',
-      svg: '<svg viewBox="0 0 130 130" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="130" height="130" fill="#F7FAF8"/><path d="M20 28 Q20 25 23 25 L62 25 L62 102 Q42 96 20 102 Z" fill="#EAF2ED" stroke="#3D6650" stroke-width="2.2" stroke-linejoin="round"/><path d="M68 25 L107 25 Q110 25 110 28 L110 102 Q88 96 68 102 Z" fill="#F5FAF6" stroke="#3D6650" stroke-width="2.2" stroke-linejoin="round"/><path d="M62 25 Q65 23.5 68 25 L68 102 Q65 103.5 62 102 Z" fill="#C2D9CA"/><line x1="27" y1="40" x2="56" y2="40" stroke="#8BAFA0" stroke-width="1.8" stroke-linecap="round"/><line x1="27" y1="50" x2="56" y2="50" stroke="#8BAFA0" stroke-width="1.8" stroke-linecap="round"/><line x1="27" y1="60" x2="56" y2="60" stroke="#8BAFA0" stroke-width="1.8" stroke-linecap="round"/><line x1="27" y1="70" x2="48" y2="70" stroke="#8BAFA0" stroke-width="1.8" stroke-linecap="round"/><line x1="74" y1="40" x2="103" y2="40" stroke="#B5CFB9" stroke-width="1.8" stroke-linecap="round"/><line x1="74" y1="50" x2="103" y2="50" stroke="#B5CFB9" stroke-width="1.8" stroke-linecap="round"/><line x1="74" y1="60" x2="103" y2="60" stroke="#B5CFB9" stroke-width="1.8" stroke-linecap="round"/><line x1="74" y1="70" x2="93" y2="70" stroke="#B5CFB9" stroke-width="1.8" stroke-linecap="round"/><path d="M48 25 L57 25 L57 44 L52.5 40.5 L48 44 Z" fill="#3D6650"/></svg>'
+      id: 't1', label: 'Course Book', color: '#3454D1', bg: '#E8ECFA',
+      svg: '<svg viewBox="0 0 130 130" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="130" height="130" fill="#F7F8FC"/><path d="M20 28 Q20 25 23 25 L62 25 L62 102 Q42 96 20 102 Z" fill="#E8ECFA" stroke="#233C8F" stroke-width="2.2" stroke-linejoin="round"/><path d="M68 25 L107 25 Q110 25 110 28 L110 102 Q88 96 68 102 Z" fill="#F5FAF6" stroke="#233C8F" stroke-width="2.2" stroke-linejoin="round"/><path d="M62 25 Q65 23.5 68 25 L68 102 Q65 103.5 62 102 Z" fill="#C3CDF0"/><line x1="27" y1="40" x2="56" y2="40" stroke="#8C9CDD" stroke-width="1.8" stroke-linecap="round"/><line x1="27" y1="50" x2="56" y2="50" stroke="#8C9CDD" stroke-width="1.8" stroke-linecap="round"/><line x1="27" y1="60" x2="56" y2="60" stroke="#8C9CDD" stroke-width="1.8" stroke-linecap="round"/><line x1="27" y1="70" x2="48" y2="70" stroke="#8C9CDD" stroke-width="1.8" stroke-linecap="round"/><line x1="74" y1="40" x2="103" y2="40" stroke="#B7C3EA" stroke-width="1.8" stroke-linecap="round"/><line x1="74" y1="50" x2="103" y2="50" stroke="#B7C3EA" stroke-width="1.8" stroke-linecap="round"/><line x1="74" y1="60" x2="103" y2="60" stroke="#B7C3EA" stroke-width="1.8" stroke-linecap="round"/><line x1="74" y1="70" x2="93" y2="70" stroke="#B7C3EA" stroke-width="1.8" stroke-linecap="round"/><path d="M48 25 L57 25 L57 44 L52.5 40.5 L48 44 Z" fill="#233C8F"/></svg>'
     },
     {
-      id: 't2', label: 'Notebook & Pen', color: '#4D7A5E', bg: '#EAF2ED',
-      svg: '<svg viewBox="0 0 130 130" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="130" height="130" fill="#F7FAF8"/><rect x="28" y="20" width="74" height="88" rx="5" fill="#EAF2ED" stroke="#3D6650" stroke-width="2"/><rect x="28" y="20" width="14" height="88" rx="5" fill="#D0E3D6" stroke="#3D6650" stroke-width="2"/><circle cx="35" cy="30" r="3" fill="white" stroke="#3D6650" stroke-width="1.5"/><circle cx="35" cy="43" r="3" fill="white" stroke="#3D6650" stroke-width="1.5"/><circle cx="35" cy="56" r="3" fill="white" stroke="#3D6650" stroke-width="1.5"/><circle cx="35" cy="69" r="3" fill="white" stroke="#3D6650" stroke-width="1.5"/><circle cx="35" cy="82" r="3" fill="white" stroke="#3D6650" stroke-width="1.5"/><circle cx="35" cy="95" r="3" fill="white" stroke="#3D6650" stroke-width="1.5"/><line x1="50" y1="40" x2="94" y2="40" stroke="#8BAFA0" stroke-width="1.8" stroke-linecap="round"/><line x1="50" y1="52" x2="94" y2="52" stroke="#8BAFA0" stroke-width="1.8" stroke-linecap="round"/><line x1="50" y1="64" x2="94" y2="64" stroke="#8BAFA0" stroke-width="1.8" stroke-linecap="round"/><line x1="50" y1="76" x2="80" y2="76" stroke="#8BAFA0" stroke-width="1.8" stroke-linecap="round"/><g transform="translate(72,68) rotate(-38)"><rect x="-4" y="-24" width="8" height="36" rx="2" fill="#F5F0DC" stroke="#3D3D3D" stroke-width="1.2"/><polygon points="-4,12 4,12 0,22" fill="#E8C98A" stroke="#3D3D3D" stroke-width="1"/><rect x="-4" y="-28" width="8" height="6" rx="1" fill="#D9847B"/><line x1="-4" y1="-10" x2="4" y2="-10" stroke="#3D6650" stroke-width="1"/></g></svg>'
+      id: 't2', label: 'Notebook & Pen', color: '#3454D1', bg: '#E8ECFA',
+      svg: '<svg viewBox="0 0 130 130" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="130" height="130" fill="#F7F8FC"/><rect x="28" y="20" width="74" height="88" rx="5" fill="#E8ECFA" stroke="#233C8F" stroke-width="2"/><rect x="28" y="20" width="14" height="88" rx="5" fill="#D2D9F2" stroke="#233C8F" stroke-width="2"/><circle cx="35" cy="30" r="3" fill="white" stroke="#233C8F" stroke-width="1.5"/><circle cx="35" cy="43" r="3" fill="white" stroke="#233C8F" stroke-width="1.5"/><circle cx="35" cy="56" r="3" fill="white" stroke="#233C8F" stroke-width="1.5"/><circle cx="35" cy="69" r="3" fill="white" stroke="#233C8F" stroke-width="1.5"/><circle cx="35" cy="82" r="3" fill="white" stroke="#233C8F" stroke-width="1.5"/><circle cx="35" cy="95" r="3" fill="white" stroke="#233C8F" stroke-width="1.5"/><line x1="50" y1="40" x2="94" y2="40" stroke="#8C9CDD" stroke-width="1.8" stroke-linecap="round"/><line x1="50" y1="52" x2="94" y2="52" stroke="#8C9CDD" stroke-width="1.8" stroke-linecap="round"/><line x1="50" y1="64" x2="94" y2="64" stroke="#8C9CDD" stroke-width="1.8" stroke-linecap="round"/><line x1="50" y1="76" x2="80" y2="76" stroke="#8C9CDD" stroke-width="1.8" stroke-linecap="round"/><g transform="translate(72,68) rotate(-38)"><rect x="-4" y="-24" width="8" height="36" rx="2" fill="#F5F0DC" stroke="#3D3D3D" stroke-width="1.2"/><polygon points="-4,12 4,12 0,22" fill="#E8C98A" stroke="#3D3D3D" stroke-width="1"/><rect x="-4" y="-28" width="8" height="6" rx="1" fill="#D9847B"/><line x1="-4" y1="-10" x2="4" y2="-10" stroke="#233C8F" stroke-width="1"/></g></svg>'
     },
     {
-      id: 't3', label: 'Spreadsheet', color: '#4D7A5E', bg: '#EAF2ED',
-      svg: '<svg viewBox="0 0 130 130" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="130" height="130" fill="#F7FAF8"/><path d="M25 22 L91 22 L105 36 L105 108 Q105 111 102 111 L25 111 Q22 111 22 108 L22 25 Q22 22 25 22 Z" fill="#EAF2ED" stroke="#3D6650" stroke-width="2"/><path d="M91 22 L105 36 L91 36 Z" fill="#B5CFB9" stroke="#3D6650" stroke-width="2" stroke-linejoin="round"/><rect x="30" y="45" width="68" height="13" rx="2" fill="#3D6650"/><rect x="30" y="60" width="68" height="11" rx="1" fill="none" stroke="#8BAFA0" stroke-width="1.2"/><rect x="30" y="73" width="68" height="11" rx="1" fill="#E0EDE4"/><rect x="30" y="86" width="68" height="11" rx="1" fill="none" stroke="#8BAFA0" stroke-width="1.2"/><line x1="52" y1="45" x2="52" y2="97" stroke="#8BAFA0" stroke-width="1.2"/><line x1="74" y1="45" x2="74" y2="97" stroke="#8BAFA0" stroke-width="1.2"/><rect x="31" y="46" width="20" height="11" rx="1" fill="#3D6650"/><rect x="53" y="46" width="20" height="11" rx="1" fill="#4D7A5E"/><rect x="75" y="46" width="22" height="11" rx="1" fill="#5B8A6A"/><rect x="31" y="61" width="20" height="9" rx="1" fill="white" opacity=".7"/><rect x="53" y="61" width="20" height="9" rx="1" fill="white" opacity=".5"/><rect x="75" y="61" width="22" height="9" rx="1" fill="white" opacity=".5"/></svg>'
+      id: 't3', label: 'Spreadsheet', color: '#3454D1', bg: '#E8ECFA',
+      svg: '<svg viewBox="0 0 130 130" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="130" height="130" fill="#F7F8FC"/><path d="M25 22 L91 22 L105 36 L105 108 Q105 111 102 111 L25 111 Q22 111 22 108 L22 25 Q22 22 25 22 Z" fill="#E8ECFA" stroke="#233C8F" stroke-width="2"/><path d="M91 22 L105 36 L91 36 Z" fill="#B7C3EA" stroke="#233C8F" stroke-width="2" stroke-linejoin="round"/><rect x="30" y="45" width="68" height="13" rx="2" fill="#233C8F"/><rect x="30" y="60" width="68" height="11" rx="1" fill="none" stroke="#8C9CDD" stroke-width="1.2"/><rect x="30" y="73" width="68" height="11" rx="1" fill="#E2E6F7"/><rect x="30" y="86" width="68" height="11" rx="1" fill="none" stroke="#8C9CDD" stroke-width="1.2"/><line x1="52" y1="45" x2="52" y2="97" stroke="#8C9CDD" stroke-width="1.2"/><line x1="74" y1="45" x2="74" y2="97" stroke="#8C9CDD" stroke-width="1.2"/><rect x="31" y="46" width="20" height="11" rx="1" fill="#233C8F"/><rect x="53" y="46" width="20" height="11" rx="1" fill="#3454D1"/><rect x="75" y="46" width="22" height="11" rx="1" fill="#4A63C9"/><rect x="31" y="61" width="20" height="9" rx="1" fill="white" opacity=".7"/><rect x="53" y="61" width="20" height="9" rx="1" fill="white" opacity=".5"/><rect x="75" y="61" width="22" height="9" rx="1" fill="white" opacity=".5"/></svg>'
     },
     {
-      id: 't4', label: 'Checklist', color: '#4D7A5E', bg: '#EAF2ED',
-      svg: '<svg viewBox="0 0 130 130" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="130" height="130" fill="#F7FAF8"/><path d="M22 25 L82 25 L98 42 L98 105 Q98 108 95 108 L22 108 Q19 108 19 105 L19 28 Q19 25 22 25 Z" fill="#EAF2ED" stroke="#3D6650" stroke-width="2"/><path d="M82 25 L98 42 L82 42 Z" fill="#B5CFB9" stroke="#3D6650" stroke-width="2" stroke-linejoin="round"/><rect x="27" y="52" width="9" height="9" rx="2" fill="none" stroke="#3D6650" stroke-width="1.8"/><polyline points="28.5,56.5 31,59 35,53.5" stroke="#3D6650" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="42" y1="56.5" x2="88" y2="56.5" stroke="#3D6650" stroke-width="1.8" stroke-linecap="round"/><rect x="27" y="67" width="9" height="9" rx="2" fill="none" stroke="#3D6650" stroke-width="1.8"/><polyline points="28.5,71.5 31,74 35,68.5" stroke="#3D6650" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="42" y1="71.5" x2="88" y2="71.5" stroke="#3D6650" stroke-width="1.8" stroke-linecap="round"/><rect x="27" y="82" width="9" height="9" rx="2" fill="none" stroke="#3D6650" stroke-width="1.8"/><line x1="42" y1="86.5" x2="80" y2="86.5" stroke="#AACCB5" stroke-width="1.8" stroke-linecap="round"/><circle cx="89" cy="98" r="16" fill="#3D6650" stroke="white" stroke-width="2.5"/><polyline points="81,98 86.5,104 98,90" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      id: 't4', label: 'Checklist', color: '#3454D1', bg: '#E8ECFA',
+      svg: '<svg viewBox="0 0 130 130" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="130" height="130" fill="#F7F8FC"/><path d="M22 25 L82 25 L98 42 L98 105 Q98 108 95 108 L22 108 Q19 108 19 105 L19 28 Q19 25 22 25 Z" fill="#E8ECFA" stroke="#233C8F" stroke-width="2"/><path d="M82 25 L98 42 L82 42 Z" fill="#B7C3EA" stroke="#233C8F" stroke-width="2" stroke-linejoin="round"/><rect x="27" y="52" width="9" height="9" rx="2" fill="none" stroke="#233C8F" stroke-width="1.8"/><polyline points="28.5,56.5 31,59 35,53.5" stroke="#233C8F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="42" y1="56.5" x2="88" y2="56.5" stroke="#233C8F" stroke-width="1.8" stroke-linecap="round"/><rect x="27" y="67" width="9" height="9" rx="2" fill="none" stroke="#233C8F" stroke-width="1.8"/><polyline points="28.5,71.5 31,74 35,68.5" stroke="#233C8F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="42" y1="71.5" x2="88" y2="71.5" stroke="#233C8F" stroke-width="1.8" stroke-linecap="round"/><rect x="27" y="82" width="9" height="9" rx="2" fill="none" stroke="#233C8F" stroke-width="1.8"/><line x1="42" y1="86.5" x2="80" y2="86.5" stroke="#ACBAE8" stroke-width="1.8" stroke-linecap="round"/><circle cx="89" cy="98" r="16" fill="#233C8F" stroke="white" stroke-width="2.5"/><polyline points="81,98 86.5,104 98,90" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     },
     {
-      id: 't5', label: 'Files & Folders', color: '#4D7A5E', bg: '#EAF2ED',
-      svg: '<svg viewBox="0 0 130 130" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="130" height="130" fill="#F7FAF8"/><rect x="18" y="52" width="94" height="62" rx="6" fill="#C2D9CA" stroke="#3D6650" stroke-width="2"/><path d="M18 62 L18 52 Q18 46 24 46 L52 46 Q58 46 62 52 L66 58 L112 58 Q118 58 118 64 L118 114 Q118 117 115 117 L21 117 Q18 117 18 114 Z" fill="#D6E9DC" stroke="#3D6650" stroke-width="2"/><rect x="26" y="68" width="22" height="30" rx="3" fill="white" stroke="#3D6650" stroke-width="1.5" opacity=".9"/><rect x="54" y="62" width="22" height="36" rx="3" fill="white" stroke="#3D6650" stroke-width="1.5"/><rect x="82" y="66" width="22" height="32" rx="3" fill="white" stroke="#3D6650" stroke-width="1.5" opacity=".85"/></svg>'
+      id: 't5', label: 'Files & Folders', color: '#3454D1', bg: '#E8ECFA',
+      svg: '<svg viewBox="0 0 130 130" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="130" height="130" fill="#F7F8FC"/><rect x="18" y="52" width="94" height="62" rx="6" fill="#C3CDF0" stroke="#233C8F" stroke-width="2"/><path d="M18 62 L18 52 Q18 46 24 46 L52 46 Q58 46 62 52 L66 58 L112 58 Q118 58 118 64 L118 114 Q118 117 115 117 L21 117 Q18 117 18 114 Z" fill="#D8DFF4" stroke="#233C8F" stroke-width="2"/><rect x="26" y="68" width="22" height="30" rx="3" fill="white" stroke="#233C8F" stroke-width="1.5" opacity=".9"/><rect x="54" y="62" width="22" height="36" rx="3" fill="white" stroke="#233C8F" stroke-width="1.5"/><rect x="82" y="66" width="22" height="32" rx="3" fill="white" stroke="#233C8F" stroke-width="1.5" opacity=".85"/></svg>'
     },
     {
-      id: 't6', label: 'Presentations', color: '#4D7A5E', bg: '#EAF2ED',
-      svg: '<svg viewBox="0 0 130 130" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="130" height="130" fill="#F7FAF8"/><line x1="65" y1="18" x2="65" y2="26" stroke="#3D6650" stroke-width="2.5" stroke-linecap="round"/><line x1="20" y1="26" x2="110" y2="26" stroke="#3D6650" stroke-width="2.5" stroke-linecap="round"/><rect x="24" y="26" width="82" height="62" rx="4" fill="white" stroke="#3D6650" stroke-width="2"/><line x1="65" y1="88" x2="50" y2="108" stroke="#3D6650" stroke-width="2.2" stroke-linecap="round"/><line x1="65" y1="88" x2="80" y2="108" stroke="#3D6650" stroke-width="2.2" stroke-linecap="round"/><path d="M32 82 L32 46 A28 28 0 0 1 60 74 Z" fill="#3D6650"/><path d="M32 46 A28 28 0 0 1 60 74 L32 74 Z" fill="#C2D9CA"/><path d="M32 74 L60 74 A28 28 0 0 1 32 102 Z" fill="#6B9E7A"/><rect x="72" y="50" width="11" height="32" rx="2" fill="#3D6650"/><rect x="86" y="60" width="11" height="22" rx="2" fill="#6B9E7A"/><rect x="100" y="55" width="0" height="0"/><rect x="86" y="60" width="0" height="0"/></svg>'
+      id: 't6', label: 'Presentations', color: '#3454D1', bg: '#E8ECFA',
+      svg: '<svg viewBox="0 0 130 130" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="130" height="130" fill="#F7F8FC"/><line x1="65" y1="18" x2="65" y2="26" stroke="#233C8F" stroke-width="2.5" stroke-linecap="round"/><line x1="20" y1="26" x2="110" y2="26" stroke="#233C8F" stroke-width="2.5" stroke-linecap="round"/><rect x="24" y="26" width="82" height="62" rx="4" fill="white" stroke="#233C8F" stroke-width="2"/><line x1="65" y1="88" x2="50" y2="108" stroke="#233C8F" stroke-width="2.2" stroke-linecap="round"/><line x1="65" y1="88" x2="80" y2="108" stroke="#233C8F" stroke-width="2.2" stroke-linecap="round"/><path d="M32 82 L32 46 A28 28 0 0 1 60 74 Z" fill="#233C8F"/><path d="M32 46 A28 28 0 0 1 60 74 L32 74 Z" fill="#C3CDF0"/><path d="M32 74 L60 74 A28 28 0 0 1 32 102 Z" fill="#5A73D0"/><rect x="72" y="50" width="11" height="32" rx="2" fill="#233C8F"/><rect x="86" y="60" width="11" height="22" rx="2" fill="#5A73D0"/><rect x="100" y="55" width="0" height="0"/><rect x="86" y="60" width="0" height="0"/></svg>'
     },
     {
-      id: 't7', label: 'Digital Reader', color: '#4D7A5E', bg: '#EAF2ED',
-      svg: '<svg viewBox="0 0 130 130" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="130" height="130" fill="#F7FAF8"/><rect x="28" y="16" width="74" height="98" rx="10" fill="#2D2D2D" stroke="#1A1A1A" stroke-width="1.5"/><rect x="34" y="24" width="62" height="78" rx="5" fill="#E6EFE9"/><circle cx="65" cy="107" r="4" fill="#3D3D3D"/><circle cx="65" cy="20" r="2" fill="#3D3D3D"/><rect x="40" y="32" width="50" height="5" rx="2.5" fill="#8BAFA0"/><rect x="40" y="41" width="50" height="4" rx="2" fill="#B5CFB9"/><rect x="40" y="49" width="40" height="4" rx="2" fill="#B5CFB9"/><rect x="40" y="60" width="50" height="4" rx="2" fill="#B5CFB9"/><rect x="40" y="68" width="50" height="4" rx="2" fill="#B5CFB9"/><rect x="40" y="76" width="35" height="4" rx="2" fill="#B5CFB9"/><rect x="40" y="86" width="50" height="4" rx="2" fill="#B5CFB9"/><rect x="40" y="94" width="28" height="4" rx="2" fill="#B5CFB9"/></svg>'
+      id: 't7', label: 'Digital Reader', color: '#3454D1', bg: '#E8ECFA',
+      svg: '<svg viewBox="0 0 130 130" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="130" height="130" fill="#F7F8FC"/><rect x="28" y="16" width="74" height="98" rx="10" fill="#2D2D2D" stroke="#1A1A1A" stroke-width="1.5"/><rect x="34" y="24" width="62" height="78" rx="5" fill="#E6EFE9"/><circle cx="65" cy="107" r="4" fill="#3D3D3D"/><circle cx="65" cy="20" r="2" fill="#3D3D3D"/><rect x="40" y="32" width="50" height="5" rx="2.5" fill="#8C9CDD"/><rect x="40" y="41" width="50" height="4" rx="2" fill="#B7C3EA"/><rect x="40" y="49" width="40" height="4" rx="2" fill="#B7C3EA"/><rect x="40" y="60" width="50" height="4" rx="2" fill="#B7C3EA"/><rect x="40" y="68" width="50" height="4" rx="2" fill="#B7C3EA"/><rect x="40" y="76" width="35" height="4" rx="2" fill="#B7C3EA"/><rect x="40" y="86" width="50" height="4" rx="2" fill="#B7C3EA"/><rect x="40" y="94" width="28" height="4" rx="2" fill="#B7C3EA"/></svg>'
     },
     {
-      id: 't8', label: 'Photo Gallery', color: '#4D7A5E', bg: '#EAF2ED',
-      svg: '<svg viewBox="0 0 130 130" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="130" height="130" fill="#F7FAF8"/><rect x="38" y="38" width="68" height="58" rx="5" fill="#D6E9DC" stroke="#3D6650" stroke-width="2" transform="rotate(8 72 67)"/><rect x="24" y="32" width="68" height="58" rx="5" fill="white" stroke="#3D6650" stroke-width="2"/><rect x="24" y="32" width="68" height="20" rx="5" fill="#EAF2ED"/><path d="M24 52 L28 44 L36 55 L46 40 L56 56 L64 47 L75 60 L92 60 L92 85 Q92 90 87 90 L29 90 Q24 90 24 85 Z" fill="#C2D9CA"/><circle cx="78" cy="44" r="6" fill="#D6E9DC" stroke="#3D6650" stroke-width="1.5"/><path d="M30 72 L38 62 L48 74 L60 64 L74 78 L74 88 L30 88 Z" fill="#8BAFA0" opacity=".6"/><circle cx="44" cy="56" r="4" fill="#AACCB5"/></svg>'
+      id: 't8', label: 'Photo Gallery', color: '#3454D1', bg: '#E8ECFA',
+      svg: '<svg viewBox="0 0 130 130" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="130" height="130" fill="#F7F8FC"/><rect x="38" y="38" width="68" height="58" rx="5" fill="#D8DFF4" stroke="#233C8F" stroke-width="2" transform="rotate(8 72 67)"/><rect x="24" y="32" width="68" height="58" rx="5" fill="white" stroke="#233C8F" stroke-width="2"/><rect x="24" y="32" width="68" height="20" rx="5" fill="#E8ECFA"/><path d="M24 52 L28 44 L36 55 L46 40 L56 56 L64 47 L75 60 L92 60 L92 85 Q92 90 87 90 L29 90 Q24 90 24 85 Z" fill="#C3CDF0"/><circle cx="78" cy="44" r="6" fill="#D8DFF4" stroke="#233C8F" stroke-width="1.5"/><path d="M30 72 L38 62 L48 74 L60 64 L74 78 L74 88 L30 88 Z" fill="#8C9CDD" opacity=".6"/><circle cx="44" cy="56" r="4" fill="#ACBAE8"/></svg>'
     },
   ];
 
@@ -5978,8 +5975,8 @@ function updateWaFloat() {
      IN-APP BROWSER PROMPT
      Instagram's and TikTok's in-app browsers restrict things like
      IndexedDB/storage and background JS in ways that can silently break
-     Firestore-driven pages like this one (products render via client-side
-     JS after a Firestore fetch — there's no server-rendered fallback).
+     Database-driven pages like this one (products render via client-side
+     JS after a fetch — there's no server-rendered fallback).
      Rather than trying to patch around every in-app-browser quirk, this
      detects those environments by User-Agent and prompts the visitor to
      open the link in their real browser, where everything works normally.
