@@ -11,10 +11,20 @@
 // the Worker secret `SLICKPAY_KEY` (set with `wrangler secret put`), never
 // in wrangler.jsonc `vars` and never shipped to the browser.
 //
-// Order writes go through the Firestore REST API, authenticated with a
-// Google service-account JWT signed via Web Crypto (RS256) — no Node SDK,
-// no extra npm dependency, fully Workers-compatible. The service account
-// JSON is read from the Worker secret `FIREBASE_SERVICE_ACCOUNT`.
+// Data + auth: Supabase (Postgres via its REST API — PostgREST — plus
+// Supabase Auth/GoTrue). All privileged reads/writes here use the
+// `SUPABASE_SERVICE_ROLE_KEY` Worker secret, which bypasses Postgres Row
+// Level Security entirely — that's what lets this Worker do things an
+// ordinary signed-in visitor's key can't (list all users, write another
+// user's purchase record, delete an account, etc). Never expose that key
+// to the browser; only the public `SUPABASE_ANON_KEY` / `SUPABASE_URL`
+// (in wrangler.jsonc `vars`) and firebase.js's client-side equivalent are
+// meant to be public.
+//
+// Collections here still use Firestore-style names (e.g. 'purchases',
+// 'products/<id>/private') — they map onto rows in one generic
+// `public.documents` table (see supabase/schema.sql), not separate SQL
+// tables per collection. See the `Docs` helper below.
 // ================================================================
 
 // ---------------------------------------------------------------
@@ -24,56 +34,61 @@
 // delete-file) must never be reachable by an anonymous visitor —
 // only the admin should be able to call them.
 //
-// This used to be a static shared-secret header baked into firebase.js.
-// That file ships to every visitor (it's loaded by the public storefront
-// too), so the "secret" was really public — anyone could view-source it
-// and call these routes directly. There is no fix that keeps a
-// client-visible static secret; the caller's identity has to be proven
-// server-side instead.
-//
-// The admin panel now signs the admin into real Firebase Authentication
-// (see the `Auth` object in firebase.js) and sends the resulting ID
-// token as `Authorization: Bearer <token>`. This function hands that
-// token to Google's Identity Toolkit, which verifies its signature and
-// expiry and tells us which Firebase account it actually belongs to —
-// a token can't be forged or reused for a different account. We then
-// check that account against the configured admin email.
+// This used to be (and still is) proven server-side, never trusted from
+// a client-visible static secret: the admin panel signs the admin into
+// real Supabase Auth (see the `Auth` object in supabase.js) and sends the
+// resulting access token as `Authorization: Bearer <token>`. This
+// function hands that token to Supabase's own GoTrue `/auth/v1/user`
+// endpoint, which verifies its signature/expiry and tells us which
+// Supabase account it actually belongs to — a token can't be forged or
+// reused for a different account. We then check that account's email
+// against the configured admin email.
 //
 // Set up once:
-//   1. Firebase console → Authentication → Users → Add user (the admin's
-//      real login email + a strong password).
-//   2. Put that same email in ADMIN_EMAIL in firebase.js.
+//   1. Supabase dashboard → Authentication → Users → Add user (the
+//      admin's real login email + a strong password).
+//   2. Put that same email in ADMIN_EMAIL in supabase.js.
 //   3. npx wrangler secret put ADMIN_EMAIL   (same email, on the Worker)
-// Like requireAdminAuth, but for any signed-in customer — no ADMIN_EMAIL
-// check. Verifies the bearer token is a real, currently-valid Firebase
-// session via Google's own accounts:lookup endpoint (same mechanism as
-// requireAdminAuth), and returns who it belongs to. Used by routes that
-// need to know *which* customer is calling (e.g. /api/claim-free) without
-// requiring that caller to be the admin.
-async function requireUserAuth(request, env) {
+async function supabaseGetUser(request, env) {
   const authHeader = request.headers.get('Authorization') || '';
   const m = authHeader.match(/^Bearer\s+(.+)$/i);
   if (!m) return { ok: false, status: 401, error: 'Missing bearer token.' };
-  const idToken = m[1];
+  const accessToken = m[1];
 
-  let lookup;
+  if (!env.SUPABASE_URL) {
+    return { ok: false, status: 500, error: 'SUPABASE_URL is not configured on this Worker.' };
+  }
+
+  let user;
   try {
-    const res = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(env.FIREBASE_API_KEY || '')}`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken }) }
-    );
-    lookup = await res.json();
+    const res = await fetch(`${env.SUPABASE_URL.replace(/\/+$/, '')}/auth/v1/user`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        // Either the anon or the service-role key works as `apikey` here;
+        // the anon key is enough since we're just asking "whose token is
+        // this", not doing a privileged operation.
+        apikey: env.SUPABASE_ANON_KEY || env.SUPABASE_SERVICE_ROLE_KEY || '',
+      },
+    });
     if (!res.ok) {
-      return { ok: false, status: 401, error: (lookup && lookup.error && lookup.error.message) || 'Invalid or expired session — please log in again.' };
+      const body = await res.json().catch(() => ({}));
+      return { ok: false, status: 401, error: body.msg || body.error_description || 'Invalid or expired session — please log in again.' };
     }
+    user = await res.json();
   } catch (e) {
     return { ok: false, status: 401, error: 'Could not verify session: ' + e.message };
   }
 
-  const user = lookup && lookup.users && lookup.users[0];
-  if (!user || !user.localId) return { ok: false, status: 401, error: 'Unauthorized.' };
+  if (!user || !user.id) return { ok: false, status: 401, error: 'Unauthorized.' };
+  return { ok: true, uid: user.id, email: (user.email || '').toLowerCase() ? user.email : '' };
+}
 
-  return { ok: true, uid: user.localId, email: user.email || '' };
+// Verifies the bearer token is a real, currently-valid Supabase session
+// and returns who it belongs to — no ADMIN_EMAIL check. Used by routes
+// that need to know *which* customer is calling (e.g. /api/claim-free)
+// without requiring that caller to be the admin.
+async function requireUserAuth(request, env) {
+  return supabaseGetUser(request, env);
 }
 
 async function requireAdminAuth(request, env) {
@@ -83,44 +98,13 @@ async function requireAdminAuth(request, env) {
     return { ok: false, status: 500, error: 'ADMIN_EMAIL is not configured on this Worker.' };
   }
 
-  const authHeader = request.headers.get('Authorization') || '';
-  const m = authHeader.match(/^Bearer\s+(.+)$/i);
-  if (!m) {
-    return { ok: false, status: 401, error: 'Missing bearer token.' };
-  }
-  const idToken = m[1];
+  const result = await supabaseGetUser(request, env);
+  if (!result.ok) return result;
 
-  // Ask Google to verify the token (signature, expiry, issuer/audience)
-  // and return the account it belongs to. This avoids re-implementing
-  // JWT/JWKS verification by hand — Firebase's apiKey is not a secret,
-  // it's the same value already public in firebaseConfig.
-  let lookup;
-  try {
-    const res = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(env.FIREBASE_API_KEY || '')}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
-      }
-    );
-    lookup = await res.json();
-    if (!res.ok) {
-      return { ok: false, status: 401, error: (lookup && lookup.error && lookup.error.message) || 'Invalid or expired session — please log in again.' };
-    }
-  } catch (e) {
-    return { ok: false, status: 401, error: 'Could not verify session: ' + e.message };
-  }
-
-  const user = lookup && lookup.users && lookup.users[0];
-  if (!user || !user.email) {
-    return { ok: false, status: 401, error: 'Unauthorized.' };
-  }
-  if (user.email.toLowerCase() !== env.ADMIN_EMAIL.toLowerCase()) {
+  if (!result.email || result.email.toLowerCase() !== env.ADMIN_EMAIL.toLowerCase()) {
     return { ok: false, status: 403, error: 'This account is not the admin account.' };
   }
-
-  return { ok: true, uid: user.localId, email: user.email };
+  return result;
 }
 
 // ---------------------------------------------------------------
@@ -246,240 +230,123 @@ async function getGatewayFee(env, baseAmount) {
 }
 
 // ---------------------------------------------------------------
-// Firestore REST helper, authenticated via Google service-account JWT
-// (RS256, signed with Web Crypto — no firebase-admin, no jose/jsonwebtoken)
+// Supabase REST helper (PostgREST), authenticated with the service-role
+// key. Every collection here is a row in the generic `public.documents`
+// table (see supabase/schema.sql) — `collection` and `id` together are
+// the primary key, `data` is the document's fields as JSON. The service
+// role key bypasses Row Level Security entirely, so this Worker can read
+///write anything, the same way the old Firestore service-account JWT
+// could.
 // ---------------------------------------------------------------
-let _cachedAccessTokens = {}; // { [scope]: { token, expiresAt } } — per-isolate cache
 
-function base64url(input) {
-  let bytes;
-  if (typeof input === 'string') {
-    bytes = new TextEncoder().encode(input);
-  } else {
-    bytes = new Uint8Array(input);
-  }
-  let str = '';
-  for (const b of bytes) str += String.fromCharCode(b);
-  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-function pemToArrayBuffer(pem) {
-  if (!pem || typeof pem !== 'string') {
-    throw new Error(
-      'FIREBASE_SERVICE_ACCOUNT is missing its "private_key" field (or the secret ' +
-      'was never set on this Worker). Run: npx wrangler secret put FIREBASE_SERVICE_ACCOUNT'
-    );
-  }
-  const b64 = pem
-    .replace('-----BEGIN PRIVATE KEY-----', '')
-    .replace('-----END PRIVATE KEY-----', '')
-    .replace(/\s+/g, '');
-  const raw = atob(b64);
-  const buf = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) buf[i] = raw.charCodeAt(i);
-  return buf.buffer;
-}
-
-async function getFirebaseAccessToken(env, scope = 'https://www.googleapis.com/auth/datastore') {
-  const now = Math.floor(Date.now() / 1000);
-  const cached = _cachedAccessTokens[scope];
-  if (cached && cached.expiresAt > now + 30) {
-    return cached.token;
-  }
-
-  if (!env.FIREBASE_SERVICE_ACCOUNT) {
-    throw new Error(
-      'FIREBASE_SERVICE_ACCOUNT secret is not set on this Worker. ' +
-      'Run: npx wrangler secret put FIREBASE_SERVICE_ACCOUNT (then paste the full service-account JSON) and redeploy.'
-    );
-  }
-
-  let serviceAccount;
-  try {
-    serviceAccount = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT);
-  } catch (e) {
-    // Diagnose the common cause without ever logging the secret itself:
-    // pasting multi-line JSON into an interactive `wrangler secret put`
-    // prompt often mangles it (a stray leading "-" from inside the
-    // private_key's "-----BEGIN PRIVATE KEY-----" line is a classic sign
-    // the JSON structure around it got dropped). Log a safe fingerprint —
-    // length and first character only — never the content.
-    const raw = env.FIREBASE_SERVICE_ACCOUNT || '';
-    const looksTruncated = raw.trimStart()[0] !== '{';
-    console.error(
-      '[FIREBASE_SERVICE_ACCOUNT] JSON.parse failed:', e.message,
-      '| length:', raw.length,
-      '| starts with "{":', !looksTruncated,
-      looksTruncated
-        ? '| This usually means the secret was pasted interactively and got corrupted. Fix: pipe the key file in instead of pasting — e.g. '
-          + '`Get-Content .\\key.json -Raw | npx wrangler secret put FIREBASE_SERVICE_ACCOUNT` (PowerShell) or '
-          + '`type key.json | npx wrangler secret put FIREBASE_SERVICE_ACCOUNT` (cmd.exe), then `npx wrangler deploy`.'
-        : ''
-    );
-    throw new Error('FIREBASE_SERVICE_ACCOUNT secret is not valid JSON: ' + e.message);
-  }
-  if (!serviceAccount.private_key || !serviceAccount.client_email || !serviceAccount.project_id) {
-    throw new Error(
-      'FIREBASE_SERVICE_ACCOUNT is missing required fields (private_key, client_email, or project_id). ' +
-      'Re-paste the complete service-account JSON with: npx wrangler secret put FIREBASE_SERVICE_ACCOUNT'
-    );
-  }
-
-  const header  = { alg: 'RS256', typ: 'JWT' };
-  const claims  = {
-    iss:   serviceAccount.client_email,
-    sub:   serviceAccount.client_email,
-    aud:   'https://oauth2.googleapis.com/token',
-    iat:   now,
-    exp:   now + 3600,
-    scope,
-  };
-
-  const unsigned = `${base64url(JSON.stringify(header))}.${base64url(JSON.stringify(claims))}`;
-
-  const key = await crypto.subtle.importKey(
-    'pkcs8',
-    pemToArrayBuffer(serviceAccount.private_key),
-    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-  const signature = await crypto.subtle.sign(
-    'RSASSA-PKCS1-v1_5',
-    key,
-    new TextEncoder().encode(unsigned)
-  );
-
-  const jwt = `${unsigned}.${base64url(signature)}`;
-
-  const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `grant_type=${encodeURIComponent('urn:ietf:params:oauth:grant-type:jwt-bearer')}&assertion=${jwt}`,
-  });
-  const tokenData = await tokenRes.json();
-  if (!tokenRes.ok) {
-    throw new Error('Failed to get Firebase access token: ' + JSON.stringify(tokenData));
-  }
-
-  _cachedAccessTokens[scope] = { token: tokenData.access_token, expiresAt: now + tokenData.expires_in };
-  return tokenData.access_token;
-}
-
-// Minimal Firestore value (en/de)coders — only the subtypes this file needs.
-function toFirestoreValue(v) {
-  if (v === null || v === undefined) return { nullValue: null };
-  if (typeof v === 'string')  return { stringValue: v };
-  if (typeof v === 'boolean') return { booleanValue: v };
-  if (typeof v === 'number')  return Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
-  if (Array.isArray(v))       return { arrayValue: { values: v.map(toFirestoreValue) } };
-  if (typeof v === 'object')  return { mapValue: { fields: Object.fromEntries(Object.entries(v).map(([k, val]) => [k, toFirestoreValue(val)])) } };
-  return { stringValue: String(v) };
-}
-
-function fromFirestoreValue(v) {
-  if (!v) return null;
-  if ('stringValue'  in v) return v.stringValue;
-  if ('booleanValue' in v) return v.booleanValue;
-  if ('integerValue'  in v) return parseInt(v.integerValue, 10);
-  if ('doubleValue'  in v) return v.doubleValue;
-  if ('nullValue'    in v) return null;
-  if ('arrayValue'   in v) return (v.arrayValue.values || []).map(fromFirestoreValue);
-  if ('mapValue'     in v) return Object.fromEntries(Object.entries(v.mapValue.fields || {}).map(([k, val]) => [k, fromFirestoreValue(val)]));
-  return null;
-}
-
-function docToObject(doc) {
-  if (!doc || !doc.fields) return null;
-  const id = (doc.name || '').split('/').pop();
-  return { id, ...Object.fromEntries(Object.entries(doc.fields).map(([k, v]) => [k, fromFirestoreValue(v)])) };
-}
-
-// Every Firestore helper below builds a REST URL by interpolating a document
-// ID directly into the path (`${base}/${collection}/${id}`). Several of
-// those IDs originate from client input (cart productIds, the order_id in
-// the public /api/checkout/status/:order_id URL, etc.) and were previously
-// passed through unsanitized. A value like `../users/<uid>` or
-// `..%2Fusers%2F<uid>` would escape the intended collection and let an
-// unauthenticated caller read or write an arbitrary document in ANY
-// collection — a path-traversal bug, not just a Firestore-permissions one,
-// since these requests go out authenticated as our own service account.
-// Real Firestore document IDs never contain "/", so we hard-reject anything
-// that does (after decoding %2F too) rather than trying to encode around it.
+// Every helper below builds a REST URL by interpolating a document ID
+// directly into the query string (`id=eq.<id>`). Several of those IDs
+// originate from client input (cart productIds, the order_id in the
+// public /api/checkout/status/:order_id URL, etc.) and must never be
+// allowed to smuggle extra PostgREST filter syntax (e.g. an embedded
+// `&` or `,`) into the query. Real document IDs here are either UUIDs
+// we generate or short alphanumeric order codes we generate — reject
+// anything that doesn't look like that instead of trying to escape it.
 function assertSafeDocId(id) {
   const raw = String(id ?? '');
-  let decoded = raw;
-  try { decoded = decodeURIComponent(raw); } catch { /* leave as-is */ }
-  if (!raw || raw.includes('/') || decoded.includes('/') || raw === '.' || raw === '..') {
+  if (!raw || !/^[A-Za-z0-9_\-\.]+$/.test(raw)) {
     throw new Error(`Invalid document ID: ${JSON.stringify(raw)}`);
   }
-  return encodeURIComponent(raw);
+  return raw;
 }
 
-const Firestore = {
-  async _baseUrl(env) {
-    const serviceAccount = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT);
-    return `https://firestore.googleapis.com/v1/projects/${serviceAccount.project_id}/databases/(default)/documents`;
-  },
+function supabaseRestBase(env) {
+  if (!env.SUPABASE_URL) throw new Error('SUPABASE_URL is not configured on this Worker.');
+  return `${env.SUPABASE_URL.replace(/\/+$/, '')}/rest/v1`;
+}
 
+function supabaseServiceHeaders(env, extra = {}) {
+  if (!env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error(
+      'SUPABASE_SERVICE_ROLE_KEY secret is not set on this Worker. ' +
+      'Run: npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY'
+    );
+  }
+  return {
+    apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+    Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+    'Content-Type': 'application/json',
+    ...extra,
+  };
+}
+
+// Turns one PostgREST row `{ collection, id, data, created_at, updated_at }`
+// into the flat `{ id, ...data }` shape the rest of this file (and the
+// frontend) expects — same shape docToObject() used to return.
+function rowToObject(row) {
+  if (!row) return null;
+  return { id: row.id, ...(row.data || {}) };
+}
+
+const Docs = {
   async getDoc(env, collection, id) {
     const safeId = assertSafeDocId(id);
-    const token = await getFirebaseAccessToken(env);
-    const base  = await this._baseUrl(env);
-    const res = await fetch(`${base}/${collection}/${safeId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.status === 404) return null;
-    if (!res.ok) throw new Error(`Firestore getDoc failed: ${res.status} ${await res.text()}`);
-    return docToObject(await res.json());
+    const res = await fetch(
+      `${supabaseRestBase(env)}/documents?collection=eq.${encodeURIComponent(collection)}&id=eq.${encodeURIComponent(safeId)}&select=*`,
+      { headers: supabaseServiceHeaders(env) }
+    );
+    if (!res.ok) throw new Error(`Docs.getDoc failed: ${res.status} ${await res.text()}`);
+    const rows = await res.json();
+    return rows[0] ? rowToObject(rows[0]) : null;
   },
 
+  // Creates a doc with a generated id (Postgres default gen_random_uuid()).
   async addDoc(env, collection, data) {
-    const token = await getFirebaseAccessToken(env);
-    const base  = await this._baseUrl(env);
-    const fields = Object.fromEntries(Object.entries(data).map(([k, v]) => [k, toFirestoreValue(v)]));
-    const res = await fetch(`${base}/${collection}`, {
+    const res = await fetch(`${supabaseRestBase(env)}/documents`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fields }),
+      headers: supabaseServiceHeaders(env, { Prefer: 'return=representation' }),
+      body: JSON.stringify([{ collection, data }]),
     });
-    if (!res.ok) throw new Error(`Firestore addDoc failed: ${res.status} ${await res.text()}`);
-    return docToObject(await res.json());
+    if (!res.ok) throw new Error(`Docs.addDoc failed: ${res.status} ${await res.text()}`);
+    const rows = await res.json();
+    return rowToObject(rows[0]);
   },
 
-  async updateDoc(env, collection, id, data) {
+  // Partial update — merges `data` into the existing JSON (matches
+  // Firestore's updateDoc/updateMask behavior of only touching the given
+  // fields, not overwriting the whole document). Defined below the object
+  // literal as Docs.updateDoc, since it needs a read-modify-write
+  // (Postgres has no per-field JSON "updateMask" over plain REST the way
+  // Firestore's PATCH does) and reads more clearly as its own function.
+
+  async deleteDoc(env, collection, id) {
     const safeId = assertSafeDocId(id);
-    const token = await getFirebaseAccessToken(env);
-    const base  = await this._baseUrl(env);
-    const fields = Object.fromEntries(Object.entries(data).map(([k, v]) => [k, toFirestoreValue(v)]));
-    const mask = Object.keys(data).map(k => `updateMask.fieldPaths=${encodeURIComponent(k)}`).join('&');
-    const res = await fetch(`${base}/${collection}/${safeId}?${mask}`, {
-      method: 'PATCH',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fields }),
-    });
-    if (!res.ok) throw new Error(`Firestore updateDoc failed: ${res.status} ${await res.text()}`);
-    return docToObject(await res.json());
+    const res = await fetch(
+      `${supabaseRestBase(env)}/documents?collection=eq.${encodeURIComponent(collection)}&id=eq.${encodeURIComponent(safeId)}`,
+      { method: 'DELETE', headers: supabaseServiceHeaders(env) }
+    );
+    // Deleting a doc that's already gone is fine — PostgREST returns 200
+    // with an empty array either way, so there's nothing to special-case.
+    if (!res.ok) throw new Error(`Docs.deleteDoc failed: ${res.status} ${await res.text()}`);
   },
 
+  // Upsert — creates the doc at this exact id if it doesn't exist, or
+  // replaces its `data` entirely if it does (matches Firestore's set()
+  // without {merge:true}).
   async setDoc(env, collection, id, data) {
     const safeId = assertSafeDocId(id);
-    const token = await getFirebaseAccessToken(env);
-    const base  = await this._baseUrl(env);
-    const fields = Object.fromEntries(Object.entries(data).map(([k, v]) => [k, toFirestoreValue(v)]));
-    const res = await fetch(`${base}/${collection}/${safeId}`, {
-      method: 'PATCH',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fields }),
+    const res = await fetch(`${supabaseRestBase(env)}/documents?on_conflict=collection,id`, {
+      method: 'POST',
+      headers: supabaseServiceHeaders(env, {
+        Prefer: 'resolution=merge-duplicates,return=representation',
+      }),
+      body: JSON.stringify([{ collection, id: safeId, data, updated_at: new Date().toISOString() }]),
     });
-    if (!res.ok) throw new Error(`Firestore setDoc failed: ${res.status} ${await res.text()}`);
-    return docToObject(await res.json());
+    if (!res.ok) throw new Error(`Docs.setDoc failed: ${res.status} ${await res.text()}`);
+    const rows = await res.json();
+    return rowToObject(rows[0]);
   },
 
   // Atomically "claims" collection/id — creates a tiny doc there ONLY if
-  // one doesn't already exist there, using Firestore's
-  // currentDocument.exists=false precondition, and returns whether THIS
-  // call was the one that created it.
+  // one doesn't already exist there, and returns whether THIS call was
+  // the one that created it. A single INSERT with ON CONFLICT DO NOTHING
+  // is atomic in Postgres, same guarantee Firestore's
+  // currentDocument.exists=false precondition gave us.
   //
   // Used as a one-shot lock around order delivery. Both the payment-status
   // poll (payment-return.html hits this every ~3s) and the SlickPay
@@ -488,111 +355,107 @@ const Firestore = {
   // write has no atomicity of its own, so if the poll and the webhook land
   // within the same few hundred ms of each other, both can see 'pending'
   // and both call deliverOrder(), creating two purchase records (two
-  // license keys / access links) for one payment. Firestore's REST API has
-  // no multi-document transactions here, but a single conditional write
+  // license keys / access links) for one payment. This conditional insert
   // does the same job: only one of the two racing requests can win the
   // claim, so deliverOrder() only ever runs once per order.
   async claimOnce(env, collection, id) {
     const safeId = assertSafeDocId(id);
-    const token = await getFirebaseAccessToken(env);
-    const base  = await this._baseUrl(env);
-    const res = await fetch(`${base}/${collection}/${safeId}?currentDocument.exists=false`, {
-      method: 'PATCH',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fields: { claimedAt: toFirestoreValue(new Date().toISOString()) } }),
+    const res = await fetch(`${supabaseRestBase(env)}/documents?on_conflict=collection,id`, {
+      method: 'POST',
+      headers: supabaseServiceHeaders(env, {
+        Prefer: 'resolution=ignore-duplicates,return=representation',
+      }),
+      body: JSON.stringify([{ collection, id: safeId, data: { claimedAt: new Date().toISOString() } }]),
     });
-    // 409 = someone else's request already created this doc first — they
-    // won the race, so we must NOT deliver again.
-    if (res.status === 409) return false;
-    if (!res.ok) throw new Error(`Firestore claimOnce failed: ${res.status} ${await res.text()}`);
-    return true;
-  },
-
-  async deleteDoc(env, collection, id) {
-    const safeId = assertSafeDocId(id);
-    const token = await getFirebaseAccessToken(env);
-    const base  = await this._baseUrl(env);
-    const res = await fetch(`${base}/${collection}/${safeId}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    // Deleting a doc that's already gone is fine — treat 404 as success.
-    if (!res.ok && res.status !== 404) throw new Error(`Firestore deleteDoc failed: ${res.status} ${await res.text()}`);
+    if (!res.ok) throw new Error(`Docs.claimOnce failed: ${res.status} ${await res.text()}`);
+    const rows = await res.json();
+    // ignore-duplicates means a conflicting row returns an EMPTY array
+    // (nothing was inserted) rather than an error — so "we won the claim"
+    // is exactly "a row came back".
+    return rows.length > 0;
   },
 
   // List a collection ordered/limited — e.g. the most recent admin login
-  // records. Unlike queryCollection, this has no filters, just ordering.
+  // records. `orderByField` is a field INSIDE `data` (e.g. 'at',
+  // 'createdAt'), sorted as text — every timestamp this app writes is an
+  // ISO-8601 string, which sorts correctly as plain text.
   async listCollection(env, collection, { orderByField, direction = 'DESCENDING', limit = 50 } = {}) {
-    const token = await getFirebaseAccessToken(env);
-    const base  = await this._baseUrl(env);
-    const structuredQuery = { from: [{ collectionId: collection }], limit };
+    const params = new URLSearchParams();
+    params.set('collection', `eq.${collection}`);
+    params.set('select', '*');
+    params.set('limit', String(limit));
     if (orderByField) {
-      structuredQuery.orderBy = [{ field: { fieldPath: orderByField }, direction }];
+      params.set('order', `data->>${orderByField}.${direction === 'DESCENDING' ? 'desc' : 'asc'}`);
     }
-    const res = await fetch(`${base}:runQuery`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ structuredQuery }),
+    const res = await fetch(`${supabaseRestBase(env)}/documents?${params.toString()}`, {
+      headers: supabaseServiceHeaders(env),
     });
-    if (!res.ok) throw new Error(`Firestore listCollection failed: ${res.status} ${await res.text()}`);
+    if (!res.ok) throw new Error(`Docs.listCollection failed: ${res.status} ${await res.text()}`);
     const rows = await res.json();
-    return rows.filter(r => r.document).map(r => docToObject(r.document));
+    return rows.map(rowToObject);
   },
 
-  // Run a structured query, e.g. find a purchase by a field value.
+  // Run a structured query, e.g. find a purchase by a field value (or
+  // several — all ANDed together, matching Firestore's compositeFilter).
   async queryCollection(env, collection, fieldFilters, limit = 10) {
-    const token = await getFirebaseAccessToken(env);
-    const base  = await this._baseUrl(env);
-    const structuredQuery = {
-      from: [{ collectionId: collection }],
-      where: {
-        compositeFilter: {
-          op: 'AND',
-          filters: fieldFilters.map(([field, value]) => ({
-            fieldFilter: {
-              field: { fieldPath: field },
-              op: 'EQUAL',
-              value: toFirestoreValue(value),
-            },
-          })),
-        },
-      },
-      limit,
-    };
-    const res = await fetch(`${base.replace(/\/documents$/, '/documents')}:runQuery`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ structuredQuery }),
+    const params = new URLSearchParams();
+    params.set('collection', `eq.${collection}`);
+    params.set('select', '*');
+    params.set('limit', String(limit));
+    for (const [field, value] of fieldFilters) {
+      // ->> compares the JSON value as text. Every field this app filters
+      // by (userId, productId, status, phone, name, variantLabel,
+      // invoiceId) is stored and compared as a string, so this matches
+      // Firestore's EQUAL semantics for these fields exactly. `null`
+      // needs `is.null` instead of `eq.` (Postgres, unlike `=`, treats
+      // NULL specially).
+      if (value === null || value === undefined) {
+        params.append(`data->>${field}`, 'is.null');
+      } else {
+        params.append(`data->>${field}`, `eq.${value}`);
+      }
+    }
+    const res = await fetch(`${supabaseRestBase(env)}/documents?${params.toString()}`, {
+      headers: supabaseServiceHeaders(env),
     });
-    if (!res.ok) throw new Error(`Firestore query failed: ${res.status} ${await res.text()}`);
+    if (!res.ok) throw new Error(`Docs.queryCollection failed: ${res.status} ${await res.text()}`);
     const rows = await res.json();
-    return rows.filter(r => r.document).map(r => docToObject(r.document));
+    return rows.map(rowToObject);
   },
 };
 
-// ---------------------------------------------------------------
-// Identity Toolkit admin calls — deleting a Firebase Auth account can only
-// be done server-side (the client SDK can only delete the currently signed
-// in user's own account). Uses the same service-account JWT flow as
-// Firestore, but with the identitytoolkit scope instead.
-// ---------------------------------------------------------------
-async function deleteFirebaseAuthUser(env, uid) {
-  const token = await getFirebaseAccessToken(env, 'https://www.googleapis.com/auth/identitytoolkit');
-  let projectId;
-  try { projectId = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT).project_id; }
-  catch (e) { throw new Error('FIREBASE_SERVICE_ACCOUNT secret is not valid JSON: ' + e.message); }
+Docs.updateDoc = async function updateDoc(env, collection, id, patch) {
+  const safeId = assertSafeDocId(id);
+  const existing = await Docs.getDoc(env, collection, safeId);
+  const merged = { ...(existing || {}), ...patch };
+  delete merged.id; // `id` lives in its own column, not inside `data`
+  const res = await fetch(
+    `${supabaseRestBase(env)}/documents?collection=eq.${encodeURIComponent(collection)}&id=eq.${encodeURIComponent(safeId)}`,
+    {
+      method: 'PATCH',
+      headers: supabaseServiceHeaders(env, { Prefer: 'return=representation' }),
+      body: JSON.stringify({ data: merged, updated_at: new Date().toISOString() }),
+    }
+  );
+  if (!res.ok) throw new Error(`Docs.updateDoc failed: ${res.status} ${await res.text()}`);
+  const rows = await res.json();
+  return rows[0] ? rowToObject(rows[0]) : null;
+};
 
-  const res = await fetch(`https://identitytoolkit.googleapis.com/v1/projects/${projectId}/accounts:delete`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ localId: uid }),
+// ---------------------------------------------------------------
+// Supabase Auth admin calls — deleting an account can only be done
+// server-side with the service-role key (the browser SDK can only ever
+// act on the currently signed-in user).
+// ---------------------------------------------------------------
+async function deleteSupabaseAuthUser(env, uid) {
+  const res = await fetch(`${env.SUPABASE_URL.replace(/\/+$/, '')}/auth/v1/admin/users/${encodeURIComponent(uid)}`, {
+    method: 'DELETE',
+    headers: supabaseServiceHeaders(env),
   });
-  if (!res.ok) {
+  if (!res.ok && res.status !== 404) {
     let detail = '';
     try { detail = JSON.stringify(await res.json()); } catch {}
-    // A user that's already gone shouldn't block cleanup of our own records.
-    if (res.status === 400 && /USER_NOT_FOUND/i.test(detail)) return;
-    throw new Error(`Failed to delete Firebase Auth account: ${res.status} ${detail}`);
+    throw new Error(`Failed to delete Supabase Auth account: ${res.status} ${detail}`);
   }
 }
 
@@ -654,7 +517,7 @@ async function getProductDelivery(env, productId, productDoc) {
   let priv = null;
   try {
     const safeId = assertSafeDocId(productId);
-    priv = await Firestore.getDoc(env, `products/${safeId}/private`, 'delivery');
+    priv = await Docs.getDoc(env, `products/${safeId}/private`, 'delivery');
   } catch (e) {
     console.error('[getProductDelivery] private doc fetch failed:', e.message);
   }
@@ -673,7 +536,7 @@ async function priceCartItems(env, cartItems) {
   // checkout could even create the invoice. Promise.all fires them together.
   const priced = await Promise.all(cartItems.map(async (item) => {
     const productId = item.productId || item.id;
-    const product = await Firestore.getDoc(env, 'products', productId);
+    const product = await Docs.getDoc(env, 'products', productId);
     if (!product) throw new Error(`Product not found: ${productId}`);
     const { price: unitPrice, label: variantLabel } = resolveVariant(product, item.variantLabel);
     const qty = Math.max(1, parseInt(item.qty, 10) || 1);
@@ -745,7 +608,7 @@ async function deliverOrder(env, order) {
     let { autoDeliver, deliveryLink, deliveryType, images, category, name, deliveryFiles, contentType } = item;
     if ((autoDeliver === undefined || !Array.isArray(deliveryFiles) || contentType === undefined) && item.productId) {
       try {
-        const product = await Firestore.getDoc(env, 'products', item.productId);
+        const product = await Docs.getDoc(env, 'products', item.productId);
         if (product) {
           const delivery = await getProductDelivery(env, item.productId, product);
           autoDeliver   = delivery.autoDeliver;
@@ -810,7 +673,7 @@ async function deliverOrder(env, order) {
     if (isAuto) purchaseDoc.deliveredAt = now;
 
     try {
-      await Firestore.addDoc(env, 'purchases', purchaseDoc);
+      await Docs.addDoc(env, 'purchases', purchaseDoc);
     } catch (e) {
       console.error('[deliverOrder] Firestore addDoc failed:', e.message);
     }
@@ -969,7 +832,7 @@ export default {
       if (!auth.ok) return json({ error: auth.error }, auth.status);
       try {
         const cf = request.cf || {};
-        await Firestore.addDoc(env, 'admin_login_log', {
+        await Docs.addDoc(env, 'admin_login_log', {
           email:     auth.email,
           uid:       auth.uid,
           ip:        request.headers.get('CF-Connecting-IP') || 'unknown',
@@ -998,7 +861,7 @@ export default {
       if (!auth.ok) return json({ error: auth.error }, auth.status);
       try {
         const limit = Math.min(parseInt(url.searchParams.get('limit') || '100', 10) || 100, 500);
-        const entries = await Firestore.listCollection(env, 'admin_login_log', {
+        const entries = await Docs.listCollection(env, 'admin_login_log', {
           orderByField: 'at', direction: 'DESCENDING', limit,
         });
         return json({ entries });
@@ -1031,7 +894,7 @@ export default {
         // that predate a `createdAt` field being added. Fetch everything,
         // then sort here where a missing field just falls back to 0
         // instead of vanishing the user from the list.
-        const users = await Firestore.listCollection(env, 'users', { limit });
+        const users = await Docs.listCollection(env, 'users', { limit });
         users.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
         return json({ users });
       } catch (err) {
@@ -1042,9 +905,9 @@ export default {
 
     // ============================================================
     // ROUTE: POST /api/delete-user
-    // Deletes a customer: their Firestore `users/{uid}` doc AND their real
-    // Firebase Auth account (the latter can only be done server-side, with
-    // the service account — the client SDK can't delete other users).
+    // Deletes a customer: their `users/{uid}` document AND their real
+    // Supabase Auth account (the latter can only be done server-side, with
+    // the service-role key — the browser SDK can't delete other users).
     // Their `purchases` docs are left in place — deleting a user shouldn't
     // silently wipe order history/analytics.
     // ============================================================
@@ -1064,8 +927,8 @@ export default {
           return json({ error: "You can't delete the account you're currently signed in as." }, 400);
         }
 
-        await Firestore.deleteDoc(env, 'users', uid);
-        await deleteFirebaseAuthUser(env, uid);
+        await Docs.deleteDoc(env, 'users', uid);
+        await deleteSupabaseAuthUser(env, uid);
 
         return json({ ok: true });
       } catch (err) {
@@ -1106,10 +969,10 @@ export default {
 
         let order = null;
         if (orderId) {
-          order = await Firestore.getDoc(env, 'slickpay_orders', orderId);
+          order = await Docs.getDoc(env, 'slickpay_orders', orderId);
         }
         if (!order && invoiceId) {
-          const matches = await Firestore.queryCollection(env, 'slickpay_orders', [['invoiceId', invoiceId]], 1);
+          const matches = await Docs.queryCollection(env, 'slickpay_orders', [['invoiceId', invoiceId]], 1);
           order = matches[0] || null;
           if (order) orderId = order.id;
         }
@@ -1118,13 +981,13 @@ export default {
         if (completed === 1 && order.status !== 'delivered') {
           try {
             // Claim delivery for this order before doing it — see
-            // Firestore.claimOnce() for why: the checkout/status poll can
+            // Docs.claimOnce() for why: the checkout/status poll can
             // land at nearly the same moment as this webhook, and without
             // this lock both could deliver the same order twice.
-            const won = await Firestore.claimOnce(env, 'order_delivery_locks', orderId);
+            const won = await Docs.claimOnce(env, 'order_delivery_locks', orderId);
             if (won) {
               await deliverOrder(env, order);
-              await Firestore.updateDoc(env, 'slickpay_orders', orderId, {
+              await Docs.updateDoc(env, 'slickpay_orders', orderId, {
                 status: 'delivered',
                 paidAt: new Date().toISOString(),
               });
@@ -1208,8 +1071,8 @@ export default {
           // `npx wrangler tail` or the Cloudflare dashboard) — never to the
           // customer. A raw config/secret error was previously shown
           // directly in the checkout modal, which leaked internal backend
-          // state (e.g. "FIREBASE_SERVICE_ACCOUNT secret is not valid
-          // JSON") to shoppers.
+          // state (e.g. "SUPABASE_SERVICE_ROLE_KEY secret is not set") to
+          // shoppers.
           console.error('[checkout] priceCartItems failed:', err.message);
           return json({ error: 'We could not process your cart right now. Please try again in a moment, or contact support if this persists.' }, 400);
         }
@@ -1286,7 +1149,7 @@ export default {
 
         // Persist the pending order in Firestore (best-effort — don't block payment)
         try {
-          await Firestore.setDoc(env, 'slickpay_orders', orderId, {
+          await Docs.setDoc(env, 'slickpay_orders', orderId, {
             orderId,
             invoiceId: String(invoiceId),
             product_id:   product_id       || (pricedItems && pricedItems.length === 1 ? pricedItems[0].productId : ''),
@@ -1332,7 +1195,7 @@ export default {
         // Fetch our persisted order from Firestore
         let order = null;
         try {
-          order = await Firestore.getDoc(env, 'slickpay_orders', orderId);
+          order = await Docs.getDoc(env, 'slickpay_orders', orderId);
         } catch { /* not found */ }
 
         if (!order || !order.invoiceId) {
@@ -1345,10 +1208,10 @@ export default {
         if (order.status === 'paid' || order.status === 'delivered') {
           if (order.status === 'paid') {
             try {
-              const won = await Firestore.claimOnce(env, 'order_delivery_locks', orderId);
+              const won = await Docs.claimOnce(env, 'order_delivery_locks', orderId);
               if (won) {
                 await deliverOrder(env, order);
-                await Firestore.updateDoc(env, 'slickpay_orders', orderId, { status: 'delivered' });
+                await Docs.updateDoc(env, 'slickpay_orders', orderId, { status: 'delivered' });
               }
             } catch (fsErr) {
               console.error('[checkout/status] delivery retry failed:', fsErr.message);
@@ -1378,10 +1241,10 @@ export default {
             // this poll and the webhook can both observe status:'pending'
             // within the same instant, so only whichever one wins the
             // claim is allowed to actually deliver.
-            const won = await Firestore.claimOnce(env, 'order_delivery_locks', orderId);
+            const won = await Docs.claimOnce(env, 'order_delivery_locks', orderId);
             if (won) {
               await deliverOrder(env, order);
-              await Firestore.updateDoc(env, 'slickpay_orders', orderId, {
+              await Docs.updateDoc(env, 'slickpay_orders', orderId, {
                 status:  'delivered',
                 paidAt:  new Date().toISOString(),
               });
@@ -1427,7 +1290,7 @@ export default {
         const productId = (body.productId || body.product_id || '').toString().trim();
         if (!productId) return json({ error: 'productId is required.' }, 400);
 
-        const product = await Firestore.getDoc(env, 'products', productId);
+        const product = await Docs.getDoc(env, 'products', productId);
         if (!product) return json({ error: 'Product not found.' }, 404);
 
         const { price, label: variantLabel } = resolveVariant(product, body.variantLabel || body.variant_label || null);
@@ -1436,7 +1299,7 @@ export default {
         }
 
         // Don't hand out a second copy of the same free product/variant.
-        const existing = await Firestore.queryCollection(env, 'purchases', [
+        const existing = await Docs.queryCollection(env, 'purchases', [
           ['userId', auth.uid], ['productId', productId], ['variantLabel', variantLabel],
         ], 1);
         if (existing[0]) {
@@ -1461,7 +1324,7 @@ export default {
         // doc), just display context, so a missing users/{uid} doc doesn't
         // block the claim.
         let profile = {};
-        try { profile = (await Firestore.getDoc(env, 'users', auth.uid)) || {}; } catch { /* best-effort */ }
+        try { profile = (await Docs.getDoc(env, 'users', auth.uid)) || {}; } catch { /* best-effort */ }
 
         const purchaseDoc = {
           userId:        auth.uid,
@@ -1488,7 +1351,7 @@ export default {
         };
         if (isAuto) purchaseDoc.deliveredAt = now;
 
-        const created = await Firestore.addDoc(env, 'purchases', purchaseDoc);
+        const created = await Docs.addDoc(env, 'purchases', purchaseDoc);
         return json({ ok: true, purchase: created });
 
       } catch (err) {
@@ -1516,7 +1379,7 @@ export default {
         const productId = decodeURIComponent(path.slice('/api/content/'.length)).trim();
         if (!productId) return json({ error: 'productId is required.' }, 400);
 
-        const owned = await Firestore.queryCollection(env, 'purchases', [
+        const owned = await Docs.queryCollection(env, 'purchases', [
           ['userId', auth.uid], ['productId', productId], ['status', 'completed'],
         ], 1);
         const isAdmin = !!env.ADMIN_EMAIL && (auth.email || '').toLowerCase() === env.ADMIN_EMAIL.toLowerCase();
@@ -1525,7 +1388,7 @@ export default {
         }
 
         const safeId = assertSafeDocId(productId);
-        const curriculum = await Firestore.getDoc(env, `products/${safeId}/private`, 'curriculum');
+        const curriculum = await Docs.getDoc(env, `products/${safeId}/private`, 'curriculum');
         if (!curriculum) return json({ error: 'This content has no curriculum yet.' }, 404);
 
         return json({
@@ -1561,7 +1424,7 @@ export default {
         const completed = body.completed !== false; // default: marking complete
         if (!productId || !lessonId) return json({ error: 'productId and lessonId are required.' }, 400);
 
-        const owned = await Firestore.queryCollection(env, 'purchases', [
+        const owned = await Docs.queryCollection(env, 'purchases', [
           ['userId', auth.uid], ['productId', productId], ['status', 'completed'],
         ], 1);
         const purchase = owned[0];
@@ -1574,7 +1437,7 @@ export default {
           : prior.filter(id => id !== lessonId);
 
         const progress = { completedLessonIds: nextIds, lastLessonId: lessonId, updatedAt: new Date().toISOString() };
-        await Firestore.updateDoc(env, 'purchases', purchase.id, { progress });
+        await Docs.updateDoc(env, 'purchases', purchase.id, { progress });
 
         return json({ ok: true, progress });
       } catch (err) {
@@ -1585,15 +1448,13 @@ export default {
 
     // ROUTE: POST /api/complete-google-registration
     // Finishes a Google sign-up (username + phone) server-side, using the
-    // service account, instead of the client SDK writing to Firestore
-    // directly. The client-side path required Firestore security rules to
-    // grant a "list" permission on /users (for the duplicate username/phone
-    // checks) in addition to "get" — which most default rule sets don't
-    // grant, and got missed here — so every signup attempt failed with
-    // permission-denied regardless of the Firebase Console rules. Routing
-    // this through the Worker's service account bypasses client Firestore
-    // rules entirely (same as /api/claim-free, /api/delete-user, etc.), so
-    // it works immediately with no Firestore Rules changes required.
+    // service-role key, instead of the client SDK writing directly. The
+    // duplicate username/phone checks need to scan the whole `users`
+    // collection, which the anon key's RLS policies deliberately don't
+    // allow (only your own user doc, or the admin) — routing this through
+    // the Worker's service-role key bypasses that restriction safely,
+    // since the checks themselves are what keep it safe (same pattern as
+    // /api/claim-free, /api/delete-user, etc).
     // ============================================================
     if (path === '/api/complete-google-registration' && method === 'POST') {
       const auth = await requireUserAuth(request, env);
@@ -1619,18 +1480,18 @@ export default {
         // Duplicate checks — run server-side with the service account, so
         // they always work regardless of client Firestore rules.
         if (checkUsername) {
-          const nameMatches = await Firestore.queryCollection(env, 'users', [['name', username]], 2);
+          const nameMatches = await Docs.queryCollection(env, 'users', [['name', username]], 2);
           if (nameMatches.some(u => u.id !== auth.uid)) {
             return json({ error: 'This username is already taken. Please choose another one.' }, 409);
           }
         }
-        const phoneMatches = await Firestore.queryCollection(env, 'users', [['phone', phone]], 2);
+        const phoneMatches = await Docs.queryCollection(env, 'users', [['phone', phone]], 2);
         if (phoneMatches.some(u => u.id !== auth.uid)) {
           return json({ error: 'This phone number is already linked to another account.' }, 409);
         }
 
         const now = new Date().toISOString();
-        const existing = await Firestore.getDoc(env, 'users', auth.uid);
+        const existing = await Docs.getDoc(env, 'users', auth.uid);
         const userDoc = {
           id: auth.uid,
           email: auth.email || '',
@@ -1640,12 +1501,38 @@ export default {
           createdAt: (existing && existing.createdAt) || now,
           lastLogin: now,
         };
-        await Firestore.setDoc(env, 'users', auth.uid, userDoc);
+        await Docs.setDoc(env, 'users', auth.uid, userDoc);
 
         return json({ ok: true, user: { id: auth.uid, email: userDoc.email, name: userDoc.name, phone: userDoc.phone } });
 
       } catch (err) {
         console.error('[complete-google-registration] error:', err.message);
+        return json({ error: 'Internal server error.' }, 500);
+      }
+    }
+
+    // ============================================================
+    // ROUTE: POST /api/rollback-registration
+    // Self-service account deletion, used ONLY by supabase.js's
+    // register() when the account it just created (via Supabase Auth's
+    // signUp()) turns out to have a duplicate phone number and the
+    // signup needs to be rolled back so the email address is free to
+    // retry with. The Supabase browser SDK has no "delete my own
+    // account" method (only the service-role key can delete accounts),
+    // so this route exists purely to let a user delete THEMSELVES —
+    // requireUserAuth() below proves the caller's token really does
+    // belong to the account being deleted; there is no `uid` parameter
+    // to trust from the request body.
+    // ============================================================
+    if (path === '/api/rollback-registration' && method === 'POST') {
+      const auth = await requireUserAuth(request, env);
+      if (!auth.ok) return json({ error: auth.error }, auth.status);
+      try {
+        await Docs.deleteDoc(env, 'users', auth.uid).catch(() => {});
+        await deleteSupabaseAuthUser(env, auth.uid);
+        return json({ ok: true });
+      } catch (err) {
+        console.error('[rollback-registration] error:', err.message);
         return json({ error: 'Internal server error.' }, 500);
       }
     }
@@ -1656,22 +1543,11 @@ export default {
     }
 
     // ── Non-API routes: serve static files via the ASSETS binding ──
-    // The ASSETS binding sends a default `Cross-Origin-Opener-Policy:
-    // same-origin` header on every page. That header cuts the opener/popup
-    // relationship the browser normally keeps between a page and any popup
-    // window it opens — which breaks Firebase's signInWithPopup() (Google
-    // sign-in), since Firebase relies on the opener being able to watch the
-    // popup (window.closed) to know when auth finishes. That's the source of
-    // the "Cross-Origin-Opener-Policy... would block the window.closed call"
-    // console errors and the permission-denied error on sign-up: the second
-    // popup in completeGoogleRegistration() never resolves cleanly, so the
-    // Firestore calls that follow run without a properly attached auth
-    // token. Relaxing it to same-origin-allow-popups keeps the normal
-    // cross-origin-opener protections but explicitly allows this popup
-    // pattern.
-    const assetResponse = await env.ASSETS.fetch(request);
-    const response = new Response(assetResponse.body, assetResponse);
-    response.headers.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
-    return response;
+    // Google sign-in now goes through Supabase Auth's redirect-based OAuth
+    // flow (see supabase.js), not a popup, so this Worker no longer needs
+    // to relax Cross-Origin-Opener-Policy the way the old Firebase
+    // signInWithPopup() flow required. The ASSETS binding's default
+    // same-origin COOP header is left as-is.
+    return env.ASSETS.fetch(request);
   },
 };

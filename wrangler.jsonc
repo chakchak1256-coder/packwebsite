@@ -1,3 +1,11 @@
+// Required Worker secrets (never put these in `vars` — they're not
+// public). Set each with: npx wrangler secret put <NAME>
+//   SUPABASE_SERVICE_ROLE_KEY   — Supabase → Project Settings → API
+//   ADMIN_EMAIL                 — same email as the admin account you
+//                                 create in Supabase Auth (see supabase.js)
+//   SLICKPAY_KEY                — your SlickPay secret API key
+//   SLICKPAY_WEBHOOK_SIG        — a signature string you choose, also
+//                                 configured on the SlickPay webhook
 {
   "name": "digital-website",
   "main": "worker.js",
@@ -12,22 +20,24 @@
 
   "vars": {
     "APP_URL": "https://digital-website.digitch.workers.dev",
-    // Same value as firebaseConfig.apiKey in firebase.js — this is NOT a
-    // secret (Firebase's client apiKey is meant to be public), it just
-    // identifies the Firebase project when the Worker verifies an admin
-    // login token via Google's Identity Toolkit (see requireAdminAuth()
-    // in worker.js). Without this, every admin-only route (upload-file,
-    // delete-file, delete-user, login-history, log-access) fails auth.
-    "FIREBASE_API_KEY": "AIzaSyAz6LUNMFRHOo4_pvLoB9UMg_u-VRc_RHA",
-    "FIREBASE_PROJECT_ID": "generalwebsite-580f9",
-    "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@generalwebsite-580f9.iam.gserviceaccount.com",
+    // Same values as the `supabaseConfig` in supabase.js — these are NOT
+    // secrets (Supabase's URL and anon/publishable key are meant to be
+    // public; RLS is what actually protects your data), they just tell
+    // the Worker which Supabase project to talk to when verifying a
+    // signed-in visitor's access token (see requireAdminAuth() /
+    // requireUserAuth() in worker.js). Without these, every admin-only
+    // route (upload-file, delete-file, delete-user, login-history,
+    // log-access) and every customer route (claim-free, content,
+    // progress, complete-google-registration) fails auth.
+    "SUPABASE_URL": "https://redbcznzczspusdzbxbq.supabase.co",
+    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlZGJjem56Y3pzcHVzZHpieGJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NjQ5MDIsImV4cCI6MjEwNDA0MDkwMn0.DbyJI_hx9NufL0gRWZFCIbQ4jmlyyFFM402Bngr1Lj8",
     // "sandbox" uses devapi.slick-pay.com  |  "production" uses prodapi.slick-pay.com
     "SLICKPAY_ENV": "production",
     // NOTE: admin-only routes (upload-file, delete-file, delete-user,
     // login-history, log-access) are protected by requireAdminAuth() in
-    // worker.js, which verifies a Firebase ID token (Authorization: Bearer
-    // <token>) against ADMIN_EMAIL — not a static API key. There is no
-    // ADMIN_API_KEY in this codebase; don't set one expecting it to do
+    // worker.js, which verifies a Supabase Auth access token (Authorization:
+    // Bearer <token>) against ADMIN_EMAIL — not a static API key. There is
+    // no ADMIN_API_KEY in this codebase; don't set one expecting it to do
     // anything.
     // Public base URL of your R2 bucket (r2.dev URL or connected custom domain,
     // NO trailing slash) — required by POST /api/upload-file in worker.js.
