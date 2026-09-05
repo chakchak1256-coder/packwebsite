@@ -97,21 +97,22 @@
   /* --accent / --primary / --secondary stay admin-configurable via Settings
      (see Settings.applyTheme in supabase.js), so their names don't change —
      only the shipped default. One color, no secondary accent, no gradients. */
-  --accent:#3454D1;--accent-rgb:52,84,209;--accent-dark:#2A43A8;
-  --primary:#3454D1;--primary-rgb:52,84,209;
-  --secondary:#3454D1;--secondary-rgb:52,84,209;
+  --accent:#4F8CFF;--accent-rgb:79,140,255;--accent-dark:#3A6FE0;--accent-hover:#6EA3FF;
+  --primary:#4F8CFF;--primary-rgb:79,140,255;
+  --secondary:#4F8CFF;--secondary-rgb:79,140,255;
+  --success:#4ADE80;--success-rgb:74,222,128;
 
-  /* Dark theme (default) — ink-blue, not a flat near-black */
-  --bg:#12141C;--bg2:#191C27;--bg3:#232634;
-  --text:#EDEAE2;--text-muted:#8D91A6;--text-subtle:#A7ABBD;
-  --border:rgba(237,234,226,.09);--border-strong:rgba(237,234,226,.15);
-  --card:rgba(237,234,226,.03);
+  /* Dark theme (default) — midnight navy, not a flat near-black */
+  --bg:#0B1220;--bg2:#111B2E;--bg3:#16233A;
+  --text:#F5F7FB;--text-muted:#A8B4C7;--text-subtle:#8C99B0;
+  --border:#263650;--border-strong:rgba(168,180,199,.22);
+  --card:#16233A;
   --shadow:0 1px 3px rgba(0,0,0,.5),0 4px 12px rgba(0,0,0,.25);
   --shadow-md:0 4px 20px rgba(0,0,0,.4);
   --radius:12px;--radius-sm:8px;--transition:.18s ease;
-  --nav-bg:rgba(18,20,28,.85);
-  --glass-bg:rgba(237,234,226,.045);--glass-bg-strong:rgba(237,234,226,.07);
-  --glass-border:rgba(237,234,226,.09);--glass-shine:rgba(237,234,226,.07);
+  --nav-bg:rgba(11,18,32,.85);
+  --glass-bg:rgba(168,180,199,.045);--glass-bg-strong:rgba(168,180,199,.07);
+  --glass-border:rgba(168,180,199,.09);--glass-shine:rgba(168,180,199,.07);
 }
 [data-theme="light"] {
   --bg:#FBF9F4;--bg2:#F3EEE3;--bg3:#EAE3D3;
@@ -308,6 +309,36 @@ body.flash-on #topbar{top:56px}
 .section-header .section-tag{justify-content:center}
 .section-title{font-size:clamp(1.6rem,3.5vw,2.2rem);font-weight:600;color:var(--text)}
 .section-sub{color:var(--text-muted);max-width:480px;margin:.5rem auto 0;font-size:.9rem}
+#explore-categories{padding:4rem 0}
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem}
+.cat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:2rem 1.6rem;cursor:pointer;transition:all var(--transition)}
+.cat-card:hover{border-color:rgba(var(--accent-rgb),.4);transform:translateY(-3px)}
+.cat-icon{width:52px;height:52px;border-radius:var(--radius-sm);background:rgba(var(--accent-rgb),.12);
+  color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:1.1rem}
+.cat-card h3{font-family:'Fraunces',serif;font-size:1.15rem;font-weight:700;margin-bottom:.4rem}
+.cat-card p{color:var(--text-muted);font-size:.88rem;margin-bottom:1.1rem;line-height:1.5}
+.cat-cta{color:var(--accent);font-size:.85rem;font-weight:700;display:inline-flex;align-items:center;gap:.4rem}
+@media(max-width:820px){.cat-grid{grid-template-columns:1fr}}
+
+/* ---- How It Works ---- */
+#how-it-works{padding:4rem 0}
+.hiw-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;position:relative}
+.hiw-step{text-align:center;position:relative}
+.hiw-num{font-family:'Fraunces',serif;font-size:2.2rem;font-weight:800;color:rgba(var(--accent-rgb),.25);margin-bottom:.3rem}
+.hiw-icon{width:56px;height:56px;border-radius:50%;background:rgba(var(--accent-rgb),.12);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin:0 auto 1rem}
+.hiw-step h3{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:700;margin-bottom:.4rem}
+.hiw-step p{color:var(--text-muted);font-size:.87rem;max-width:280px;margin:0 auto;line-height:1.55}
+@media(max-width:820px){.hiw-grid{grid-template-columns:1fr;gap:2.2rem}}
+
+/* ---- Final CTA ---- */
+#final-cta{padding:4rem 0 5rem}
+.final-cta-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:3rem 2rem;text-align:center;max-width:760px;margin:0 auto}
+.final-cta-box h2{font-family:'Fraunces',serif;font-size:clamp(1.5rem,3.2vw,2rem);font-weight:700;margin-bottom:.7rem}
+.final-cta-box p{color:var(--text-muted);font-size:.92rem;max-width:520px;margin:0 auto 1.6rem;line-height:1.6}
+.final-cta-btns{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap}
 
 /* ===== BUTTONS ===== */
 .btn{
@@ -415,7 +446,7 @@ body.flash-on #topbar{top:56px}
 }
 .about-feat:hover{border-color:rgba(var(--accent-rgb),.3);transform:translateY(-2px)}
 .feat-icon{
-  width:36px;height:36px;border-radius:10px;flex-shrink:0;font-size:.9rem;
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;font-size:.9rem;color:var(--accent);
   background:rgba(var(--accent-rgb),.1);display:flex;align-items:center;justify-content:center;
 }
 .feat-body h4{font-size:.875rem;font-weight:600;margin-bottom:.1rem;color:var(--text)}
@@ -474,6 +505,7 @@ body.flash-on #topbar{top:56px}
   background:#EF4444;color:#fff;box-shadow:0 3px 8px rgba(0,0,0,.2)}
 .prod-info{padding:1rem}
 .prod-cat{font-size:.72rem;color:var(--text-muted);font-weight:500;margin-bottom:.3rem}
+.prod-type-tag{color:var(--accent);font-weight:700}
 .prod-name{font-family:'Fraunces',serif;font-size:.98rem;font-weight:500;margin-bottom:.45rem;line-height:1.3;color:var(--text)}
 .prod-price-row{display:flex;align-items:center;justify-content:space-between}
 .prod-prices{display:flex;align-items:baseline;gap:.4rem;flex-wrap:wrap}
@@ -563,7 +595,7 @@ body.flash-on #topbar{top:56px}
 .warranty-shield{
   width:72px;height:72px;margin:0 auto 1.5rem;border-radius:50%;
   background:rgba(var(--accent-rgb),.1);border:1px solid rgba(var(--accent-rgb),.25);
-  display:flex;align-items:center;justify-content:center;font-size:1.8rem;
+  display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:var(--accent);
 }
 .warranty-title{font-size:clamp(1.6rem,3.5vw,2.2rem);font-weight:800;margin-bottom:1.2rem;color:var(--text)}
 
@@ -575,7 +607,7 @@ body.flash-on #topbar{top:56px}
   transition:border-color var(--transition),transform var(--transition);
 }
 .warranty-card:hover{border-color:rgba(var(--accent-rgb),.3);transform:translateY(-2px)}
-.warranty-card-icon{font-size:1.3rem;margin-bottom:.7rem}
+.warranty-card-icon{font-size:1.3rem;margin-bottom:.7rem;color:var(--accent)}
 .warranty-card-title{font-family:'Fraunces',serif;font-size:.875rem;font-weight:700;margin-bottom:.35rem;color:var(--text)}
 .warranty-card-text{font-size:.8rem;color:var(--text-muted);line-height:1.65}
 
@@ -789,7 +821,19 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:2.5rem 0
 }
 .search-bar input{background:none;border:none;color:var(--text);outline:none;font-size:.875rem;width:200px}
 .search-bar input::placeholder{color:var(--text-muted)}
+.sort-select{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);
+  color:var(--text);font-size:.83rem;font-weight:600;padding:.6rem .9rem;cursor:pointer;
+  font-family:inherit;transition:border-color var(--transition)}
+.sort-select:hover{border-color:var(--border-strong)}
+.sort-select:focus{outline:none;border-color:rgba(var(--accent-rgb),.5)}
 .filter-chips{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1.5rem}
+.type-tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
+.type-tab{display:flex;align-items:center;gap:.5rem;padding:.55rem 1rem;border-radius:var(--radius-sm);
+  background:var(--card);border:1px solid var(--border);color:var(--text-muted);
+  font-size:.83rem;font-weight:600;transition:all var(--transition)}
+.type-tab i{font-size:.8rem}
+.type-tab:hover{color:var(--text);border-color:var(--border-strong)}
+.type-tab.active{background:rgba(var(--accent-rgb),.12);border-color:rgba(var(--accent-rgb),.4);color:var(--accent)}
 .chip{
   padding:5px 12px;border-radius:99px;font-size:.75rem;font-weight:600;cursor:pointer;
   background:var(--card);border:1px solid var(--border);color:var(--text-muted);
@@ -1171,8 +1215,8 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:2.5rem 0
 /* ===== ACCOUNT AREA ===== */
 #account-page{display:none;position:fixed;inset:0;z-index:830;background:var(--bg);overflow-y:auto}
 #account-page.active{display:block}
-.acct-inner{max-width:1160px;margin:0 auto;padding:128px 5vw 60px}
-.acct-layout{display:grid;grid-template-columns:250px 1fr;gap:2rem;align-items:start}
+.acct-inner{max-width:1500px;margin:0 auto;padding:128px 3vw 60px}
+.acct-layout{display:grid;grid-template-columns:230px 1fr;gap:2rem;align-items:start}
 .acct-side{position:sticky;top:138px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:.6rem;display:flex;flex-direction:column}
 .acct-side-user{display:flex;align-items:center;gap:.7rem;padding:.8rem .7rem 1rem;border-bottom:1px solid var(--border);margin-bottom:.5rem}
 .acct-avatar{width:42px;height:42px;border-radius:50%;background:rgba(var(--accent-rgb),.15);color:var(--accent);
@@ -1853,9 +1897,9 @@ footer::before{
 <nav id="nav">
   <div class="nav-links">
     <a href="#hero" data-section="hero" onclick="showMain()">Home</a>
-    <a href="#" data-section="products" onclick="closeWishlist();closeMyProducts();openAllProducts();return false;">Explore</a>
-    <a href="#about" data-section="about" onclick="closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">About</a>
-    <a href="#warranty" data-section="warranty" onclick="closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">Warranty</a>
+    <a href="#" data-section="products" onclick="closeAccount();closeWishlist();closeMyProducts();openAllProducts();return false;">Explore</a>
+    <a href="#about" data-section="about" onclick="closeAccount();closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">About</a>
+    <a href="#warranty" data-section="warranty" onclick="closeAccount();closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">Warranty</a>
   </div>
   <div class="nav-actions">
     <button id="user-btn" onclick="toggleUserMenu()" style="position:relative;width:42px;height:42px;border-radius:50%;background:var(--card);border:1px solid var(--border);align-items:center;justify-content:center;font-size:1rem;transition:all var(--transition)">
@@ -1882,23 +1926,23 @@ footer::before{
 
 <div id="mobile-nav">
   <a href="#hero" onclick="closeMobileNav();showMain()">Home</a>
-  <a href="#" onclick="closeMobileNav();closeWishlist();closeMyProducts();openAllProducts();return false;">Explore</a>
-  <a href="#about" onclick="closeMobileNav();closeMyProducts();closeAllProducts();closeWishlist();">About</a>
-  <a href="#warranty" onclick="closeMobileNav();closeMyProducts();closeAllProducts();closeWishlist();">Warranty</a>
+  <a href="#" onclick="closeMobileNav();closeAccount();closeWishlist();closeMyProducts();openAllProducts();return false;">Explore</a>
+  <a href="#about" onclick="closeMobileNav();closeAccount();closeMyProducts();closeAllProducts();closeWishlist();">About</a>
+  <a href="#warranty" onclick="closeMobileNav();closeAccount();closeMyProducts();closeAllProducts();closeWishlist();">Warranty</a>
 </div>
 
 <!-- ===== HERO ===== -->
 <section id="hero">
   <div class="hero-inner">
     <div class="hero-content">
-      <h1 class="hero-title">Learn skills that actually matter</h1>
-      <p class="hero-sub">Explore courses and content packs built to help you learn, build, and grow — with permanent access inside your own account.</p>
+      <h1 class="hero-title">Digital resources. Powerful packs. Skills that matter.</h1>
+      <p class="hero-sub">Discover carefully selected digital products, complete packs, and practical courses designed to help you create, learn, and grow — with permanent access inside your own account.</p>
       <div class="hero-btns">
-        <button class="btn btn-primary" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">
-          Explore Content <i class="fa-solid fa-arrow-right"></i>
+        <button class="btn btn-primary" onclick="openAllProducts()">
+          Explore Everything <i class="fa-solid fa-arrow-right"></i>
         </button>
-        <button class="btn btn-outline" onclick="document.getElementById('about').scrollIntoView({behavior:'smooth'})">
-          How It Works <i class="fa-solid fa-gear"></i>
+        <button class="btn btn-outline" onclick="openAllProducts('all','course')">
+          Browse Courses <i class="fa-solid fa-graduation-cap"></i>
         </button>
       </div>
       <div class="hero-preview" id="hero-preview" style="display:none"></div>
@@ -1914,6 +1958,37 @@ footer::before{
   <div class="carousel-track-wrap">
     <div class="carousel-track" id="game-carousel-track">
       <!-- Populated by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- ===== EXPLORE CATEGORIES ===== -->
+<section id="explore-categories">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">What we offer</div>
+      <h2 class="section-title">Three ways to level up</h2>
+      <p class="section-sub">One catalog, three formats — pick what fits how you like to learn.</p>
+    </div>
+    <div class="cat-grid">
+      <div class="cat-card" onclick="openAllProducts('all','product')">
+        <div class="cat-icon"><i class="fa-solid fa-cube"></i></div>
+        <h3>Digital Products</h3>
+        <p>Individual resources for your next project.</p>
+        <span class="cat-cta">Browse Products <i class="fa-solid fa-arrow-right"></i></span>
+      </div>
+      <div class="cat-card" onclick="openAllProducts('all','pack')">
+        <div class="cat-icon"><i class="fa-solid fa-layer-group"></i></div>
+        <h3>Digital Packs</h3>
+        <p>Curated bundles with more value in one place.</p>
+        <span class="cat-cta">Browse Packs <i class="fa-solid fa-arrow-right"></i></span>
+      </div>
+      <div class="cat-card" onclick="openAllProducts('all','course')">
+        <div class="cat-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+        <h3>Courses</h3>
+        <p>Learn practical skills through structured content.</p>
+        <span class="cat-cta">Browse Courses <i class="fa-solid fa-arrow-right"></i></span>
+      </div>
     </div>
   </div>
 </section>
@@ -1936,6 +2011,38 @@ footer::before{
       <div class="mp-skeleton"><div class="sk-img"></div><div class="sk-body"><div class="sk-line"></div><div class="sk-line short"></div><div class="sk-line" style="width:80%;height:28px;border-radius:6px;margin-top:.5rem"></div></div></div>
       <div class="mp-skeleton"><div class="sk-img"></div><div class="sk-body"><div class="sk-line"></div><div class="sk-line short"></div><div class="sk-line" style="width:80%;height:28px;border-radius:6px;margin-top:.5rem"></div></div></div>
     </div>
+  </div>
+</section>
+
+<!-- ===== DIGITAL PACKS ===== -->
+<section id="packs-section" style="display:none">
+  <div class="container">
+    <div class="products-hdr">
+      <div>
+        <div class="section-tag">More value, one place</div>
+        <h2 class="section-title" style="margin-bottom:0">Digital Packs</h2>
+      </div>
+      <button class="btn btn-outline" onclick="openAllProducts('all','pack')">
+        Explore Packs <i class="fa-solid fa-arrow-right"></i>
+      </button>
+    </div>
+    <div class="products-grid" id="packs-grid"></div>
+  </div>
+</section>
+
+<!-- ===== COURSES ===== -->
+<section id="courses-section" style="display:none">
+  <div class="container">
+    <div class="products-hdr">
+      <div>
+        <div class="section-tag">Learn by doing</div>
+        <h2 class="section-title" style="margin-bottom:0">Courses</h2>
+      </div>
+      <button class="btn btn-outline" onclick="openAllProducts('all','course')">
+        Explore Courses <i class="fa-solid fa-arrow-right"></i>
+      </button>
+    </div>
+    <div class="products-grid" id="courses-grid"></div>
   </div>
 </section>
 
@@ -1978,10 +2085,10 @@ footer::before{
         <h2 class="about-title">A place built for learning that actually sticks</h2>
         <p class="about-desc">DIGITCH is a learning platform — courses and content packs built by people who actually know the subject, unlocked permanently in your own account.</p>
         <div class="about-feats">
-          <div class="about-feat"><div class="feat-icon">⚡</div><div class="feat-body"><h4>Quality First</h4><p>Every course and pack is reviewed before it's published.</p></div></div>
-          <div class="about-feat"><div class="feat-icon">🔒</div><div class="feat-body"><h4>100% Secure</h4><p>All transactions protected. Access tied to your account, not a device.</p></div></div>
-          <div class="about-feat"><div class="feat-icon">💰</div><div class="feat-body"><h4>Fair Pricing</h4><p>Transparent pricing. No hidden fees.</p></div></div>
-          <div class="about-feat"><div class="feat-icon">🎯</div><div class="feat-body"><h4>Curated Curriculum</h4><p>Every module is structured so you can actually finish what you start.</p></div></div>
+          <div class="about-feat"><div class="feat-icon"><i class="fa-solid fa-bolt"></i></div><div class="feat-body"><h4>Quality First</h4><p>Every course and pack is reviewed before it's published.</p></div></div>
+          <div class="about-feat"><div class="feat-icon"><i class="fa-solid fa-lock"></i></div><div class="feat-body"><h4>100% Secure</h4><p>All transactions protected. Access tied to your account, not a device.</p></div></div>
+          <div class="about-feat"><div class="feat-icon"><i class="fa-solid fa-sack-dollar"></i></div><div class="feat-body"><h4>Fair Pricing</h4><p>Transparent pricing. No hidden fees.</p></div></div>
+          <div class="about-feat"><div class="feat-icon"><i class="fa-solid fa-bullseye"></i></div><div class="feat-body"><h4>Curated Curriculum</h4><p>Every module is structured so you can actually finish what you start.</p></div></div>
         </div>
       </div>
       <div class="about-right">
@@ -1999,43 +2106,74 @@ footer::before{
   </div>
 </section>
 
+<!-- ===== HOW IT WORKS ===== -->
+<section id="how-it-works">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Getting started</div>
+      <h2 class="section-title">How It Works</h2>
+      <p class="section-sub">From browsing to learning, in three simple steps.</p>
+    </div>
+    <div class="hiw-grid">
+      <div class="hiw-step">
+        <div class="hiw-num">01</div>
+        <div class="hiw-icon"><i class="fa-solid fa-compass"></i></div>
+        <h3>Explore</h3>
+        <p>Browse digital products, packs, and courses across every category.</p>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-num">02</div>
+        <div class="hiw-icon"><i class="fa-solid fa-square-check"></i></div>
+        <h3>Choose</h3>
+        <p>Pick what fits your goals and check out securely in a few clicks.</p>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-num">03</div>
+        <div class="hiw-icon"><i class="fa-solid fa-unlock"></i></div>
+        <h3>Access</h3>
+        <p>Get instant, permanent access inside your own account — anytime, anywhere.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ===== WARRANTY ===== -->
 <section id="warranty">
   <div class="warranty-bg"></div>
   <div class="container">
     <div class="warranty-inner">
-      <div class="warranty-shield">🛡️</div>
+      <div class="warranty-shield"><i class="fa-solid fa-shield-halved"></i></div>
       <div class="section-tag">Our promise</div>
       <h2 class="warranty-title">We stand behind everything we publish</h2>
       <p class="warranty-lead">At DIGITCH, our commitment doesn't end at checkout. Every course and pack is reviewed, and every learner is supported. Your progress isn't just saved — it's yours for good.</p>
       <div class="warranty-cards">
         <div class="warranty-card">
-          <div class="warranty-card-icon">✅</div>
+          <div class="warranty-card-icon"><i class="fa-solid fa-circle-check"></i></div>
           <div class="warranty-card-title">Reviewed Content</div>
           <div class="warranty-card-text">Every course and pack is checked before it's published on the platform.</div>
         </div>
         <div class="warranty-card">
-          <div class="warranty-card-icon">🔄</div>
+          <div class="warranty-card-icon"><i class="fa-solid fa-arrows-rotate"></i></div>
           <div class="warranty-card-title">Permanent Access</div>
           <div class="warranty-card-text">Once you're enrolled, your access never expires and lives in your account — sign in from anywhere.</div>
         </div>
         <div class="warranty-card">
-          <div class="warranty-card-icon">⚡</div>
+          <div class="warranty-card-icon"><i class="fa-solid fa-bolt"></i></div>
           <div class="warranty-card-title">Responsive Support</div>
           <div class="warranty-card-text">Our team responds within hours via WhatsApp and Telegram. You're never left waiting.</div>
         </div>
         <div class="warranty-card">
-          <div class="warranty-card-icon">🔒</div>
+          <div class="warranty-card-icon"><i class="fa-solid fa-lock"></i></div>
           <div class="warranty-card-title">Secure Transactions</div>
           <div class="warranty-card-text">Your personal information and enrollment details are always kept private and secure.</div>
         </div>
         <div class="warranty-card">
-          <div class="warranty-card-icon">💯</div>
+          <div class="warranty-card-icon"><i class="fa-solid fa-award"></i></div>
           <div class="warranty-card-title">Authenticity Promise</div>
           <div class="warranty-card-text">We only publish original content. No recycled material, no shortcuts.</div>
         </div>
         <div class="warranty-card">
-          <div class="warranty-card-icon">🇩🇿</div>
+          <div class="warranty-card-icon"><i class="fa-solid fa-heart"></i></div>
           <div class="warranty-card-title">Learner First</div>
           <div class="warranty-card-text">We listen, we support, and we stand behind every course we publish — always.</div>
         </div>
@@ -2066,14 +2204,28 @@ footer::before{
   </div>
 </section>
 
+<!-- ===== FINAL CTA ===== -->
+<section id="final-cta">
+  <div class="container">
+    <div class="final-cta-box">
+      <h2>Ready to find your next resource, pack, or course?</h2>
+      <p>Everything DIGITCH offers lives in one place — explore the full catalog and unlock permanent access today.</p>
+      <div class="final-cta-btns">
+        <button class="btn btn-primary" onclick="openAllProducts()">Explore Everything <i class="fa-solid fa-arrow-right"></i></button>
+        <button class="btn btn-outline" onclick="openAllProducts('all','course')">Browse Courses <i class="fa-solid fa-graduation-cap"></i></button>
+      </div>
+    </div>
+  </div>
+</section>
+
 <footer>
   <div class="container">
     <div class="footer-logo store-name">DIGITCH</div>
     <div class="footer-links">
       <a href="#hero" onclick="showMain()">Home</a>
-      <a href="#" onclick="closeWishlist();closeMyProducts();openAllProducts();return false;">Explore</a>
-      <a href="#about" onclick="closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">About</a>
-      <a href="#warranty" onclick="closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">Warranty</a>
+      <a href="#" onclick="closeAccount();closeWishlist();closeMyProducts();openAllProducts();return false;">Explore</a>
+      <a href="#about" onclick="closeAccount();closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">About</a>
+      <a href="#warranty" onclick="closeAccount();closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">Warranty</a>
     </div>
     <p class="footer-copy" id="footer-copy">© 2025 DIGITCH · All rights reserved</p>
   </div>
@@ -2336,10 +2488,23 @@ footer::before{
     <button class="back-btn" onclick="closeAllProducts()"><i class="fa-solid fa-arrow-left"></i> Back to Home</button>
     <div class="all-hdr">
       <h2 style="font-family:'Fraunces',serif;font-size:1.7rem;font-weight:800">Explore All Content</h2>
-      <div class="search-bar">
-        <i class="fa-solid fa-search" style="color:var(--text-muted)"></i>
-        <input type="text" id="search-input" placeholder="Search courses & packs..." oninput="renderAllProducts()"/>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center">
+        <div class="search-bar">
+          <i class="fa-solid fa-search" style="color:var(--text-muted)"></i>
+          <input type="text" id="search-input" placeholder="Search courses & packs..." oninput="renderAllProducts()"/>
+        </div>
+        <select id="sort-select" class="sort-select" onchange="renderAllProducts()">
+          <option value="newest">Newest</option>
+          <option value="price-asc">Price: Low to High</option>
+          <option value="price-desc">Price: High to Low</option>
+        </select>
       </div>
+    </div>
+    <div class="type-tabs" id="type-tabs">
+      <button class="type-tab active" data-type="all" onclick="setTypeFilter('all')"><i class="fa-solid fa-border-all"></i> All</button>
+      <button class="type-tab" data-type="product" onclick="setTypeFilter('product')"><i class="fa-solid fa-cube"></i> Digital Products</button>
+      <button class="type-tab" data-type="pack" onclick="setTypeFilter('pack')"><i class="fa-solid fa-layer-group"></i> Digital Packs</button>
+      <button class="type-tab" data-type="course" onclick="setTypeFilter('course')"><i class="fa-solid fa-graduation-cap"></i> Courses</button>
     </div>
     <div class="filter-chips" id="filter-chips"></div>
     <div class="products-grid" id="all-products-grid"></div>
@@ -2609,6 +2774,8 @@ function handleDbUpdate() {
       Wishlist.prune(validIds);
     }
     renderProducts();
+    renderFeaturedPacks();
+    renderFeaturedCourses();
     renderHeroPreview();
     renderTopbarSocials();
     updateFooter();
@@ -2701,6 +2868,38 @@ function renderProducts() {
   prods.slice(0, 4).forEach(p => g.appendChild(makeProductCard(p)));
 }
 
+// ===== DIGITAL PACKS (homepage) — real catalog items with contentType 'pack' =====
+function renderFeaturedPacks() {
+  const g = document.getElementById('packs-grid');
+  const section = document.getElementById('packs-section');
+  if (!g || !DB.isLoaded('products')) return;
+  const packs = DB.getAll('products').filter(p => p.contentType === 'pack');
+  g.innerHTML = '';
+  if (!packs.length) {
+    // Nothing to feature yet — hide the whole section instead of showing
+    // an empty grid on the homepage.
+    if (section) section.style.display = 'none';
+    return;
+  }
+  if (section) section.style.display = '';
+  packs.slice(0, 4).forEach(p => g.appendChild(makeProductCard(p)));
+}
+
+// ===== COURSES (homepage) — real catalog items with contentType 'course' =====
+function renderFeaturedCourses() {
+  const g = document.getElementById('courses-grid');
+  const section = document.getElementById('courses-section');
+  if (!g || !DB.isLoaded('products')) return;
+  const courses = DB.getAll('products').filter(p => p.contentType === 'course');
+  g.innerHTML = '';
+  if (!courses.length) {
+    if (section) section.style.display = 'none';
+    return;
+  }
+  if (section) section.style.display = '';
+  courses.slice(0, 4).forEach(p => g.appendChild(makeProductCard(p)));
+}
+
 function makeProductCard(prod) {
   const d = document.createElement('div'); d.className = 'product-card';
   const s = Settings.get();
@@ -2719,7 +2918,7 @@ function makeProductCard(prod) {
       </button>
     </div>
     <div class="prod-info">
-      <div class="prod-cat">${prod.category||''}</div>
+      <div class="prod-cat">${prod.category||''}${prod.contentType && prod.contentType !== 'product' ? ` <span class="prod-type-tag">· ${prod.contentType === 'course' ? 'Course' : 'Pack'}</span>` : ''}</div>
       <div class="prod-name">${prod.name}</div>
       ${starsHtml}
       <div class="prod-price-row">
@@ -2804,9 +3003,20 @@ async function claimFreeProduct(prod) {
 }
 
 // ===== ALL PRODUCTS PAGE =====
-function openAllProducts(filterCat = 'all') {
+// _typeFilter groups by contentType (product/pack/course — matches the three
+// DIGITCH business lines), independent from the admin-defined topic chips
+// (filter-chips, which group by p.category). Both can be active together.
+let _typeFilter = 'all';
+function setTypeFilter(type) {
+  _typeFilter = type;
+  document.querySelectorAll('#type-tabs .type-tab').forEach(t => t.classList.toggle('active', t.dataset.type === type));
+  renderAllProducts();
+}
+function openAllProducts(filterCat = 'all', filterType = 'all') {
   document.getElementById('all-products-page').classList.add('active');
   document.body.classList.add('no-scroll');
+  _typeFilter = filterType;
+  document.querySelectorAll('#type-tabs .type-tab').forEach(t => t.classList.toggle('active', t.dataset.type === filterType));
   renderAllFilters(filterCat);
   renderAllProducts(filterCat);
   document.getElementById('all-products-page').scrollTo(0,0);
@@ -2846,8 +3056,13 @@ function renderAllProducts(filterCat) {
   }
   const q = (document.getElementById('search-input')||{}).value?.toLowerCase()||'';
   let prods = DB.getAll('products');
+  if (_typeFilter && _typeFilter !== 'all') prods = prods.filter(p => (p.contentType || 'product') === _typeFilter);
   if (filterCat !== 'all') prods = prods.filter(p => p.category === filterCat);
   if (q) prods = prods.filter(p => p.name.toLowerCase().includes(q) || (p.description||'').toLowerCase().includes(q));
+  const sortVal = (document.getElementById('sort-select')||{}).value || 'newest';
+  if (sortVal === 'price-asc') prods = [...prods].sort((a,b) => (Number(a.price)||0) - (Number(b.price)||0));
+  else if (sortVal === 'price-desc') prods = [...prods].sort((a,b) => (Number(b.price)||0) - (Number(a.price)||0));
+  // 'newest' needs no re-sort — DB.getAll('products') is already newest-first
   const g = document.getElementById('all-products-grid'); g.innerHTML = '';
   if (!prods.length) { g.innerHTML = '<p style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:3rem">No content found.</p>'; return; }
   prods.forEach(p => g.appendChild(makeProductCard(p)));
@@ -2881,7 +3096,7 @@ function openProductDetail(id, fromAllPage = true) {
   const metaDesc = document.querySelector('meta[name="description"]');
   if (metaDesc) metaDesc.setAttribute('content', (prod.description || `Buy ${prod.name} on DIGITCH.`).slice(0, 160));
 
-  document.getElementById('pd-cat').textContent = prod.category||'';
+  document.getElementById('pd-cat').innerHTML = `${prod.category||''}${prod.contentType && prod.contentType !== 'product' ? ` <span class="prod-type-tag">· ${prod.contentType === 'course' ? 'Course' : 'Pack'}</span>` : ''}`;
   document.getElementById('pd-name').textContent = prod.name;
   document.getElementById('pd-price').textContent = formatPrice(prod.price, s.currency);
   document.getElementById('pd-desc').textContent = prod.description||'';
@@ -2896,6 +3111,7 @@ function openProductDetail(id, fromAllPage = true) {
   if (prod.badge) badges.innerHTML += `<span class="pd-badge-pill"><i class="fa-solid fa-fire"></i> ${prod.badge}</span>`;
   
   badges.innerHTML += `<span class="pd-badge-pill"><i class="fa-solid fa-shield-halved"></i> Guaranteed</span>`;
+  badges.innerHTML += `<span class="pd-badge-pill"><i class="fa-solid fa-infinity"></i> Permanent Access</span>`;
 
   // Stars
   const starsEl = document.getElementById('pd-stars-row');
@@ -3255,6 +3471,7 @@ function showMain() {
   closeProductDetail();
   closeMyProducts();
   closeWishlist();
+  closeAccount();
 }
 
 // ===== CART =====
