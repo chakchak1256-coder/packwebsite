@@ -17,12 +17,12 @@
   } catch(e) {}
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Admin — DIGITCH</title>
+<title>Admin — Orvyn</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <style>
 /* ============================================================
-   DIGITCH — Admin Panel (Clean Redesign)
+   Orvyn — Admin Panel (Clean Redesign)
    ============================================================ */
 :root{
   --accent:#4F8CFF;--accent-rgb:79,140,255;--accent-dark:#3A6FE0;
@@ -478,7 +478,7 @@ select.form-input option{background:var(--bg2)}
   <div class="login-grid"></div>
   <div class="login-box">
     <div class="login-logo">
-      <span class="login-logo-text store-name">DIGITCH</span>
+      <span class="login-logo-text store-name">Orvyn</span>
       <span class="login-logo-sub">Admin Panel</span>
     </div>
     <h2 class="login-title">Welcome Back</h2>
@@ -497,7 +497,7 @@ select.form-input option{background:var(--bg2)}
     </label>
     <button class="login-btn" onclick="doLogin()"><i class="fa-solid fa-lock-open"></i> Enter Admin Panel</button>
     <div class="login-error" id="login-error"><i class="fa-solid fa-circle-xmark"></i> Incorrect password. Please try again.</div>
-    <p class="login-hint">Protected area · <span class="store-name">DIGITCH</span></p>
+    <p class="login-hint">Protected area · <span class="store-name">Orvyn</span></p>
   </div>
 </div>
 
@@ -508,7 +508,7 @@ select.form-input option{background:var(--bg2)}
   <aside id="sidebar">
     <div class="sidebar-logo">
       <img class="sidebar-logo-img nav-logo-img" alt="logo"/>
-      <span class="sidebar-logo-text nav-logo-text store-name">DIGITCH</span>
+      <span class="sidebar-logo-text nav-logo-text store-name">Orvyn</span>
       <span class="sidebar-logo-badge">ADMIN</span>
     </div>
     <nav class="sidebar-nav">
@@ -908,7 +908,7 @@ select.form-input option{background:var(--bg2)}
         <div class="form-section">
           <div class="form-section-title"><i class="fa-solid fa-palette"></i> Logo, Name &amp; Color</div>
           <div style="font-size:.82rem;color:var(--text-muted);margin-bottom:1.2rem">
-            This is the branding actually being served to visitors right now (read live from the database). If your storefront doesn't match your repo's default look, this is why — edit the fields below and save, or hit "Reset to Repo Defaults" to wipe any stray branding data and restore the shipped green DIGITCH look.
+            This is the branding actually being served to visitors right now (read live from the database). If your storefront doesn't match your repo's default look, this is why — edit the fields below and save, or hit "Reset to Repo Defaults" to wipe any stray branding data and restore the shipped green Orvyn look.
           </div>
           <div id="branding-current" style="display:flex;align-items:center;gap:1rem;margin-bottom:1.4rem;padding:.9rem 1rem;background:var(--bg3);border-radius:var(--radius-sm)">
             <img id="branding-current-logo" src="" alt="" style="height:40px;width:auto;display:none;border-radius:6px"/>
@@ -919,7 +919,7 @@ select.form-input option{background:var(--bg2)}
           </div>
           <div class="form-group">
             <label class="form-label">Store Name</label>
-            <input class="form-input" id="brand-store-name" placeholder="DIGITCH"/>
+            <input class="form-input" id="brand-store-name" placeholder="Orvyn"/>
           </div>
           <div class="form-group">
             <label class="form-label">Logo URL (light theme / default)</label>
@@ -3138,7 +3138,7 @@ async function saveAnnouncement() {
 // fix a bad value already saved there.
 // ================================================================
 const BRANDING_DEFAULTS = {
-  storeName: 'DIGITCH',
+  storeName: 'Orvyn',
   logoLight: '/logo.png',
   logoDark: null,
   logo: null,
@@ -3192,7 +3192,7 @@ async function saveBranding() {
 }
 
 async function resetBrandingToDefaults() {
-  if (!confirm('Reset branding to the repo defaults (DIGITCH, green, /logo.png)? This overwrites whatever is currently saved in the database.')) return;
+  if (!confirm('Reset branding to the repo defaults (Orvyn, green, /logo.png)? This overwrites whatever is currently saved in the database.')) return;
   await Settings.save({ ...BRANDING_DEFAULTS });
   Settings.applyTheme();
   loadBrandingForm();

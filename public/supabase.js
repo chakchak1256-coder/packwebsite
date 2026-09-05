@@ -859,7 +859,7 @@ const Reviews = {
       // Security) — same pattern as DB.add() below, so this failure is no
       // longer silently swallowed.
       if (e.message && /row-level security|permission denied/i.test(e.message)) {
-        console.error('[DIGITCH] Review delete BLOCKED by Row Level Security. The admin panel signs in via Supabase Auth as ADMIN_EMAIL (see Auth.login below) — make sure supabase/schema.sql\'s is_admin() policies were applied and that this account\'s email matches exactly.');
+        console.error('[Orvyn] Review delete BLOCKED by Row Level Security. The admin panel signs in via Supabase Auth as ADMIN_EMAIL (see Auth.login below) — make sure supabase/schema.sql\'s is_admin() policies were applied and that this account\'s email matches exactly.');
       } else {
         console.error('Reviews.delete:', e);
       }
@@ -1164,7 +1164,7 @@ const DB = {
     } catch(e) {
       // Log a helpful hint for the most common cause (Row Level Security)
       if (e.message && /row-level security|permission denied/i.test(e.message)) {
-        console.error('[DIGITCH] Write BLOCKED by Row Level Security. Make sure supabase/schema.sql was run in your Supabase project, and that you\'re signed in as the ADMIN_EMAIL account.');
+        console.error('[Orvyn] Write BLOCKED by Row Level Security. Make sure supabase/schema.sql was run in your Supabase project, and that you\'re signed in as the ADMIN_EMAIL account.');
       } else {
         console.error('DB.add error:', e);
       }
@@ -1309,7 +1309,7 @@ const Learning = {
 // ================================================================
 const Settings = {
   _defaults: {
-    storeName:'DIGITCH', logo:null, logoLight:null, logoDark:null,
+    storeName:'Orvyn', logo:null, logoLight:null, logoDark:null,
     primary:'#3454D1', secondary:'#3454D1', accent:'#3454D1', currency:'DA',
     social:{ facebook:'', instagram:'', whatsapp:'', telegram:'', tiktok:'', youtube:'' }
   },
