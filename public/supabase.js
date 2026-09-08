@@ -1378,7 +1378,16 @@ const Settings = {
     // Cover images for the 3 homepage "Three ways to level up" cards,
     // one per content type — set from the admin panel's "Content Types &
     // Topics" page (see admin.html renderCategoriesList/handleTypeImage).
-    contentTypeImages:{ product:null, pack:null, course:null }
+    contentTypeImages:{ product:null, pack:null, course:null },
+    // Master on/off switch per content type (Digital Products / Digital
+    // Packs / Courses) — set from the same "Content Types & Topics" page.
+    // When a type is off, the storefront hides every product of that
+    // contentType from browsing, search, the homepage, and related/wishlist
+    // grids — see index.html's isTypeEnabled()/visibleProducts(). The
+    // underlying product rows are never touched or deleted; this only
+    // controls what index.html chooses to render, so re-enabling instantly
+    // brings everything back exactly as it was.
+    enabledTypes:{ product:true, pack:true, course:true }
   },
   _data: null,
 

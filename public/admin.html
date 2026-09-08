@@ -636,6 +636,7 @@ select.form-input option{background:var(--bg2)}
           <span class="sec-title">Courses &amp; Packs <span id="prod-count" style="font-size:.8rem;color:var(--text-muted)"></span></span>
           <button class="btn btn-primary" onclick="showPanel('add-product')"><i class="fa-solid fa-plus"></i> Add Course / Pack</button>
         </div>
+        <div id="type-visibility-banner"></div>
         <div class="table-wrap">
           <table><thead><tr><th>Image</th><th>Name</th><th>Type</th><th>Topic</th><th>Price</th><th>Old Price</th><th>Featured</th><th>Actions</th></tr></thead><tbody id="products-tbody"></tbody></table>
         </div>
@@ -1464,15 +1465,30 @@ function resetProductStats(productId, productName) {
 // ===== PRODUCTS =====
 function renderProductsList() {
   const prods = DB.getAll('products'); const s = Settings.get();
+  const enabledTypes = s.enabledTypes || { product: true, pack: true, course: true };
   document.getElementById('prod-count').textContent = `(${prods.length})`;
+
+  // Banner: call out any content type that's currently switched off, with
+  // a one-click way back to the toggle (Content Types & Topics page).
+  const bannerEl = document.getElementById('type-visibility-banner');
+  if (bannerEl) {
+    const off = CONTENT_TYPES.filter(t => enabledTypes[t.key] === false);
+    bannerEl.innerHTML = off.length ? `
+      <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:9px;padding:.85rem 1rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+        <span style="color:#EF4444;font-size:.85rem"><i class="fa-solid fa-eye-slash"></i> ${off.map(t => t.label).join(' & ')} ${off.length > 1 ? 'are' : 'is'} currently hidden from the storefront — those items still exist below but visitors won't see them.</span>
+        <button class="btn btn-sm btn-outline" onclick="showPanel('categories')">Manage visibility</button>
+      </div>` : '';
+  }
+
   const tbody = document.getElementById('products-tbody');
   if (!prods.length) { tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="fa-solid fa-graduation-cap"></i><p>Nothing here yet. <strong>Add your first course or pack!</strong></p></div></td></tr>`; return; }
   const typeLabel = t => t === 'course' ? '🎓 Course' : t === 'pack' ? '📦 Pack' : '— Legacy';
   tbody.innerHTML = prods.map(p => {
     const img = (p.images||[])[0] || generatePlaceholder(p.name, 80, 60);
-    return `<tr>
+    const typeOff = enabledTypes[p.contentType || 'product'] === false;
+    return `<tr${typeOff ? ' style="opacity:.55"' : ''}>
       <td><div class="td-img"><img src="${img}" alt=""/></div></td>
-      <td><div class="td-name">${p.name}</div>${p.badge?`<span class="status-badge status-pending">${p.badge}</span>`:''}</td>
+      <td><div class="td-name">${p.name}</div>${p.badge?`<span class="status-badge status-pending">${p.badge}</span>`:''}${typeOff?' <span class="status-badge" style="background:rgba(239,68,68,.1);color:#EF4444;border:1px solid rgba(239,68,68,.2)" title="This item\'s content type is switched off"><i class="fa-solid fa-eye-slash"></i> Hidden</span>':''}</td>
       <td style="font-size:.82rem;white-space:nowrap">${typeLabel(p.contentType)}</td>
       <td class="td-cat">${p.category||'—'}</td>
       <td class="td-price">${p.price ? p.price.toLocaleString()+' '+s.currency : 'FREE'}</td>
@@ -2041,9 +2057,12 @@ function renderCategoriesList() {
   const wrap = document.getElementById('content-type-groups');
   if (!wrap) return;
 
+  const enabledTypes = settings.enabledTypes || { product:true, pack:true, course:true };
+
   const groupHtml = CONTENT_TYPES.map(t => {
     const topics = cats.filter(c => c.contentType === t.key);
     const img = _typeImagePending[t.key] !== undefined ? _typeImagePending[t.key] : (typeImages[t.key] || null);
+    const isOn = enabledTypes[t.key] !== false;
     const rows = topics.length ? topics.map(c => {
       const count = prods.filter(p => p.category === c.name).length;
       const cimg = c.image && c.image.length > 0 ? c.image : null;
@@ -2060,11 +2079,18 @@ function renderCategoriesList() {
     }).join('') : `<tr><td colspan="5"><div class="empty-state"><i class="fa-solid fa-tags"></i><p>No topics yet under ${t.label}.</p></div></td></tr>`;
 
     return `
-      <div class="form-section" style="margin-bottom:1.5rem">
+      <div class="form-section" style="margin-bottom:1.5rem${isOn ? '' : ';opacity:.62'}">
         <div class="form-section-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem">
-          <span><i class="fa-solid ${t.icon}"></i> ${t.label}</span>
-          <button class="btn btn-sm btn-primary" onclick="addTopicForType('${t.key}')"><i class="fa-solid fa-plus"></i> Add Topic</button>
+          <span><i class="fa-solid ${t.icon}"></i> ${t.label} ${isOn ? '' : '<span style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;background:rgba(239,68,68,.12);color:#EF4444;border:1px solid rgba(239,68,68,.25);border-radius:99px;padding:.15rem .6rem;margin-left:.4rem;vertical-align:middle">Hidden from storefront</span>'}</span>
+          <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:.55rem;cursor:pointer;font-size:.82rem;color:var(--text-muted)">
+              <input type="checkbox" ${isOn ? 'checked' : ''} onchange="toggleContentTypeEnabled('${t.key}', this.checked)" style="width:17px;height:17px;accent-color:var(--primary);cursor:pointer"/>
+              <span style="cursor:pointer">Visible on storefront</span>
+            </label>
+            <button class="btn btn-sm btn-primary" onclick="addTopicForType('${t.key}')"><i class="fa-solid fa-plus"></i> Add Topic</button>
+          </div>
         </div>
+        ${isOn ? '' : `<p style="color:#EF4444;font-size:.8rem;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:9px;padding:.7rem .9rem;margin:0 0 1rem">This whole content type is turned off. Every ${t.label.toLowerCase()} item stays in the database exactly as-is, but none of them will appear anywhere on the storefront (homepage, browsing, search, wishlist) until you switch this back on.</p>`}
         <div style="display:flex;gap:1.2rem;flex-wrap:wrap;align-items:flex-start;margin:1rem 0 1.3rem">
           <div>
             <label class="form-label" style="display:block;margin-bottom:.5rem">Cover Image <span>(shown on the homepage card)</span></label>
@@ -2147,6 +2173,25 @@ function addTopicForType(type) {
   editCategoryData = null;
   _addCatDefaultType = type;
   showPanel('add-category');
+}
+
+// Master on/off switch for a whole content type (Digital Products / Digital
+// Packs / Courses). Saves straight to Settings (settings/store doc), same
+// instant-save pattern as the type cover image right above — no separate
+// "Save" step. Nothing is deleted or edited on the products themselves;
+// index.html just skips rendering any product whose contentType is off.
+async function toggleContentTypeEnabled(type, isOn) {
+  const current = Settings.get().enabledTypes || { product: true, pack: true, course: true };
+  try {
+    await Settings.save({ enabledTypes: { ...current, [type]: isOn } });
+    renderCategoriesList();
+    renderProductsList();
+    const label = (CONTENT_TYPES.find(t => t.key === type) || {}).label || type;
+    showToast(isOn ? `✅ ${label} are visible on the storefront again` : `${label} are now hidden from the storefront`);
+  } catch (err) {
+    showToast('❌ Failed: ' + (err.message || err));
+    renderCategoriesList(); // revert the checkbox to the real saved state
+  }
 }
 
 function loadCategoryForm() {

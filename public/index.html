@@ -2826,6 +2826,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // (settings:update fires on both the initial load and any admin edit).
   Settings.applyTheme();
   applyContentTypeCardImages();
+  applyContentTypeVisibility();
   renderTopbarSocials();
   updateWaFloat();
   // renderTopbarSocials() and updateWaFloat() both read Settings.get().social,
@@ -2841,7 +2842,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // cached/defaulted) and again whenever settings:update actually fires
   // (fresh data in) makes them track their OWN data source instead of
   // hitching a ride on an unrelated one.
-  window.addEventListener('settings:update', () => { Settings.applyTheme(); applyContentTypeCardImages(); renderTopbarSocials(); updateWaFloat(); });
+  window.addEventListener('settings:update', () => { Settings.applyTheme(); applyContentTypeCardImages(); applyContentTypeVisibility(); renderTopbarSocials(); updateWaFloat(); renderProducts(); renderFeaturedPacks(); renderFeaturedCourses(); });
   // Handle ?open= param (e.g. redirects from payment-return.html)
   (function handleOpenParam() {
     const p = new URLSearchParams(window.location.search).get('open');
@@ -2871,11 +2872,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function handleDbUpdate() {
     // Clean up stale references to products that were deleted by the
-    // seller: drop them from anyone's cart and wishlist so people can no
-    // longer buy a removed product, and the wishlist badge count stays
+    // seller (or whose whole content type was switched off): drop them
+    // from anyone's cart and wishlist so people can no longer buy a
+    // removed/hidden product, and the wishlist badge count stays
     // accurate. Guarded on validIds.size so this never wipes carts before
     // the product list has actually loaded.
-    const allProducts = DB.getAll('products');
+    const allProducts = visibleProducts();
     const validIds = new Set(allProducts.map(p => p.id));
     if (validIds.size) {
       const removedFromCart = Cart.prune(validIds);
@@ -2911,7 +2913,7 @@ function handleDbUpdate() {
     // Deep link to a single product (e.g. someone opened a shared product link)
     if (_pendingProductOpen) {
       const sharedProd = DB.getById('products', _pendingProductOpen);
-      if (sharedProd) openProductDetail(sharedProd.id, false);
+      if (sharedProd && isTypeEnabled(sharedProd.contentType || 'product')) openProductDetail(sharedProd.id, false);
       _pendingProductOpen = ''; // only try once — catalog is fully loaded by the first db:update
       _hideDeepLinkLoader();
     }
@@ -2942,7 +2944,7 @@ function initScrollSpy() {
 function renderHeroPreview() {
   const el = document.getElementById('hero-preview');
   if (!el) return;
-  const prods = DB.getAll('products');
+  const prods = visibleProducts();
   const cats = DB.getAll('categories');
   if (!prods.length) return; // catalog not loaded yet — leave hidden
   const courseCount = prods.filter(p => p.contentType === 'course').length;
@@ -2972,7 +2974,7 @@ function renderProducts() {
   // as broken/slow rather than "still loading" — especially on mobile
   // where that whole DOMContentLoaded → network round trip takes longer.
   if (!DB.isLoaded('products')) return;
-  const all = DB.getAll('products'); // already sorted newest first (unshift on add)
+  const all = visibleProducts(); // already sorted newest first (unshift on add)
   const prods = all.filter(p => !!p.featured);
   const s = Settings.get();
   g.innerHTML = '';
@@ -2988,7 +2990,7 @@ function renderFeaturedPacks() {
   const g = document.getElementById('packs-grid');
   const section = document.getElementById('packs-section');
   if (!g || !DB.isLoaded('products')) return;
-  const packs = DB.getAll('products').filter(p => p.contentType === 'pack');
+  const packs = visibleProducts().filter(p => p.contentType === 'pack');
   g.innerHTML = '';
   if (!packs.length) {
     // Nothing to feature yet — hide the whole section instead of showing
@@ -3005,7 +3007,7 @@ function renderFeaturedCourses() {
   const g = document.getElementById('courses-grid');
   const section = document.getElementById('courses-section');
   if (!g || !DB.isLoaded('products')) return;
-  const courses = DB.getAll('products').filter(p => p.contentType === 'course');
+  const courses = visibleProducts().filter(p => p.contentType === 'course');
   g.innerHTML = '';
   if (!courses.length) {
     if (section) section.style.display = 'none';
@@ -3131,6 +3133,40 @@ function applyContentTypeCardImages() {
   });
 }
 
+// ===== CONTENT TYPE VISIBILITY (admin master switch per type) =====
+// Set from admin.html's "Content Types & Topics" page (Settings.enabledTypes).
+// When a type is off, nothing of that contentType should be discoverable
+// anywhere on the storefront — the underlying product rows are untouched,
+// this is purely a display filter. isTypeEnabled() defaults missing/legacy
+// types to visible so nothing disappears before Settings has ever been saved.
+function isTypeEnabled(type) {
+  const enabled = (Settings.get().enabledTypes) || {};
+  return enabled[type || 'product'] !== false;
+}
+// Drop-in replacement for DB.getAll('products') everywhere the storefront
+// lists/searches/suggests products — filters out any item whose content
+// type has been switched off in the admin panel.
+function visibleProducts() {
+  return DB.getAll('products').filter(p => isTypeEnabled(p.contentType || 'product'));
+}
+
+// Hides the homepage "Three ways to level up" card and the All Products
+// page's type tab for any content type that's currently switched off, and
+// bounces the active type filter back to "All" if it was pointing at a
+// type that just got turned off underneath it.
+function applyContentTypeVisibility() {
+  [['product', 'cat-card-product'], ['pack', 'cat-card-pack'], ['course', 'cat-card-course']].forEach(([type, cardId]) => {
+    const on = isTypeEnabled(type);
+    const card = document.getElementById(cardId);
+    if (card) card.style.display = on ? '' : 'none';
+    const tab = document.querySelector(`#type-tabs .type-tab[data-type="${type}"]`);
+    if (tab) tab.style.display = on ? '' : 'none';
+  });
+  if (typeof _typeFilter !== 'undefined' && _typeFilter !== 'all' && !isTypeEnabled(_typeFilter)) {
+    setTypeFilter('all');
+  }
+}
+
 // ===== ALL PRODUCTS PAGE =====
 // _typeFilter groups by contentType (product/pack/course — matches the three
 // Orvyn business lines). The topic chips (filter-chips, admin-managed under
@@ -3146,6 +3182,7 @@ function setTypeFilter(type) {
   renderAllProducts('all');
 }
 function openAllProducts(filterCat = 'all', filterType = 'all') {
+  if (filterType !== 'all' && !isTypeEnabled(filterType)) filterType = 'all';
   document.getElementById('all-products-page').classList.add('active');
   document.body.classList.add('no-scroll');
   _typeFilter = filterType;
@@ -3195,7 +3232,7 @@ function renderAllProducts(filterCat) {
     filterCat = active ? active.dataset.cat : 'all';
   }
   const q = (document.getElementById('search-input')||{}).value?.toLowerCase()||'';
-  let prods = DB.getAll('products');
+  let prods = visibleProducts();
   if (_typeFilter && _typeFilter !== 'all') prods = prods.filter(p => (p.contentType || 'product') === _typeFilter);
   if (filterCat !== 'all') prods = prods.filter(p => p.category === filterCat);
   if (q) prods = prods.filter(p => p.name.toLowerCase().includes(q) || (p.description||'').toLowerCase().includes(q));
@@ -3214,7 +3251,11 @@ function renderAllProducts(filterCat) {
 
 // ===== PRODUCT DETAIL =====
 function openProductDetail(id, fromAllPage = true) {
-  const prod = DB.getById('products', id); if (!prod) return;
+  const prod = DB.getById('products', id);
+  // Nothing opens for a deleted product, or one whose whole content type
+  // has been switched off in the admin panel — same "not available"
+  // outcome from the visitor's point of view either way.
+  if (!prod || !isTypeEnabled(prod.contentType || 'product')) return;
   Analytics.logView(prod.id, prod.name);
   Presence.setProduct(prod.id);
   fromAll = fromAllPage || document.getElementById('all-products-page').classList.contains('active');
@@ -3421,7 +3462,7 @@ function renderRelatedProducts(prod) {
   const section = document.getElementById('pd-related-section');
   const grid = document.getElementById('pd-related-grid');
   if (!section || !grid) return;
-  const related = DB.getAll('products')
+  const related = visibleProducts()
     .filter(p => p.id !== prod.id && p.category && p.category === prod.category)
     .slice(0, 4);
   grid.innerHTML = '';
@@ -3694,9 +3735,9 @@ function toggleCart() {
 }
 
 function renderCartItems() {
-  const allProducts = DB.getAll('products');
+  const allProducts = visibleProducts();
   const validIds = new Set(allProducts.map(p => p.id));
-  if (validIds.size) Cart.prune(validIds); // drop items for products the seller has since removed
+  if (validIds.size) Cart.prune(validIds); // drop items for products the seller has since removed or hidden
   if (validIds.size) Cart.syncPrices(allProducts); // never show a cached/stale price
   const items = Cart.get(); const s = Settings.get();
   const body = document.getElementById('cart-body');
@@ -3737,9 +3778,9 @@ let _coUseAccount = false;
 function openCheckout() {
   const user = UserAuth.current();
   if (!user) { openLoginModal('checkout'); return; }
-  const allProducts = DB.getAll('products');
+  const allProducts = visibleProducts();
   const validIds = new Set(allProducts.map(p => p.id));
-  if (validIds.size) Cart.prune(validIds); // never let someone check out a product that was removed
+  if (validIds.size) Cart.prune(validIds); // never let someone check out a product that was removed or hidden
   if (validIds.size) Cart.syncPrices(allProducts); // never charge a cached/stale price
   const cartItems = Cart.get();
   if (cartItems.length && Cart.total() <= 0) {
@@ -5328,7 +5369,7 @@ function renderWishlist() {
   const ids = Wishlist.get();
   const grid = document.getElementById(_wlCtx === 'account' ? 'acct-wishlist-grid' : 'wishlist-grid');
   if (!grid) return;
-  const prods = DB.getAll('products').filter(p => ids.includes(p.id));
+  const prods = visibleProducts().filter(p => ids.includes(p.id));
   grid.innerHTML = '';
   if (!prods.length) {
     const browseOnClick = _wlCtx === 'account' ? 'closeAccount();openAllProducts()' : 'closeWishlist();openAllProducts()';
@@ -5622,7 +5663,7 @@ function navSearchQuery(q, target) {
     const res = document.getElementById(target === 'mobile' ? 'mobile-search-results' : 'topbar-search-results');
     if (!res) return;
     if (!q.trim()) { res.classList.remove('show'); res.innerHTML = ''; return; }
-    const prods = DB.getAll('products').filter(p =>
+    const prods = visibleProducts().filter(p =>
       p.name.toLowerCase().includes(q.toLowerCase()) ||
       (p.description||'').toLowerCase().includes(q.toLowerCase()) ||
       (p.category||'').toLowerCase().includes(q.toLowerCase())
@@ -5897,7 +5938,7 @@ function renderRecentlyViewed() {
   if (!grid) return;
   try {
     const rv = JSON.parse(sessionStorage.getItem('dz_rv') || '[]');
-    const prods = rv.map(x => DB.getById('products', x.id)).filter(Boolean);
+    const prods = rv.map(x => DB.getById('products', x.id)).filter(p => p && isTypeEnabled(p.contentType || 'product'));
     grid.innerHTML = '';
     if (!prods.length) {
       grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:4rem 2rem;border:1px dashed var(--border);border-radius:var(--radius)">
