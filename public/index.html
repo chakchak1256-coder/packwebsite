@@ -239,7 +239,6 @@ body.flash-on #topbar{top:56px}
   body.flash-on #nav{top:150px}
   #mobile-nav{top:164px}
   body.flash-on #mobile-nav{top:202px}
-  #user-menu{top:164px !important}
   #hero{padding:256px 5vw 0}
   .all-products-inner,.product-page-inner,.mp-inner,.wishlist-inner{padding-top:184px}
   body.flash-on .all-products-inner,body.flash-on .product-page-inner,
@@ -282,6 +281,64 @@ body.flash-on #topbar{top:56px}
 }
 [data-theme="dark"] #cart-badge{border-color:var(--bg2)}
 #user-btn-wrap{position:relative}
+
+/* ===== ACCOUNT AVATAR + DROPDOWN (redesign) ===== */
+.avatar-btn{
+  position:relative;width:40px;height:40px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+  background:linear-gradient(135deg,var(--accent),var(--accent-dark));
+  color:#fff;font-family:'Fraunces',serif;font-weight:700;font-size:1rem;
+  border:2px solid var(--bg2);box-shadow:0 2px 10px rgba(var(--accent-rgb),.35);
+  cursor:pointer;transition:transform var(--transition),box-shadow var(--transition);
+}
+[data-theme="dark"] .avatar-btn{border-color:var(--bg)}
+.avatar-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(var(--accent-rgb),.45)}
+.avatar-btn img{width:100%;height:100%;object-fit:cover}
+.avatar-online-dot{
+  position:absolute;bottom:-1px;right:-1px;width:11px;height:11px;border-radius:50%;
+  background:var(--success);border:2px solid var(--bg2);
+}
+[data-theme="dark"] .avatar-online-dot{border-color:var(--bg)}
+
+.user-dropdown{
+  position:absolute;top:calc(100% + 14px);right:0;width:270px;
+  background:var(--bg2);border:1px solid var(--border);border-radius:18px;
+  box-shadow:0 24px 60px -16px rgba(0,0,0,.5);z-index:1000;overflow:hidden;
+  opacity:0;transform:translateY(-8px) scale(.97);pointer-events:none;
+  transition:opacity .18s ease,transform .18s ease;
+}
+.user-dropdown.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+.user-dropdown-header{
+  display:flex;align-items:center;gap:.8rem;padding:1.1rem;
+  background:rgba(var(--accent-rgb),.07);border-bottom:1px solid var(--border);
+}
+.user-dropdown-header .avatar-btn{cursor:default}
+.user-dropdown-header .avatar-btn:hover{transform:none;box-shadow:0 2px 10px rgba(var(--accent-rgb),.35)}
+.user-dropdown-id{min-width:0}
+.user-dropdown-name{font-size:.88rem;font-weight:700;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-dropdown-email{font-size:.72rem;color:var(--text-muted);font-family:monospace;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-dropdown-list{padding:.5rem}
+.user-dropdown-item{
+  display:flex;align-items:center;gap:.7rem;width:100%;padding:.5rem .6rem;
+  border-radius:11px;font-size:.85rem;font-weight:500;color:var(--text);
+  text-align:left;transition:background var(--transition);
+}
+.user-dropdown-item:hover{background:rgba(var(--accent-rgb),.09)}
+.udi-icon{
+  width:30px;height:30px;border-radius:9px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(var(--accent-rgb),.12);color:var(--accent);font-size:.8rem;
+}
+.user-dropdown-divider{height:1px;background:var(--border);margin:.4rem .5rem}
+.user-dropdown-item.danger{color:#EF4444}
+.user-dropdown-item.danger .udi-icon{background:rgba(239,68,68,.1);color:#EF4444}
+.user-dropdown-item.danger:hover{background:rgba(239,68,68,.08)}
+@media(max-width:420px){
+  .user-dropdown{width:calc(100vw - 10vw);right:-4vw}
+}
+
 .hamburger{display:none;flex-direction:column;gap:4px;width:32px;height:32px;
   align-items:center;justify-content:center}
 .hamburger span{display:block;width:18px;height:1.5px;background:var(--text-muted);
@@ -1985,21 +2042,36 @@ footer::before{
     <a href="#hero" data-section="hero" onclick="showMain()">Home</a>
     <a href="#" data-section="products" onclick="closeAccount();closeWishlist();closeMyProducts();openAllProducts();return false;">Explore</a>
     <a href="#about" data-section="about" onclick="closeAccount();closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">About</a>
+    <a href="#how-it-works" data-section="how-it-works" onclick="closeAccount();closeMyProducts();closeAllProducts();closeProductDetail();closeWishlist();">How it works</a>
   </div>
   <div class="nav-actions">
-    <button id="user-btn" onclick="toggleUserMenu()" aria-label="Account menu" style="position:relative;width:42px;height:42px;border-radius:50%;background:var(--card);border:1px solid var(--border);align-items:center;justify-content:center;font-size:1rem;transition:all var(--transition)">
-      <i class="fa-solid fa-user" id="user-icon"></i>
-    </button>
-    <div id="user-menu" style="display:none;position:absolute;top:112px;right:5vw;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:.5rem;min-width:200px;z-index:1000;box-shadow:0 12px 35px rgba(0,0,0,.5)">
-      <div id="user-menu-info" style="padding:.6rem .9rem;margin-bottom:.3rem;border-bottom:1px solid var(--border)"></div>
-      <button onclick="openAccount('library');document.getElementById('user-menu').style.display='none';" style="display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;width:100%;transition:background var(--transition)" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''"><i class="fa-solid fa-box-archive" style="color:var(--primary)"></i> My Library</button>
-      <button onclick="openAccount('orders');document.getElementById('user-menu').style.display='none';" style="display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;width:100%;transition:background var(--transition)" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''"><i class="fa-solid fa-receipt" style="color:var(--primary)"></i> Orders</button>
-      <button onclick="openAccount('wishlist');document.getElementById('user-menu').style.display='none';" style="display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;width:100%;transition:background var(--transition)" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''"><i class="fa-regular fa-heart" style="color:var(--primary)"></i> Wishlist</button>
-      <button onclick="openAccount('history');document.getElementById('user-menu').style.display='none';" style="display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;width:100%;transition:background var(--transition)" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''"><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary)"></i> History</button>
-      <button onclick="openAccount('settings');document.getElementById('user-menu').style.display='none';" style="display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;width:100%;transition:background var(--transition)" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''"><i class="fa-solid fa-gear" style="color:var(--primary)"></i> Settings</button>
-      <button onclick="openAccount('help');document.getElementById('user-menu').style.display='none';" style="display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;width:100%;transition:background var(--transition)" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''"><i class="fa-solid fa-circle-question" style="color:var(--primary)"></i> Help</button>
-      <div style="height:1px;background:var(--border);margin:.35rem .2rem"></div>
-      <button onclick="doUserLogout()" style="width:100%;display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;font-weight:500;color:var(--text-muted);transition:all var(--transition);text-align:left" onmouseover="this.style.color='#ff4d6d'" onmouseout="this.style.color='var(--text-muted)'"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+    <div id="user-btn-wrap">
+      <button id="user-btn" class="avatar-btn" onclick="toggleUserMenu()" aria-label="Account menu">
+        <img id="avatar-img" style="display:none" alt=""/>
+        <span id="avatar-initial">?</span>
+      </button>
+      <div id="user-menu" class="user-dropdown">
+        <div class="user-dropdown-header">
+          <div class="avatar-btn" aria-hidden="true">
+            <img id="avatar-img-dd" style="display:none" alt=""/>
+            <span id="avatar-initial-dd">?</span>
+          </div>
+          <div class="user-dropdown-id">
+            <div class="user-dropdown-name" id="dd-name">Account</div>
+            <div class="user-dropdown-email" id="dd-email"></div>
+          </div>
+        </div>
+        <div class="user-dropdown-list">
+          <button class="user-dropdown-item" onclick="openAccount('library');document.getElementById('user-menu').classList.remove('open');"><span class="udi-icon"><i class="fa-solid fa-box-archive"></i></span> My Library</button>
+          <button class="user-dropdown-item" onclick="openAccount('orders');document.getElementById('user-menu').classList.remove('open');"><span class="udi-icon"><i class="fa-solid fa-receipt"></i></span> Orders</button>
+          <button class="user-dropdown-item" onclick="openAccount('wishlist');document.getElementById('user-menu').classList.remove('open');"><span class="udi-icon"><i class="fa-regular fa-heart"></i></span> Wishlist</button>
+          <button class="user-dropdown-item" onclick="openAccount('history');document.getElementById('user-menu').classList.remove('open');"><span class="udi-icon"><i class="fa-solid fa-clock-rotate-left"></i></span> History</button>
+          <button class="user-dropdown-item" onclick="openAccount('settings');document.getElementById('user-menu').classList.remove('open');"><span class="udi-icon"><i class="fa-solid fa-gear"></i></span> Settings</button>
+          <button class="user-dropdown-item" onclick="openAccount('help');document.getElementById('user-menu').classList.remove('open');"><span class="udi-icon"><i class="fa-solid fa-circle-question"></i></span> Help</button>
+          <div class="user-dropdown-divider"></div>
+          <button class="user-dropdown-item danger" onclick="doUserLogout()"><span class="udi-icon"><i class="fa-solid fa-right-from-bracket"></i></span> Logout</button>
+        </div>
+      </div>
     </div>
     <button id="login-nav-btn" onclick="openLoginModal()" style="padding:8px 16px;border-radius:var(--radius-sm);background:rgba(var(--primary-rgb),.12);border:1px solid rgba(var(--primary-rgb),.3);color:var(--primary);font-size:.83rem;font-weight:700;transition:all var(--transition);white-space:nowrap"><i class="fa-solid fa-user"></i> Sign In</button>
     <button class="hamburger" onclick="toggleMobileNav()" id="hamburger-btn" aria-label="Open menu">
@@ -2012,6 +2084,7 @@ footer::before{
   <a href="#hero" onclick="closeMobileNav();showMain()">Home</a>
   <a href="#" onclick="closeMobileNav();closeAccount();closeWishlist();closeMyProducts();openAllProducts();return false;">Explore</a>
   <a href="#about" onclick="closeMobileNav();closeAccount();closeMyProducts();closeAllProducts();closeWishlist();">About</a>
+  <a href="#how-it-works" onclick="closeMobileNav();closeAccount();closeMyProducts();closeAllProducts();closeWishlist();">How it works</a>
 </div>
 
 <!-- ===== HERO ===== -->
@@ -2944,10 +3017,10 @@ window.addEventListener('scroll', () => {
 
 // ===== SCROLLSPY — active nav link ====
 function initScrollSpy() {
-  const sections = ['hero','products','about'];
+  const sections = ['hero','products','about','how-it-works'];
   const navLinks = document.querySelectorAll('.nav-links a[data-section]');
   // Map section ids to nav link data-section (the "products" section shows Our Products content)
-  const map = { hero:'hero', products:'new-arrivals', about:'about' };
+  const map = { hero:'hero', products:'new-arrivals', about:'about', 'how-it-works':'how-it-works' };
   const obs = new IntersectionObserver(entries => {
     entries.forEach(e => {
       if (e.isIntersecting) {
@@ -4547,10 +4620,18 @@ function initUserAuth() {
     _firebaseResolved = true;
     try { localStorage.setItem('dz_auth', '1'); } catch(e) {}
     document.documentElement.setAttribute('data-authed', 'true');
-    const userBtn = document.getElementById('user-btn');
-    if (userBtn) userBtn.style.borderColor = 'rgba(var(--primary-rgb),.5)';
-    const info = document.getElementById('user-menu-info');
-    if (info) info.innerHTML = `<div style="font-size:.78rem;color:var(--text-muted)">Signed in as</div><div style="font-size:.88rem;font-weight:700;margin-top:.15rem">${user.name}</div><div style="font-size:.75rem;font-family:monospace;color:var(--text-muted)">${user.email}</div>`;
+
+    const initial = (user.name || user.email || '?').trim().charAt(0).toUpperCase();
+    const photo = user.photoURL || '';
+    [['avatar-img','avatar-initial'], ['avatar-img-dd','avatar-initial-dd']].forEach(([imgId, txtId]) => {
+      const img = document.getElementById(imgId), txt = document.getElementById(txtId);
+      if (!img || !txt) return;
+      if (photo) { img.src = photo; img.style.display = 'block'; txt.style.display = 'none'; }
+      else { img.style.display = 'none'; txt.style.display = ''; txt.textContent = initial; }
+    });
+    const nameEl = document.getElementById('dd-name'), emailEl = document.getElementById('dd-email');
+    if (nameEl) nameEl.textContent = user.name || 'Account';
+    if (emailEl) emailEl.textContent = user.email || '';
   } else if (_firebaseResolved) {
     // Supabase confirmed no user — safe to clear
     localStorage.removeItem('dz_auth');
@@ -4560,14 +4641,13 @@ function initUserAuth() {
 }
 
 function toggleUserMenu() {
-  const menu = document.getElementById('user-menu');
-  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+  document.getElementById('user-menu').classList.toggle('open');
 }
 document.addEventListener('click', e => {
   const menu = document.getElementById('user-menu');
-  const btn = document.getElementById('user-btn');
-  if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
-    menu.style.display = 'none';
+  const wrap = document.getElementById('user-btn-wrap');
+  if (menu && wrap && !wrap.contains(e.target)) {
+    menu.classList.remove('open');
   }
 });
 
@@ -4672,7 +4752,7 @@ async function doCompleteGoogleSignup() {
 
 function doUserLogout() {
   UserAuth.logout(); initUserAuth();
-  document.getElementById('user-menu').style.display = 'none';
+  document.getElementById('user-menu').classList.remove('open');
   // If My Library (or any other overlay page) is open, signing out should
   // land back on the main storefront, not leave the person stranded on a
   // now-inaccessible "logged in" page.
