@@ -4,4 +4,4 @@ Disallow: /admin.html
 Disallow: /api/
 Disallow: /payment-return.html
 
-Sitemap: https://digital-website.digitch.workers.dev/sitemap.xml
+Sitemap: https://packwebsite.digitch.workers.dev/sitemap.xml

@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Orvyn — Seed &amp; Test Console</title>
+<meta name="robots" content="noindex, nofollow"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --accent:#3454D1;--bg:#0C0C0C;--bg2:#141414;--bg3:#1E1E1E;
+  --text:#F2F2F2;--text-muted:#71717A;--border:rgba(255,255,255,.08);
+  --radius:14px;--shadow:0 4px 32px rgba(0,0,0,.4);
+  --ok:#10B981;--fail:#EF4444;--warn:#F59E0B;
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;padding:2rem 1.25rem 4rem}
+.wrap{max-width:880px;margin:0 auto}
+h1{font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;margin-bottom:.35rem}
+.sub{color:var(--text-muted);font-size:.88rem;margin-bottom:1.5rem;line-height:1.6}
+.banner{
+  background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:#F59E0B;
+  border-radius:10px;padding:.85rem 1rem;font-size:.82rem;margin-bottom:1.5rem;line-height:1.55;
+}
+.card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:1.5rem;margin-bottom:1.25rem;box-shadow:var(--shadow);
+}
+.card h2{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;margin-bottom:.9rem;display:flex;align-items:center;gap:.5rem}
+.row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+input[type=password],input[type=text]{
+  background:var(--bg3);border:1px solid var(--border);color:var(--text);
+  border-radius:9px;padding:.7rem .9rem;font-family:'DM Sans',sans-serif;font-size:.88rem;
+  outline:none;flex:1;min-width:180px;
+}
+input[type=password]:focus,input[type=text]:focus{border-color:var(--accent)}
+.btn{
+  display:inline-flex;align-items:center;gap:.5rem;background:var(--accent);color:#fff;
+  font-weight:700;font-size:.85rem;padding:.7rem 1.3rem;border-radius:9px;border:none;
+  cursor:pointer;transition:opacity .15s;white-space:nowrap;
+}
+.btn:hover{opacity:.88}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn.danger{background:var(--fail)}
+.btn.ghost{background:transparent;color:var(--text-muted);border:1px solid var(--border)}
+.status-pill{
+  display:inline-flex;align-items:center;gap:.4rem;font-size:.78rem;font-weight:700;
+  padding:.3rem .7rem;border-radius:99px;text-transform:uppercase;letter-spacing:.03em;
+}
+.pill-off{background:rgba(113,113,122,.15);color:var(--text-muted)}
+.pill-on{background:rgba(16,185,129,.12);color:var(--ok);border:1px solid rgba(16,185,129,.25)}
+.dot{width:.5rem;height:.5rem;border-radius:50%;background:currentColor}
+.log{
+  background:#000;border:1px solid var(--border);border-radius:9px;padding:1rem;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.78rem;
+  max-height:420px;overflow-y:auto;line-height:1.7;
+}
+.log .line{white-space:pre-wrap;word-break:break-word}
+.log .ok{color:var(--ok)}
+.log .fail{color:var(--fail)}
+.log .warn{color:var(--warn)}
+.log .info{color:var(--text-muted)}
+.log .head{color:#fff;font-weight:700;margin-top:.4rem}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.6rem;margin-top:1rem}
+.stat{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:.7rem .8rem}
+.stat .n{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem}
+.stat .l{font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em}
+small.hint{color:var(--text-muted);font-size:.78rem;display:block;margin-top:.6rem;line-height:1.5}
+code{background:var(--bg3);padding:.1rem .35rem;border-radius:5px;font-size:.82em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🌱 Orvyn — Seed &amp; Test Console</h1>
+  <p class="sub">Populates the store with a full matrix of test data (topics, products, packs, courses, reviews, orders), then verifies every read path. Everything it creates is tagged <code>_seed:true</code> so it can be wiped in one click. Delete this file when you're done with it — it isn't linked from anywhere and <code>robots.txt</code> won't help if someone finds the URL.</p>
+
+  <div class="banner">
+    ⚠️ This writes real rows to the production Supabase project. Only run it against a project you're OK seeding test data into, and remove the seeded data (or this file) before going live.
+  </div>
+
+  <div class="card">
+    <h2>1 · Admin session <span id="auth-pill" class="status-pill pill-off"><span class="dot"></span>Not signed in</span></h2>
+    <div class="row">
+      <input type="password" id="admin-pass" placeholder="Admin password"/>
+      <button class="btn" id="login-btn" onclick="doLogin()">Sign in</button>
+      <button class="btn ghost" id="logout-btn" onclick="doLogout()" style="display:none">Sign out</button>
+    </div>
+    <small class="hint">Signs in as the admin account configured in <code>supabase.js</code> (<code>ADMIN_EMAIL</code>). Writes to products/categories/reviews/orders are gated by Row Level Security to that account.</small>
+  </div>
+
+  <div class="card">
+    <h2>2 · Seed data</h2>
+    <p class="sub" style="margin-bottom:.9rem">Creates 3 topics, 7 products covering every content type / delivery / pricing combination, 3 reviews (2 approved, 1 pending), and 2 orders (1 pending, 1 paid).</p>
+    <div class="row">
+      <button class="btn" id="seed-btn" onclick="seedAll()" disabled>Seed database</button>
+      <button class="btn outline" id="verify-btn" onclick="runReadTests()" disabled>Run read-path tests</button>
+      <button class="btn danger" id="remove-btn" onclick="removeSeed()" disabled>Remove all seeded data</button>
+    </div>
+    <div class="stat-grid" id="stats" style="display:none">
+      <div class="stat"><div class="n" id="stat-pass">0</div><div class="l">Passed</div></div>
+      <div class="stat"><div class="n" id="stat-fail">0</div><div class="l">Failed</div></div>
+      <div class="stat"><div class="n" id="stat-created">0</div><div class="l">Docs created</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>3 · Log</h2>
+    <div class="log" id="log"><div class="line info">Waiting for admin sign-in…</div></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+  // Load the shared data layer in "admin" mode so writes go through the
+  // same authenticated Supabase session admin.html uses — required
+  // because products/categories/reviews/orders are RLS-gated to
+  // ADMIN_EMAIL. DB, Auth, Reviews, Purchases and _db all come from
+  // this file as page-global bindings (same trick admin.html relies on).
+  window.__IS_ADMIN = true;
+</script>
+<script src="supabase.js"></script>
+<script>
+const SEED_TAG = 'orvyn-seed-v1';
+const SEED_COLLECTIONS = ['products', 'categories', 'reviews', 'purchases'];
+let passCount = 0, failCount = 0, createdCount = 0;
+const seedIds = { products: [], categories: [], reviews: [], purchases: [] };
+
+function logLine(msg, cls) {
+  const el = document.getElementById('log');
+  const div = document.createElement('div');
+  div.className = 'line ' + (cls || 'info');
+  div.textContent = msg;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+function logHead(msg) { logLine(msg, 'head'); }
+function pass(msg) { passCount++; updateStats(); logLine('✔ ' + msg, 'ok'); }
+function fail(msg) { failCount++; updateStats(); logLine('✘ ' + msg, 'fail'); }
+function warn(msg) { logLine('⚠ ' + msg, 'warn'); }
+function info(msg) { logLine(msg, 'info'); }
+function updateStats() {
+  document.getElementById('stats').style.display = '';
+  document.getElementById('stat-pass').textContent = passCount;
+  document.getElementById('stat-fail').textContent = failCount;
+  document.getElementById('stat-created').textContent = createdCount;
+}
+
+// Wraps an async step: logs success/failure, never throws, returns the
+// result (or null on failure) so callers can chain.
+async function step(label, fn) {
+  try {
+    const result = await fn();
+    pass(label);
+    return result;
+  } catch (e) {
+    fail(label + ' — ' + (e && e.message ? e.message : e));
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------
+// AUTH
+// ---------------------------------------------------------------------
+function refreshAuthUI() {
+  const pill = document.getElementById('auth-pill');
+  const loggedIn = Auth.isLoggedIn();
+  document.getElementById('login-btn').style.display = loggedIn ? 'none' : '';
+  document.getElementById('admin-pass').style.display = loggedIn ? 'none' : '';
+  document.getElementById('logout-btn').style.display = loggedIn ? '' : 'none';
+  document.getElementById('seed-btn').disabled = !loggedIn;
+  document.getElementById('verify-btn').disabled = !loggedIn;
+  document.getElementById('remove-btn').disabled = !loggedIn;
+  pill.className = 'status-pill ' + (loggedIn ? 'pill-on' : 'pill-off');
+  pill.innerHTML = '<span class="dot"></span>' + (loggedIn ? 'Signed in as admin' : 'Not signed in');
+}
+
+async function doLogin() {
+  const pass = document.getElementById('admin-pass').value;
+  if (!pass) { warn('Enter the admin password first.'); return; }
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  try {
+    const ok = await Auth.login(pass);
+    if (ok) logLine('✔ Signed in as admin', 'ok');
+    else fail('Sign-in returned false — wrong account?');
+  } catch (e) {
+    fail('Sign-in failed — ' + (e && e.message ? e.message : e));
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sign in';
+    refreshAuthUI();
+  }
+}
+function doLogout() { Auth.logout(); refreshAuthUI(); logLine('Signed out.', 'info'); }
+
+// ---------------------------------------------------------------------
+// SEED DATA DEFINITIONS
+// ---------------------------------------------------------------------
+function sampleImage(seed, w, h) {
+  // Stable, no-signup placeholder images — safe to seed, safe to delete.
+  return `https://picsum.photos/seed/${seed}/${w || 640}/${h || 480}`;
+}
+
+async function seedAll() {
+  logHead('── Seeding started ──');
+  passCount = failCount = createdCount = 0; updateStats();
+
+  // 1) Topics/categories — one per content type -------------------------
+  const catDefs = [
+    { name: 'Seed · Design Assets',  emoji: '🎨', contentType: 'product' },
+    { name: 'Seed · Resource Packs', emoji: '🎁', contentType: 'pack' },
+    { name: 'Seed · Video Courses',  emoji: '🎓', contentType: 'course' },
+  ];
+  const cats = {};
+  for (const c of catDefs) {
+    const saved = await step(`Create topic "${c.name}" (${c.contentType})`, async () => {
+      const r = await DB.add('categories', { ...c, image: null, _seed: SEED_TAG });
+      seedIds.categories.push(r.id);
+      createdCount++;
+      return r;
+    });
+    if (saved) cats[c.contentType] = saved;
+  }
+
+  // 2) Products — covers every combination worth testing -----------------
+  const productDefs = [
+    {
+      key: 'basic',
+      name: 'Seed · Basic Icon Pack',
+      category: cats.product ? cats.product.name : '',
+      price: 1200, oldPrice: null, badge: null, featured: false,
+      description: 'A minimal, no-frills product: single price, no variants, single image, link-only delivery, auto-unlock on. Tests the plain product-card and instant-download path.',
+      images: [sampleImage('orvyn-basic', 700, 700)],
+      variables: [], contentType: 'product',
+      delivery: { autoDeliver: true, deliveryType: 'link', deliveryLink: 'https://file-examples.com/storage/fe1e6d0b7d6b1c4a6a6a9d3/2017/10/file-sample_150kB.pdf', deliveryFiles: [] },
+    },
+    {
+      key: 'sale-variants',
+      name: 'Seed · Pro UI Kit (Sale)',
+      category: cats.product ? cats.product.name : '',
+      price: 2400, oldPrice: 4000, badge: 'SALE', featured: true,
+      description: 'Featured + on-sale + license-tier variables + multiple images. Tests badge styling, discount-percent math, the featured rail, the image gallery, and per-variant pricing at checkout.',
+      images: [sampleImage('orvyn-kit-1', 700, 700), sampleImage('orvyn-kit-2', 700, 700), sampleImage('orvyn-kit-3', 700, 700)],
+      variables: [{ title: 'License', items: [{ label: 'Personal', price: 2400 }, { label: 'Commercial', price: 5900 }, { label: 'Extended', price: 12000 }] }],
+      contentType: 'product',
+      delivery: { autoDeliver: true, deliveryType: 'both', deliveryLink: 'https://file-examples.com/storage/fe1e6d0b7d6b1c4a6a6a9d3/2017/10/file-sample_150kB.pdf',
+        deliveryFiles: [{ url: 'https://file-examples.com/storage/fe1e6d0b7d6b1c4a6a6a9d3/2017/10/file_example_JPG_100kB.jpg', path: 'seed/fake-asset.jpg', name: 'ui-kit-assets.jpg', size: 102400 }] },
+    },
+    {
+      key: 'manual',
+      name: 'Seed · Custom Logo Request (Manual Fulfillment)',
+      category: cats.product ? cats.product.name : '',
+      price: 3500, oldPrice: null, badge: 'NEW', featured: false,
+      description: 'Auto-deliver is OFF. Tests the admin "pending manual fulfillment" queue instead of instant unlock.',
+      images: [sampleImage('orvyn-manual', 700, 700)],
+      variables: [], contentType: 'product',
+      delivery: { autoDeliver: false, deliveryType: 'link', deliveryLink: '', deliveryFiles: [] },
+    },
+    {
+      key: 'no-image',
+      name: 'Seed · Font Bundle (No Image)',
+      category: cats.product ? cats.product.name : '',
+      price: 900, oldPrice: null, badge: 'POPULAR', featured: false,
+      description: 'Deliberately has zero images. Tests the placeholder/fallback thumbnail in the product grid and product detail page.',
+      images: [], variables: [], contentType: 'product',
+      delivery: { autoDeliver: true, deliveryType: 'link', deliveryLink: 'https://file-examples.com/storage/fe1e6d0b7d6b1c4a6a6a9d3/2017/10/file-sample_150kB.pdf', deliveryFiles: [] },
+    },
+    {
+      key: 'pack',
+      name: 'Seed · Complete Branding Pack',
+      category: cats.pack ? cats.pack.name : '',
+      price: 5500, oldPrice: 7000, badge: 'BEST SELLER', featured: true,
+      description: 'contentType = pack. Tests the Pack access page (rather than the plain product-card path) plus its own delivery unlock.',
+      images: [sampleImage('orvyn-pack', 700, 700)],
+      variables: [], contentType: 'pack',
+      delivery: { autoDeliver: true, deliveryType: 'both', deliveryLink: 'https://file-examples.com/storage/fe1e6d0b7d6b1c4a6a6a9d3/2017/10/file-sample_150kB.pdf',
+        deliveryFiles: [{ url: 'https://file-examples.com/storage/fe1e6d0b7d6b1c4a6a6a9d3/2017/10/file_example_JPG_100kB.jpg', path: 'seed/fake-pack-asset.jpg', name: 'branding-pack.jpg', size: 204800 }] },
+    },
+    {
+      key: 'free-pack',
+      name: 'Seed · Free Starter Pack',
+      category: cats.pack ? cats.pack.name : '',
+      price: 0, oldPrice: null, badge: 'HOT', featured: false,
+      description: 'Price is 0 — tests the "free" checkout/unlock path.',
+      images: [sampleImage('orvyn-free', 700, 700)],
+      variables: [], contentType: 'pack',
+      delivery: { autoDeliver: true, deliveryType: 'link', deliveryLink: 'https://file-examples.com/storage/fe1e6d0b7d6b1c4a6a6a9d3/2017/10/file-sample_150kB.pdf', deliveryFiles: [] },
+    },
+    {
+      key: 'course',
+      name: 'Seed · Web Design Masterclass',
+      category: cats.course ? cats.course.name : '',
+      price: 8900, oldPrice: 15000, badge: 'PREMIUM', featured: true,
+      description: 'contentType = course. Tests the Course Player: 2 modules, one video lesson and one text/article lesson, plus a lesson-level resource link.',
+      images: [sampleImage('orvyn-course', 700, 700)],
+      variables: [], contentType: 'course',
+      curriculum: {
+        modules: [
+          { id: 'seed-mod-1', title: 'Getting Started', lessons: [
+            { id: 'seed-lsn-1', title: 'Welcome & Setup', type: 'video', videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4', textContent: '', resources: [{ name: 'Setup checklist', url: 'https://example.com/checklist.pdf' }] },
+            { id: 'seed-lsn-2', title: 'Design Principles (reading)', type: 'text', videoUrl: '', textContent: 'This is seeded lesson content used to test the text/article lesson renderer. Replace with real course content before launch.', resources: [] },
+          ]},
+          { id: 'seed-mod-2', title: 'Building the Layout', lessons: [
+            { id: 'seed-lsn-3', title: 'Grid Systems', type: 'video', videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4', textContent: '', resources: [] },
+          ]},
+        ],
+      },
+    },
+  ];
+
+  const savedProducts = {};
+  for (const p of productDefs) {
+    const { delivery, curriculum, key, ...publicData } = p;
+    const saved = await step(`Create product "${p.name}" [${p.contentType}]`, async () => {
+      const r = await DB.add('products', { ...publicData, _seed: SEED_TAG });
+      seedIds.products.push(r.id);
+      createdCount++;
+      return r;
+    });
+    if (!saved) continue;
+    savedProducts[key] = saved;
+
+    if (p.contentType === 'course') {
+      await step(`  ↳ Save curriculum for "${p.name}"`, () => DB.setProductCurriculum(saved.id, curriculum));
+    } else {
+      await step(`  ↳ Save delivery info for "${p.name}"`, () => DB.setProductDelivery(saved.id, delivery));
+    }
+  }
+
+  // 3) Reviews — 2 approved (to test rating aggregation) + 1 pending -----
+  if (savedProducts.basic) {
+    const r1 = await step('Create approved review #1', async () => {
+      const r = await DB.add('reviews', {
+        userId: 'seed-user-1', userName: 'Amina K.', productId: savedProducts.basic.id, productName: savedProducts.basic.name,
+        stars: 5, comment: 'Seed review — worked perfectly, tests the 5-star approved case.', status: 'approved', _seed: SEED_TAG,
+      });
+      seedIds.reviews.push(r.id); createdCount++;
+      return r;
+    });
+    const r2 = await step('Create approved review #2', async () => {
+      const r = await DB.add('reviews', {
+        userId: 'seed-user-2', userName: 'Yacine B.', productId: savedProducts.basic.id, productName: savedProducts.basic.name,
+        stars: 3, comment: 'Seed review — tests a mid-range rating and the running-average math.', status: 'approved', _seed: SEED_TAG,
+      });
+      seedIds.reviews.push(r.id); createdCount++;
+      return r;
+    });
+    if (r1 || r2) {
+      await step('Recalculate rating for "Seed · Basic Icon Pack"', () => Reviews._recalcProductRating(savedProducts.basic.id));
+    }
+  }
+  if (savedProducts['sale-variants']) {
+    await step('Create pending review (moderation queue)', async () => {
+      const r = await DB.add('reviews', {
+        userId: 'seed-user-3', userName: 'Sara M.', productId: savedProducts['sale-variants'].id, productName: savedProducts['sale-variants'].name,
+        stars: 4, comment: 'Seed review — should sit in the admin "pending" moderation queue until approved/rejected.', status: 'pending', _seed: SEED_TAG,
+      });
+      seedIds.reviews.push(r.id); createdCount++;
+      return r;
+    });
+  }
+
+  // 4) Orders / purchases — 1 pending (manual), 1 paid --------------------
+  if (savedProducts.manual) {
+    await step('Create pending order (manual fulfillment)', async () => {
+      const doc = await Purchases.add('seed-user-manual', 'seed.pending@example.com', savedProducts.manual, {
+        customerName: 'Seed Test Buyer', customerPhone: '0550000000', customerEmail: 'seed.pending@example.com',
+        paymentMethod: 'CCP', orderNotes: 'Seed order — should appear as pending in the admin Orders panel.', orderId: 'SEED-PENDING-001',
+      });
+      await DB.update('purchases', doc.id, { _seed: SEED_TAG });
+      seedIds.purchases.push(doc.id); createdCount++;
+      return doc;
+    });
+  }
+  if (savedProducts.basic) {
+    await step('Create paid order', async () => {
+      const doc = await Purchases.add('seed-user-paid', 'seed.paid@example.com', savedProducts.basic, {
+        customerName: 'Seed Paid Buyer', customerEmail: 'seed.paid@example.com',
+        paymentMethod: 'SlickPay', orderId: 'SEED-PAID-001',
+      });
+      await DB.update('purchases', doc.id, { status: 'delivered', _seed: SEED_TAG });
+      seedIds.purchases.push(doc.id); createdCount++;
+      return doc;
+    });
+  }
+
+  try { localStorage.setItem('dz_seed_ids', JSON.stringify(seedIds)); } catch (e) {}
+  logHead(`── Seeding finished: ${passCount} passed, ${failCount} failed, ${createdCount} docs created ──`);
+  info('Run "Run read-path tests" to verify everything reads back correctly, or open index.html / admin.html to look around.');
+}
+
+// ---------------------------------------------------------------------
+// READ-PATH TESTS — exercises the same functions the storefront/admin use
+// ---------------------------------------------------------------------
+async function runReadTests() {
+  logHead('── Read-path tests started ──');
+  let localPass = 0, localFail = 0;
+  const check = async (label, fn) => {
+    try {
+      const ok = await fn();
+      if (ok) { pass(label); localPass++; } else { fail(label + ' — assertion returned false'); localFail++; }
+    } catch (e) {
+      fail(label + ' — ' + (e && e.message ? e.message : e)); localFail++;
+    }
+  };
+
+  const stored = (() => { try { return JSON.parse(localStorage.getItem('dz_seed_ids') || '{}'); } catch (e) { return {}; } })();
+  const ids = { ...seedIds };
+  for (const k of Object.keys(stored)) if (!ids[k] || !ids[k].length) ids[k] = stored[k];
+
+  if (!ids.products || !ids.products.length) {
+    warn('No seeded products found in this session or localStorage — run "Seed database" first.');
+    return;
+  }
+
+  await check('Fresh-load products collection includes seeded items', async () => {
+    await DB._load('products');
+    const all = DB.getAll('products');
+    return ids.products.every(id => all.some(p => p.id === id));
+  });
+
+  await check('Fresh-load categories collection includes seeded topics', async () => {
+    await DB._load('categories');
+    const all = DB.getAll('categories');
+    return ids.categories.every(id => all.some(c => c.id === id));
+  });
+
+  await check('Sale product has correct discount math (40% off)', async () => {
+    const all = DB.getAll('products');
+    const p = all.find(x => x.name === 'Seed · Pro UI Kit (Sale)');
+    if (!p) return false;
+    const pct = Math.round((1 - p.price / p.oldPrice) * 100);
+    return pct === 40 && p.badge === 'SALE' && p.featured === true;
+  });
+
+  await check('Variant product carries its price tiers', async () => {
+    const all = DB.getAll('products');
+    const p = all.find(x => x.name === 'Seed · Pro UI Kit (Sale)');
+    return !!p && Array.isArray(p.variables) && p.variables[0] && p.variables[0].items.length === 3;
+  });
+
+  await check('Manual-fulfillment product has autoDeliver = false', async () => {
+    const all = DB.getAll('products');
+    const p = all.find(x => x.name === 'Seed · Custom Logo Request (Manual Fulfillment)');
+    if (!p) return false;
+    const delivery = await DB.getProductDelivery(p.id);
+    return !!delivery && delivery.autoDeliver === false;
+  });
+
+  await check('Link+file product delivery info round-trips', async () => {
+    const all = DB.getAll('products');
+    const p = all.find(x => x.name === 'Seed · Pro UI Kit (Sale)');
+    if (!p) return false;
+    const delivery = await DB.getProductDelivery(p.id);
+    return !!delivery && delivery.deliveryType === 'both' && delivery.deliveryFiles.length === 1;
+  });
+
+  await check('Course curriculum round-trips (2 modules, 3 lessons)', async () => {
+    const all = DB.getAll('products');
+    const p = all.find(x => x.contentType === 'course' && x.name.startsWith('Seed'));
+    if (!p) return false;
+    const curriculum = await DB.getProductCurriculum(p.id);
+    const lessonCount = (curriculum.modules || []).reduce((n, m) => n + m.lessons.length, 0);
+    return curriculum.modules.length === 2 && lessonCount === 3;
+  });
+
+  await check('Approved reviews are visible via Reviews.forProduct', async () => {
+    const all = DB.getAll('products');
+    const p = all.find(x => x.name === 'Seed · Basic Icon Pack');
+    if (!p) return false;
+    const revs = await Reviews.forProduct(p.id);
+    return revs.filter(r => r._seed === SEED_TAG).length >= 2;
+  });
+
+  await check('Rating average was recalculated onto the product (expect 4.0)', async () => {
+    await DB._load('products');
+    const all = DB.getAll('products');
+    const p = all.find(x => x.name === 'Seed · Basic Icon Pack');
+    return !!p && p.rating === 4 && p.reviewCount === 2;
+  });
+
+  await check('Pending review is excluded from Reviews.forProduct', async () => {
+    const all = DB.getAll('products');
+    const p = all.find(x => x.name === 'Seed · Pro UI Kit (Sale)');
+    if (!p) return false;
+    const revs = await Reviews.forProduct(p.id);
+    return !revs.some(r => r.status === 'pending');
+  });
+
+  await check('Free pack priced at 0', async () => {
+    const all = DB.getAll('products');
+    const p = all.find(x => x.name === 'Seed · Free Starter Pack');
+    return !!p && p.price === 0;
+  });
+
+  await check('No-image product has an empty images array (fallback path)', async () => {
+    const all = DB.getAll('products');
+    const p = all.find(x => x.name === 'Seed · Font Bundle (No Image)');
+    return !!p && Array.isArray(p.images) && p.images.length === 0;
+  });
+
+  await check('Topic filter scopes products by category name + contentType', async () => {
+    const all = DB.getAll('products');
+    const cats = DB.getAll('categories');
+    const packCat = cats.find(c => c.name === 'Seed · Resource Packs');
+    if (!packCat) return false;
+    const inTopic = all.filter(p => p.category === packCat.name);
+    return inTopic.length >= 2 && inTopic.every(p => p.contentType === 'pack');
+  });
+
+  await check('Seed orders exist with expected statuses', async () => {
+    const snap = await _db.collection('purchases').where('_seed', '==', SEED_TAG).get();
+    const docs = snap.docs.map(d => d.data());
+    const pending = docs.find(d => d.orderId === 'SEED-PENDING-001');
+    const paid = docs.find(d => d.orderId === 'SEED-PAID-001');
+    return !!pending && pending.status === 'pending' && !!paid && paid.status === 'delivered';
+  });
+
+  logHead(`── Read-path tests finished: ${localPass} passed, ${localFail} failed ──`);
+}
+
+// ---------------------------------------------------------------------
+// CLEANUP — deletes everything tagged with SEED_TAG
+// ---------------------------------------------------------------------
+async function removeSeed() {
+  if (!confirm('Remove all seeded test data? This cannot be undone.')) return;
+  logHead('── Removing seeded data ──');
+  let removed = 0, errors = 0;
+
+  for (const col of SEED_COLLECTIONS) {
+    try {
+      const snap = await _db.collection(col).where('_seed', '==', SEED_TAG).get();
+      const docs = snap.docs;
+      info(`Found ${docs.length} seeded doc(s) in "${col}".`);
+      for (const d of docs) {
+        try {
+          await DB.delete(col, d.id);
+          removed++;
+          // Best-effort cleanup of private subdocs for products (delivery /
+          // curriculum). These live at products/{id}/private/{docId} and
+          // are invisible/inert once the parent product is gone, so a
+          // failure here is not reported as a test failure.
+          if (col === 'products') {
+            try { await _db.collection(`products/${d.id}/private`).doc('delivery').delete(); } catch (e) {}
+            try { await _db.collection(`products/${d.id}/private`).doc('curriculum').delete(); } catch (e) {}
+          }
+        } catch (e) {
+          errors++;
+          fail(`Delete ${col}/${d.id} — ` + (e && e.message ? e.message : e));
+        }
+      }
+    } catch (e) {
+      errors++;
+      fail(`Query seeded docs in "${col}" — ` + (e && e.message ? e.message : e));
+    }
+  }
+
+  // Scrub the localStorage read caches so the pages this tab has open
+  // don't keep showing removed items until their next network refresh.
+  for (const col of SEED_COLLECTIONS) {
+    try {
+      const key = 'dz_fc_' + col;
+      const cached = JSON.parse(localStorage.getItem(key) || '[]');
+      const cleaned = cached.filter(x => x._seed !== SEED_TAG);
+      localStorage.setItem(key, JSON.stringify(cleaned));
+    } catch (e) {}
+  }
+  try { localStorage.removeItem('dz_seed_ids'); } catch (e) {}
+  seedIds.products = []; seedIds.categories = []; seedIds.reviews = []; seedIds.purchases = [];
+
+  logHead(`── Cleanup finished: ${removed} doc(s) removed, ${errors} error(s) ──`);
+
+  // Verify nothing tagged remains.
+  await step('Verify no seeded docs remain in any collection', async () => {
+    for (const col of SEED_COLLECTIONS) {
+      const snap = await _db.collection(col).where('_seed', '==', SEED_TAG).get();
+      if (snap.docs.length) throw new Error(`${snap.docs.length} left in ${col}`);
+    }
+    return true;
+  });
+}
+
+refreshAuthUI();
+</script>
+</body>
+</html>
