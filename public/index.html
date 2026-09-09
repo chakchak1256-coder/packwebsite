@@ -2591,16 +2591,6 @@ footer::before{
             <div class="co-method-name">EDDAHABIA</div>
           </label>
 
-          <!-- Test/dev-only "pay nothing" method — only ever shown when
-               window.DIGISTORE_TEST_MODE is true (see backend URL config
-               near the bottom of this file). Hidden by default so real
-               customers never see it. -->
-          <label class="co-method-card" id="co-method-test" style="display:none">
-            <input type="radio" name="co-payment" value="test" onchange="coShowPaymentInstructions('test')" style="display:none"/>
-            <div class="co-method-icon">🧪</div>
-            <div class="co-method-name">Test Payment (no charge)</div>
-          </label>
-
         </div>
       </div>
 
@@ -3916,9 +3906,6 @@ function openCheckout() {
     return;
   }
   document.getElementById('checkout-modal').classList.add('open');
-  // Reveal the dev-only "Test Payment" method card, if enabled.
-  const testCard = document.getElementById('co-method-test');
-  if (testCard) testCard.style.display = window.DIGISTORE_TEST_MODE ? '' : 'none';
   // Skip step 0 — go straight to form, auto-fill from account if available
   coChooseAccount(!!user);
 }
@@ -4035,8 +4022,6 @@ function coShowPaymentInstructions(method) {
   if (nextBtn) {
     if (method === 'cib') {
       nextBtn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Pay with Card →';
-    } else if (method === 'test') {
-      nextBtn.innerHTML = '<i class="fa-solid fa-flask"></i> Complete Test Order →';
     } else {
       nextBtn.innerHTML = '<i class="fa-solid fa-arrow-right"></i> Next: Payment Proof';
     }
@@ -4046,13 +4031,6 @@ function coShowPaymentInstructions(method) {
   // computed and applied server-side only (see worker.js) — never shown
   // or added to the total on this screen.
   if (method === 'cib') {
-    if (instrEl) instrEl.style.display = 'none';
-    _coRefreshOrderSummary(0, 0);
-    return;
-  }
-
-  // Test payment — same as CIB, no instruction card, no fee.
-  if (method === 'test') {
     if (instrEl) instrEl.style.display = 'none';
     _coRefreshOrderSummary(0, 0);
     return;
@@ -4314,90 +4292,8 @@ async function coHandleNextStep() {
   const method = document.querySelector('input[name="co-payment"]:checked')?.value || '';
   if (method === 'cib') {
     coInitiateSlickPayCheckout();
-  } else if (method === 'test') {
-    coInitiateTestCheckout();
   } else {
     coProceedToProofStep();
-  }
-}
-
-// ── Test Payment — dev-only, no real money, no SlickPay ────────────
-// Only reachable when window.DIGISTORE_TEST_MODE is true (the "Test
-// Payment" method card is hidden otherwise) AND the backend Worker has
-// TEST_CHECKOUT_ENABLED = "true" (see wrangler.jsonc) — the backend
-// refuses this route entirely if that var isn't set, so leaving
-// DIGISTORE_TEST_MODE on by accident in a deployed copy is harmless as
-// long as the Worker var stays off.
-async function coInitiateTestCheckout() {
-  const currentUser = UserAuth.current();
-  if (!currentUser) { openLoginModal('checkout'); closeCheckout(); return; }
-  const cartItems = Cart.get();
-  if (!cartItems.length) { closeCheckout(); return; }
-
-  const name        = (document.getElementById('co-name')?.value || '').trim();
-  const email       = (document.getElementById('co-email')?.value || currentUser.email || '').trim();
-  const phonePfx    = (document.getElementById('co-phone-prefix')?.value || '07');
-  const phoneDigits = (document.getElementById('co-phone')?.value || '').trim();
-  const phone       = phonePfx + phoneDigits;
-
-  if (!name) { coShowFormError('Please enter your full name.'); return; }
-
-  const nameParts = name.split(' ');
-  const firstname = nameParts[0];
-  const lastname  = nameParts.slice(1).join(' ') || nameParts[0];
-
-  const productName = cartItems.length === 1
-    ? (cartItems[0].variantLabel ? `${cartItems[0].name} — ${cartItems[0].variantLabel}` : cartItems[0].name)
-    : `Order (${cartItems.length} items)`;
-
-  const btn = document.getElementById('co-submit-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Completing test order...';
-
-  try {
-    const idToken = await UserAuth.getIdToken();
-    if (!idToken) { openLoginModal('checkout'); closeCheckout(); return; }
-
-    const backendUrl = (window.DIGISTORE_BACKEND_URL || '').replace(/\/+$/, '');
-    const res = await fetch(`${backendUrl}/api/checkout/test`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${idToken}`,
-      },
-      body: JSON.stringify({
-        items: cartItems.map(it => ({
-          product_id:    it.productId || it.id,
-          variant_label: it.variantLabel || null,
-          qty:           it.qty || 1,
-        })),
-        user_id:      currentUser.id,
-        user_email:   currentUser.email || email,
-        product_id:   cartItems[0]?.productId || cartItems[0]?.id || '',
-        product_name: productName,
-        firstname,
-        lastname,
-        email,
-        phone,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok || !data.payment_url) {
-      coShowFormError(data.error || 'Test checkout failed. Is TEST_CHECKOUT_ENABLED set on the Worker?');
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-flask"></i> Complete Test Order →';
-      return;
-    }
-
-    try { sessionStorage.setItem('slickpay_order_id', data.order_id); } catch {}
-    window.location.href = data.payment_url;
-
-  } catch (err) {
-    coShowFormError('Network error. Please check your connection and try again.');
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-flask"></i> Complete Test Order →';
   }
 }
 
@@ -6441,15 +6337,6 @@ function updateWaFloat() {
      ─────────────────────────────────────────────────────────────── -->
 <script>
   window.DIGISTORE_BACKEND_URL = 'https://packwebsite.digitch.workers.dev';
-
-  // Set to true ONLY while testing the buy flow locally/on staging — it
-  // reveals a "🧪 Test Payment (no charge)" method in checkout that skips
-  // SlickPay and delivers the order for free. The Worker independently
-  // refuses that request unless TEST_CHECKOUT_ENABLED="true" is also set
-  // in wrangler.jsonc, so this flag alone can't let anyone buy for free —
-  // but leave it false for a real deployment anyway, so customers never
-  // even see the option.
-  window.DIGISTORE_TEST_MODE = true;
 </script>
 
 <!-- ===== PREMIUM POLISH: scroll-reveal (visual only, no logic touched) ===== -->
