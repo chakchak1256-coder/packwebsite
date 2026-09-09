@@ -125,7 +125,7 @@ function slickpayHeaders(env) {
     'Authorization': `Bearer ${env.SLICKPAY_KEY}`,
     'Content-Type':  'application/json',
     'Accept':        'application/json',
-    'User-Agent':    'DigiStoreDZ/1.0 (+https://digital-website.digitch.workers.dev)',
+    'User-Agent':    'DigiStoreDZ/1.0 (+https://packwebsite.digitch.workers.dev)',
   };
 }
 
@@ -1095,7 +1095,7 @@ export default {
         const gatewayFee   = await getGatewayFee(env, Number(computedAmount));
         const chargeAmount = Number(computedAmount) + gatewayFee;
 
-        const appUrl = env.APP_URL || 'https://digital-website.digitch.workers.dev';
+        const appUrl = env.APP_URL || 'https://packwebsite.digitch.workers.dev';
         const returnUrl = `${appUrl}/payment-return.html`;
 
         // Generate a short order ID stored in webhook meta
@@ -1243,7 +1243,7 @@ export default {
         const computedAmount = pricedItems.reduce((sum, it) => sum + it.unitPrice * it.qty, 0);
         const finalProductName = product_name || (pricedItems.length === 1 ? pricedItems[0].name : `Order (${pricedItems.length} items)`);
 
-        const appUrl = env.APP_URL || 'https://digital-website.digitch.workers.dev';
+        const appUrl = env.APP_URL || 'https://packwebsite.digitch.workers.dev';
         const returnUrl = `${appUrl}/payment-return.html`;
         const orderId = 'TEST-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7).toUpperCase();
 

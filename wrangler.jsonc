@@ -1,5 +1,5 @@
 // Required Worker secrets (never put these in `vars` — they're not
-// public). Set each with: npx wrangler secret put <n>
+// public). Set each with: npx wrangler secret put <NAME>
 //   SUPABASE_SERVICE_ROLE_KEY   — Supabase → Project Settings → API
 //   ADMIN_EMAIL                 — same email as the admin account you
 //                                 create in Supabase Auth (see supabase.js)
@@ -7,7 +7,7 @@
 //   SLICKPAY_WEBHOOK_SIG        — a signature string you choose, also
 //                                 configured on the SlickPay webhook
 {
-  "name": "digital-website",
+  "name": "packwebsite",
   "main": "worker.js",
   "compatibility_date": "2024-01-01",
   "compatibility_flags": ["nodejs_compat"],
@@ -19,37 +19,12 @@
 },
 
   "vars": {
-    "APP_URL": "https://digital-website.digitch.workers.dev",
-    // Same values as the `supabaseConfig` in supabase.js — these are NOT
-    // secrets (Supabase's URL and anon/publishable key are meant to be
-    // public; RLS is what actually protects your data), they just tell
-    // the Worker which Supabase project to talk to when verifying a
-    // signed-in visitor's access token (see requireAdminAuth() /
-    // requireUserAuth() in worker.js). Without these, every admin-only
-    // route (upload-file, delete-file, delete-user, login-history,
-    // log-access) and every customer route (claim-free, content,
-    // progress, complete-google-registration) fails auth.
+    "APP_URL": "https://packwebsite.digitch.workers.dev",
     "SUPABASE_URL": "https://redbcznzczspusdzbxbq.supabase.co",
     "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlZGJjem56Y3pzcHVzZHpieGJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NjQ5MDIsImV4cCI6MjEwNDA0MDkwMn0.DbyJI_hx9NufL0gRWZFCIbQ4jmlyyFFM402Bngr1Lj8",
     // "sandbox" uses devapi.slick-pay.com  |  "production" uses prodapi.slick-pay.com
     "SLICKPAY_ENV": "production",
-    // Set to "true" (string) to turn on POST /api/checkout/test — a
-    // dev-only checkout route that skips SlickPay entirely and marks the
-    // order paid/delivered for free, so you can test the buy → delivery
-    // flow without spending real money or needing SlickPay sandbox test
-    // cards. It still requires the buyer to be logged in. Leave this
-    // "false" (or remove it) once you're done testing — it is NOT gated
-    // by anything else, so anyone can buy anything for free while it's on.
-    "TEST_CHECKOUT_ENABLED": "false",
-    // NOTE: admin-only routes (upload-file, delete-file, delete-user,
-    // login-history, log-access) are protected by requireAdminAuth() in
-    // worker.js, which verifies a Supabase Auth access token (Authorization:
-    // Bearer <token>) against ADMIN_EMAIL — not a static API key. There is
-    // no ADMIN_API_KEY in this codebase; don't set one expecting it to do
-    // anything.
-    // Public base URL of your R2 bucket (r2.dev URL or connected custom domain,
-    // NO trailing slash) — required by POST /api/upload-file in worker.js.
-    // Example: "https://pub-xxxxxxxxxxxxxxxx.r2.dev"
+    "TEST_CHECKOUT_ENABLED": "true",
     "R2_PUBLIC_URL": "https://pub-3b114b0bb0f949b4a20eafa3911ee64c.r2.dev"
   },
 
