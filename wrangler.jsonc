@@ -1,5 +1,5 @@
 // Required Worker secrets (never put these in `vars` — they're not
-// public). Set each with: npx wrangler secret put <NAME>
+// public). Set each with: npx wrangler secret put <n>
 //   SUPABASE_SERVICE_ROLE_KEY   — Supabase → Project Settings → API
 //   ADMIN_EMAIL                 — same email as the admin account you
 //                                 create in Supabase Auth (see supabase.js)
@@ -33,6 +33,14 @@
     "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlZGJjem56Y3pzcHVzZHpieGJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NjQ5MDIsImV4cCI6MjEwNDA0MDkwMn0.DbyJI_hx9NufL0gRWZFCIbQ4jmlyyFFM402Bngr1Lj8",
     // "sandbox" uses devapi.slick-pay.com  |  "production" uses prodapi.slick-pay.com
     "SLICKPAY_ENV": "production",
+    // Set to "true" (string) to turn on POST /api/checkout/test — a
+    // dev-only checkout route that skips SlickPay entirely and marks the
+    // order paid/delivered for free, so you can test the buy → delivery
+    // flow without spending real money or needing SlickPay sandbox test
+    // cards. It still requires the buyer to be logged in. Leave this
+    // "false" (or remove it) once you're done testing — it is NOT gated
+    // by anything else, so anyone can buy anything for free while it's on.
+    "TEST_CHECKOUT_ENABLED": "false",
     // NOTE: admin-only routes (upload-file, delete-file, delete-user,
     // login-history, log-access) are protected by requireAdminAuth() in
     // worker.js, which verifies a Supabase Auth access token (Authorization:
