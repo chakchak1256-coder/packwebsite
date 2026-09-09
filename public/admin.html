@@ -655,7 +655,7 @@ select.form-input option{background:var(--bg2)}
                 <select class="form-input" id="prod-content-type" onchange="populateTopicSelect(this.value, ''); toggleContentTypeUI()">
                   <option value="course">Course (modules &amp; lessons — learners progress inside the platform)</option>
                   <option value="pack">Digital Pack (a bundle of resources/files unlocked after purchase)</option>
-                  <option value="product">Other / Legacy Content</option>
+                  <option value="product">Digital Product (a single file, tool, or template)</option>
                 </select>
               </div>
               <div class="form-group full"><label class="form-label" id="prod-name-label">Course Title</label><input class="form-input" id="prod-name" placeholder="e.g. Full-Stack Web Development" required/></div>
@@ -690,7 +690,7 @@ select.form-input option{background:var(--bg2)}
               <i class="fa-solid fa-plus"></i> Add Module
             </button>
           </div>
-          <!-- AUTOMATIC DELIVERY SECTION (shown for Digital Pack / Legacy) -->
+          <!-- AUTOMATIC DELIVERY SECTION (shown for Digital Pack / Digital Product) -->
           <div class="form-section" id="pack-delivery-section">
             <div class="form-section-title"><i class="fa-solid fa-bolt"></i> Pack Resources <span style="font-weight:400;font-size:.75rem;color:var(--text-muted);margin-left:.4rem">(unlocked instantly on purchase)</span></div>
             <div class="variant-hint" style="margin-bottom:1rem">
@@ -1482,7 +1482,7 @@ function renderProductsList() {
 
   const tbody = document.getElementById('products-tbody');
   if (!prods.length) { tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="fa-solid fa-graduation-cap"></i><p>Nothing here yet. <strong>Add your first course or pack!</strong></p></div></td></tr>`; return; }
-  const typeLabel = t => t === 'course' ? '🎓 Course' : t === 'pack' ? '📦 Pack' : '— Legacy';
+  const typeLabel = t => t === 'course' ? '🎓 Course' : t === 'pack' ? '📦 Pack' : '🧩 Product';
   tbody.innerHTML = prods.map(p => {
     const img = (p.images||[])[0] || generatePlaceholder(p.name, 80, 60);
     const typeOff = enabledTypes[p.contentType || 'product'] === false;
@@ -1573,7 +1573,7 @@ function loadProductForm() {
     populateTopicSelect(document.getElementById('prod-content-type').value, '');
   }
 }
-// ── Content Type switch (Course / Pack / Legacy) ─────────────────────
+// ── Content Type switch (Course / Pack / Digital Product) ─────────────
 // Toggles which section of the form is relevant, and relabels a couple
 // of fields so the form reads naturally either way.
 function toggleContentTypeUI() {
