@@ -1238,7 +1238,11 @@ export default {
           pricedItems = await priceCartItems(env, normalizedItems);
         } catch (err) {
           console.error('[checkout/test] priceCartItems failed:', err.message);
-          return json({ error: 'We could not process your cart right now. Please try again in a moment.' }, 400);
+          // This route is dev-only and already gated behind TEST_CHECKOUT_ENABLED
+          // + a logged-in user, so — unlike the real /api/checkout above —
+          // it's safe to surface the actual reason instead of a generic
+          // message, to make debugging test purchases faster.
+          return json({ error: 'We could not process your cart right now.', detail: err.message }, 400);
         }
         const computedAmount = pricedItems.reduce((sum, it) => sum + it.unitPrice * it.qty, 0);
         const finalProductName = product_name || (pricedItems.length === 1 ? pricedItems[0].name : `Order (${pricedItems.length} items)`);
