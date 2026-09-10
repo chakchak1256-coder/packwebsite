@@ -793,6 +793,10 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:4rem 0 2
 .cart-del{width:24px;height:24px;border-radius:5px;color:var(--text-muted);margin-left:auto;
   display:flex;align-items:center;justify-content:center;font-size:.72rem;transition:color var(--transition)}
 .cart-del:hover{color:#EF4444}
+.pd-qty-wrap{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem}
+.pd-qty-label{font-size:.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em}
+.pd-qty-wrap .qty-btn{width:30px;height:30px;font-size:.8rem}
+.pd-qty-wrap .qty-num{font-size:.95rem;min-width:22px}
 .cart-foot{padding:1.1rem;border-top:1px solid var(--border)}
 .cart-total-row{display:flex;justify-content:space-between;margin-bottom:.9rem;align-items:center}
 .cart-total-lbl{color:var(--text-muted);font-size:.85rem}
@@ -2010,7 +2014,7 @@ footer::before{
 <!-- ===== TOP BAR ===== -->
 <div id="topbar">
   <div class="topbar-logo" onclick="showMain()">
-    <img class="topbar-logo-img" src="/logob.png" alt="logo"/>
+    <img class="topbar-logo-img" src="/logo.png" alt="logo"/>
     <span class="topbar-logo-text store-name">Orvyn</span>
   </div>
   <div id="topbar-search-wrap">
@@ -2773,6 +2777,15 @@ footer::before{
         <div class="pd-variant-wrap" id="pd-variant-wrap" style="display:none">
           <div id="pd-variant-groups"></div>
         </div>
+        <!-- Quantity stepper — hidden for courses (enrollment isn't sold in
+             multiples) via updatePdActionButtons(). Selected qty is added
+             to the cart in one shot when Add to Cart / Buy Now is clicked. -->
+        <div class="pd-qty-wrap" id="pd-qty-wrap">
+          <span class="pd-qty-label">Qty</span>
+          <button class="qty-btn" type="button" onclick="pdChangeQty(-1)"><i class="fa-solid fa-minus"></i></button>
+          <span class="qty-num" id="pd-qty-num">1</span>
+          <button class="qty-btn" type="button" onclick="pdChangeQty(1)"><i class="fa-solid fa-plus"></i></button>
+        </div>
         <div class="pd-actions">
           <button class="btn-add-cart" id="pd-add-btn"><i class="fa-solid fa-bag-shopping"></i> Add to Cart</button>
           <button class="btn-buy-now" id="pd-buy-btn"><i class="fa-solid fa-bolt"></i> Buy Now</button>
@@ -3175,7 +3188,7 @@ function makeProductCard(prod) {
   return d;
 }
 
-function addToCart(prod) { Cart.add(prod); Analytics.logCart(prod.id, prod.name); showToast(`"${prod.name}" added to cart`); }
+function addToCart(prod, qty=1) { Cart.add(prod, qty); Analytics.logCart(prod.id, prod.name); showToast(qty > 1 ? `${qty}× "${prod.name}" added to cart` : `"${prod.name}" added to cart`); }
 
 // ── FREE products (price === 0) — no cart, no payment ──────────────
 // Delivers the product straight to My Library for a signed-in user.
@@ -3453,6 +3466,9 @@ function openProductDetail(id, fromAllPage = true) {
   const variantWrap   = document.getElementById('pd-variant-wrap');
   const variantGroups = document.getElementById('pd-variant-groups');
   let   activeProd    = { ...prod }; // clone — price may be overridden by variant selection
+  pdQty = 1; // reset the quantity stepper for every product opened
+  const pdQtyNum = document.getElementById('pd-qty-num');
+  if (pdQtyNum) pdQtyNum.textContent = '1';
 
   // Build group structures: prefer prod.variables (new format), fall back to legacy prod.variants
   let groups = [];
@@ -3489,9 +3505,13 @@ function openProductDetail(id, fromAllPage = true) {
   // selected variant changes price, in case a variant makes it free (or not).
   function updatePdActionButtons() {
     const isFree = (Number(activeProd.price) || 0) <= 0;
+    const isCourse = prod.contentType === 'course';
     document.getElementById('pd-add-btn').style.display  = isFree ? 'none' : '';
     document.getElementById('pd-buy-btn').style.display  = isFree ? 'none' : '';
     document.getElementById('pd-free-btn').style.display = isFree ? '' : 'none';
+    // Quantity doesn't apply to free claims or course enrollment (you can't
+    // "enroll twice" for yourself) — only to purchasable products/packs.
+    document.getElementById('pd-qty-wrap').style.display = (isFree || isCourse) ? 'none' : '';
     const buyLabel = prod.contentType === 'course' ? 'Enroll Now' : prod.contentType === 'pack' ? 'Unlock Pack' : 'Buy Now';
     const freeLabel = prod.contentType === 'course' ? 'Enroll for Free' : prod.contentType === 'pack' ? 'Unlock for Free' : 'Add to My Library';
     document.getElementById('pd-buy-btn').innerHTML = `<i class="fa-solid fa-bolt"></i> ${buyLabel}`;
@@ -3541,10 +3561,10 @@ function openProductDetail(id, fromAllPage = true) {
 
   window.onVariantChange = function() {}; // no-op, replaced by per-group listeners
 
-  document.getElementById('pd-add-btn').onclick = () => addToCart(activeProd);
+  document.getElementById('pd-add-btn').onclick = () => addToCart(activeProd, pdQty);
   document.getElementById('pd-buy-btn').onclick = () => {
     if ((Number(activeProd.price)||0) <= 0) { claimFreeProduct(activeProd); return; }
-    addToCart(activeProd); closeProductDetail(); toggleCart();
+    addToCart(activeProd, pdQty); closeProductDetail(); toggleCart();
   };
   document.getElementById('pd-free-btn').onclick = () => claimFreeProduct(activeProd);
   updatePdActionButtons(); // set correct buttons immediately, even with no variants
@@ -3895,6 +3915,17 @@ function changeQty(id, d) { Cart.setQty(id, (Cart.get().find(i=>i.id===id)?.qty|
 function removeItem(id) { Cart.remove(id); renderCartItems(); }
 function updateCartBadge() { const c=Cart.count(); const b=document.getElementById('cart-badge'); b.textContent=c; b.style.display=c?'flex':'none'; }
 
+// ── Product-page quantity stepper ───────────────────────────────────
+// Lets someone pick a quantity before adding to cart, instead of only
+// being able to bump it up one at a time from inside the cart drawer
+// afterward. Reset to 1 each time a new product's detail view opens.
+let pdQty = 1;
+function pdChangeQty(d) {
+  pdQty = Math.max(1, pdQty + d);
+  const el = document.getElementById('pd-qty-num');
+  if (el) el.textContent = pdQty;
+}
+
 // ===== CHECKOUT =====
 let _coProofFiles = []; // proof screenshots (File objects or data URLs)
 let _coUseAccount = false;
@@ -3943,10 +3974,10 @@ function _showCoStep(step) {
     // Wire up buttons here so they always work regardless of DOM state
     const myProdsBtn = document.getElementById('co-success-myprods-btn');
     const continueBtn = document.getElementById('co-success-continue-btn');
-    // Safety net: whichever flow got us here (proof order, SlickPay return,
-    // or the test-payment simulator) already empties the cart, but make sure
-    // the cart drawer is fully closed and cleared before moving on — it
-    // shouldn't still be sitting open with old items in it.
+    // Safety net: whichever flow got us here (proof order or SlickPay
+    // return) already empties the cart, but make sure the cart drawer is
+    // fully closed and cleared before moving on — it shouldn't still be
+    // sitting open with old items in it.
     const closeCartDrawer = () => {
       const cartOverlay = document.getElementById('cart-overlay');
       const cartDrawer = document.getElementById('cart-drawer');
