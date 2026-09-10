@@ -1107,12 +1107,6 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:4rem 0 2
 .pd-variant-select:focus{border-color:var(--accent)}
 .pd-variant-select option{background:var(--bg2);color:var(--text)}
 .pd-actions{display:flex;flex-direction:column;gap:.55rem}
-.btn-add-cart{
-  width:100%;padding:13px;border-radius:var(--radius-sm);
-  background:var(--accent);color:#fff;font-weight:700;font-size:.875rem;
-  display:flex;align-items:center;justify-content:center;gap:.5rem;transition:all var(--transition);
-}
-.btn-add-cart:hover{background:var(--accent-dark);transform:translateY(-1px)}
 .pd-wish-btn{width:44px;height:44px;border-radius:10px;border:1.5px solid var(--border);
   background:var(--bg2);color:var(--text-muted);cursor:pointer;font-size:1.1rem;
   display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
@@ -2774,7 +2768,6 @@ footer::before{
           <div id="pd-variant-groups"></div>
         </div>
         <div class="pd-actions">
-          <button class="btn-add-cart" id="pd-add-btn"><i class="fa-solid fa-bag-shopping"></i> Add to Cart</button>
           <button class="btn-buy-now" id="pd-buy-btn"><i class="fa-solid fa-bolt"></i> Buy Now</button>
           <button class="btn-buy-now" id="pd-free-btn" style="display:none"><i class="fa-solid fa-gift"></i> Add to My Library</button>
           <button class="pd-wish-btn" id="pd-wish-btn" title="Add to Wishlist" aria-label="Add to Wishlist"><i class="fa-regular fa-heart"></i></button>
@@ -3489,7 +3482,6 @@ function openProductDetail(id, fromAllPage = true) {
   // selected variant changes price, in case a variant makes it free (or not).
   function updatePdActionButtons() {
     const isFree = (Number(activeProd.price) || 0) <= 0;
-    document.getElementById('pd-add-btn').style.display  = isFree ? 'none' : '';
     document.getElementById('pd-buy-btn').style.display  = isFree ? 'none' : '';
     document.getElementById('pd-free-btn').style.display = isFree ? '' : 'none';
     const buyLabel = prod.contentType === 'course' ? 'Enroll Now' : prod.contentType === 'pack' ? 'Unlock Pack' : 'Buy Now';
@@ -3541,7 +3533,6 @@ function openProductDetail(id, fromAllPage = true) {
 
   window.onVariantChange = function() {}; // no-op, replaced by per-group listeners
 
-  document.getElementById('pd-add-btn').onclick = () => addToCart(activeProd);
   document.getElementById('pd-buy-btn').onclick = () => {
     if ((Number(activeProd.price)||0) <= 0) { claimFreeProduct(activeProd); return; }
     addToCart(activeProd); closeProductDetail(); toggleCart();
@@ -4117,7 +4108,6 @@ function buildOrderSummaryHTML(surchargeRate, surchargeFlat) {
       <div style="flex:1;min-width:0">
         <div style="font-size:.86rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.name}</div>
         ${variant}
-        <div style="font-size:.73rem;color:var(--text-muted);margin-top:.1rem">Qty: ${item.qty || 1}</div>
       </div>
       <div style="font-family:'Fraunces',serif;font-size:.9rem;font-weight:700;color:var(--accent);white-space:nowrap;flex-shrink:0;margin-right:.35rem">${((item.price)*(item.qty||1)).toLocaleString()} ${s.currency||'DA'}</div>
       <button type="button" class="co-summary-remove" data-cartid="${idx}" title="Remove item"
