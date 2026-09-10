@@ -3072,10 +3072,18 @@ function renderHeroShowcase() {
   picks.forEach((p, i) => {
     const el = cards[i];
     if (!el || !p) return;
+    el.style.display = '';
     el.style.backgroundImage = `url('${(p.images || [])[0]}')`;
     el.dataset.label = p.name;
     el.onclick = () => openProductDetail(p.id, false);
     el.style.cursor = 'pointer';
+  });
+  // Fewer than 3 distinct products to show (e.g. a catalog with just 1-2
+  // items) — hide the leftover stacked card(s) instead of leaving them as
+  // empty placeholder rectangles behind the real one, which reads as
+  // broken rather than intentional.
+  cards.forEach((el, i) => {
+    if (el && !picks[i]) el.style.display = 'none';
   });
 }
 
