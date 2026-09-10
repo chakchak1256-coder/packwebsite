@@ -1,0 +1,10 @@
+# .wranglerignore
+
+node_modules
+.wrangler
+.env
+worker.js
+wrangler.jsonc
+package.json
+package-lock.json
+seed.html

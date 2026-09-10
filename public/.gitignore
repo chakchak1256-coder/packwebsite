@@ -1,0 +1,16 @@
+# .gitignore
+
+# Environment variables — NEVER commit these
+.env
+*.env
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Cloudflare Wrangler local cache/session — regenerates automatically
+.wrangler/
+
+# OS
+.DS_Store
+Thumbs.db
