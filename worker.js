@@ -1183,6 +1183,125 @@ export default {
     }
 
     // ============================================================
+    // ROUTE: POST /api/checkout/test
+    // Test/dev-only stand-in for /api/checkout — creates an order that is
+    // already marked paid and delivers it immediately, with NO SlickPay
+    // invoice and NO real money involved. Same product lookup/pricing path
+    // as the real checkout (priceCartItems), so it's a faithful test of
+    // delivery, not just a fake success screen.
+    //
+    // Locked down two ways so it can never be used to get free products
+    // on a live store:
+    //   1. Fails closed unless the Worker var TEST_CHECKOUT_ENABLED is
+    //      literally the string "true" (see wrangler.jsonc). Leave this
+    //      unset/false in production.
+    //   2. Requires a real logged-in Supabase session (requireUserAuth) —
+    //      the purchase is attached to that account, same as a real order.
+    //
+    // Body: { items, user_id, user_email, firstname, lastname, email, phone }
+    // Returns: { order_id, payment_url, amount, test: true }
+    // The returned payment_url points straight at payment-return.html,
+    // which will report the order as paid instantly since it's created
+    // already 'delivered'.
+    // ============================================================
+    if (path === '/api/checkout/test' && method === 'POST') {
+      try {
+        if ((env.TEST_CHECKOUT_ENABLED || '').toLowerCase() !== 'true') {
+          return json({ error: 'Test checkout is not enabled on this Worker.' }, 403);
+        }
+
+        const auth = await requireUserAuth(request, env);
+        if (!auth.ok) return json({ error: auth.error }, auth.status);
+
+        let body;
+        try { body = await request.json(); } catch { return json({ error: 'Invalid JSON body.' }, 400); }
+
+        const {
+          product_id, product_name, firstname, lastname, email, phone,
+          items: rawItems, user_id, user_email,
+        } = body || {};
+
+        const normalizedItems = (Array.isArray(rawItems) && rawItems.length)
+          ? rawItems.map(it => ({
+              productId:    it.product_id || it.productId || it.id,
+              variantLabel: it.variant_label || it.variantLabel || null,
+              qty:          it.qty || 1,
+            }))
+          : (product_id ? [{ productId: product_id, variantLabel: null, qty: 1 }] : []);
+
+        if (!normalizedItems.length) {
+          return json({ error: 'Missing required fields: items or product_id.' }, 400);
+        }
+
+        let pricedItems;
+        try {
+          pricedItems = await priceCartItems(env, normalizedItems);
+        } catch (err) {
+          console.error('[checkout/test] priceCartItems failed:', err.message);
+          // This route is dev-only and already gated behind TEST_CHECKOUT_ENABLED
+          // + a logged-in user, so — unlike the real /api/checkout above —
+          // it's safe to surface the actual reason instead of a generic
+          // message, to make debugging test purchases faster.
+          return json({ error: 'We could not process your cart right now.', detail: err.message }, 400);
+        }
+        const computedAmount = pricedItems.reduce((sum, it) => sum + it.unitPrice * it.qty, 0);
+        const finalProductName = product_name || (pricedItems.length === 1 ? pricedItems[0].name : `Order (${pricedItems.length} items)`);
+
+        const appUrl = env.APP_URL || 'https://packwebsite.digitch.workers.dev';
+        const returnUrl = `${appUrl}/payment-return.html`;
+        const orderId = 'TEST-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7).toUpperCase();
+
+        const order = {
+          orderId,
+          invoiceId:    'TEST-INVOICE-' + orderId,
+          product_id:   product_id || (pricedItems.length === 1 ? pricedItems[0].productId : ''),
+          product_name: finalProductName || '',
+          amount:       Number(computedAmount),
+          productsAmount: Number(computedAmount),
+          gatewayFee:   0,
+          items:        pricedItems,
+          userId:       user_id    || auth.uid,
+          userEmail:    user_email || email || auth.email || '',
+          firstname:    firstname || 'Test',
+          lastname:     lastname  || 'Buyer',
+          email:        email     || auth.email || '',
+          phone:        phone     || '',
+          address:      'Algérie - Livraison numérique',
+          status:       'paid',
+          paymentUrl:   returnUrl,
+          paymentMethod: 'test',
+          createdAt:    new Date().toISOString(),
+        };
+
+        try {
+          await Docs.setDoc(env, 'slickpay_orders', orderId, order);
+        } catch (fsErr) {
+          console.error('[checkout/test] Firestore write failed:', fsErr.message);
+          return json({ error: 'Could not create test order.' }, 500);
+        }
+
+        // Deliver right away, same claim-once lock the real webhook/poll use,
+        // so this can't double-deliver if hit twice.
+        try {
+          const won = await Docs.claimOnce(env, 'order_delivery_locks', orderId);
+          if (won) {
+            await deliverOrder(env, order);
+            await Docs.updateDoc(env, 'slickpay_orders', orderId, { status: 'delivered' });
+          }
+        } catch (err) {
+          console.error('[checkout/test] delivery failed:', err.message);
+          return json({ error: 'Test order created but delivery failed: ' + err.message }, 500);
+        }
+
+        return json({ order_id: orderId, payment_url: `${returnUrl}?order=${orderId}`, amount: Number(computedAmount), test: true });
+
+      } catch (err) {
+        console.error('[checkout/test] unexpected error:', err.message);
+        return json({ error: 'Internal server error.' }, 500);
+      }
+    }
+
+    // ============================================================
     // ROUTE: GET /api/checkout/status/:order_id
     // Polls SlickPay for payment status.
     // Returns { status, completed, invoice_id, rejection_reason }
