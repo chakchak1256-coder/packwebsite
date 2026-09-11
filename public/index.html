@@ -994,6 +994,14 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:4rem 0 2
 }
 .back-btn:hover{color:var(--text)}
 .detail-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:3.5rem;align-items:start}
+/* Grid items default to min-width:auto, not 0 — without this, a gallery
+   with many thumbnails (their fixed 60px widths adding up past the
+   column's normal width) forces the whole grid column, and therefore the
+   whole page, to grow wider instead of letting .gallery-thumbs's own
+   overflow-x:auto scroll internally as intended. Only shows up once a
+   product has enough images (e.g. 16) to exceed the column width — a
+   product with 2-5 images never hits it. */
+.detail-grid > div{min-width:0}
 .gallery-main{aspect-ratio:4/3;border-radius:var(--radius);overflow:hidden;
   background:var(--bg3);border:1px solid var(--border);margin-bottom:.6rem;
   position:relative}
@@ -2752,8 +2760,8 @@ footer::before{
         <div class="gallery-thumbs" id="gal-thumbs"></div>
       </div>
       <div>
-        <div class="pd-cat" id="pd-cat"></div>
-        <h1 class="pd-name" id="pd-name"></h1>
+        <div class="pd-cat" id="pd-cat" dir="auto"></div>
+        <h1 class="pd-name" id="pd-name" dir="auto"></h1>
         <div class="pd-prices">
           <span class="pd-price" id="pd-price"></span>
           <span class="pd-old" id="pd-old" style="display:none"></span>
@@ -2762,7 +2770,7 @@ footer::before{
         <div class="pd-badges" id="pd-badges"></div>
         <div id="pd-viewing" class="pd-viewing" style="display:none"><i class="fa-solid fa-circle" style="font-size:.5rem;color:var(--success)"></i> <span id="pd-viewing-text"></span></div>
         <div id="pd-stars-row"></div>
-        <p class="pd-desc" id="pd-desc"></p>
+        <p class="pd-desc" id="pd-desc" dir="auto"></p>
         <!-- Variant selector — shown only if product has variants -->
         <div class="pd-variant-wrap" id="pd-variant-wrap" style="display:none">
           <div id="pd-variant-groups"></div>
@@ -3152,8 +3160,8 @@ function makeProductCard(prod) {
       </button>
     </div>
     <div class="prod-info">
-      <div class="prod-cat">${prod.category||''}${prod.contentType && prod.contentType !== 'product' ? ` <span class="prod-type-tag">· ${prod.contentType === 'course' ? 'Course' : 'Pack'}</span>` : ''}</div>
-      <div class="prod-name">${prod.name}</div>
+      <div class="prod-cat" dir="auto">${prod.category||''}${prod.contentType && prod.contentType !== 'product' ? ` <span class="prod-type-tag">· ${prod.contentType === 'course' ? 'Course' : 'Pack'}</span>` : ''}</div>
+      <div class="prod-name" dir="auto">${prod.name}</div>
       ${starsHtml}
       <div class="prod-price-row">
         <div class="prod-prices">
@@ -3868,7 +3876,7 @@ function renderCartItems() {
     d.innerHTML = `
       <div class="cart-item-img"><img src="${img}" alt="" loading="lazy" decoding="async"/></div>
       <div class="cart-item-info">
-        <div class="cart-item-name">${item.name}</div>
+        <div class="cart-item-name" dir="auto">${item.name}</div>
         <div class="cart-item-price">${(() => { const lt = item.price*item.qty; return lt > 0 ? lt.toLocaleString()+' '+(s.currency||'DA') : 'FREE'; })()}</div>
         <div class="cart-item-row">
           <button class="cart-del" onclick="removeItem('${item.id}')"><i class="fa-solid fa-trash"></i></button>
@@ -4106,7 +4114,7 @@ function buildOrderSummaryHTML(surchargeRate, surchargeFlat) {
     // Use data-cartid attribute — avoids any quote/injection issues with the id string
     return `<div style="display:flex;align-items:center;gap:.6rem;padding:.55rem 0;border-bottom:1px solid var(--border)">
       <div style="flex:1;min-width:0">
-        <div style="font-size:.86rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.name}</div>
+        <div style="font-size:.86rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" dir="auto">${item.name}</div>
         ${variant}
       </div>
       <div style="font-family:'Fraunces',serif;font-size:.9rem;font-weight:700;color:var(--accent);white-space:nowrap;flex-shrink:0;margin-right:.35rem">${((item.price)*(item.qty||1)).toLocaleString()} ${s.currency||'DA'}</div>
