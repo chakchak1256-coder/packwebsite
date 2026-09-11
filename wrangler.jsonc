@@ -20,45 +20,14 @@
 
   "vars": {
     "APP_URL": "https://packwebsite.digitch.workers.dev",
-    // Same values as the `supabaseConfig` in supabase.js — these are NOT
-    // secrets (Supabase's URL and anon/publishable key are meant to be
-    // public; RLS is what actually protects your data), they just tell
-    // the Worker which Supabase project to talk to when verifying a
-    // signed-in visitor's access token (see requireAdminAuth() /
-    // requireUserAuth() in worker.js). Without these, every admin-only
-    // route (upload-file, delete-file, delete-user, login-history,
-    // log-access) and every customer route (claim-free, content,
-    // progress, complete-google-registration) fails auth.
     "SUPABASE_URL": "https://redbcznzczspusdzbxbq.supabase.co",
     "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlZGJjem56Y3pzcHVzZHpieGJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NjQ5MDIsImV4cCI6MjEwNDA0MDkwMn0.DbyJI_hx9NufL0gRWZFCIbQ4jmlyyFFM402Bngr1Lj8",
     // "sandbox" uses devapi.slick-pay.com  |  "production" uses prodapi.slick-pay.com
     "SLICKPAY_ENV": "production",
     // Told to SlickPay on every invoice so THEY can call us back
-    // server-to-server the moment payment completes — this is the backup
-    // to the client-side polling on payment-return.html, which only works
-    // as long as the customer's browser stays open and connected. Without
-    // this var (it was missing until now), no webhook_url was ever sent,
-    // so this backup path silently never existed. Signature is verified
-    // against the SLICKPAY_WEBHOOK_SIG secret in the /api/webhook route.
+    // server-to-server the moment payment completes — backup to the
+    // client-side polling on payment-return.html. Was missing before.
     "SLICKPAY_WEBHOOK_URL": "https://packwebsite.digitch.workers.dev/api/webhook",
-    // Set to "true" (string) to turn on POST /api/checkout/test — a
-    // dev-only checkout route that skips SlickPay entirely and marks the
-    // order paid/delivered for free, so you can test what happens AFTER
-    // payment (delivery, My Learning, cart clearing) without spending real
-    // money or needing SlickPay sandbox test cards. Still requires the
-    // buyer to be logged in. Set back to "false" once you're done testing —
-    // it is NOT gated by anything else, so anyone can buy anything for
-    // free while it's "true".
-    "TEST_CHECKOUT_ENABLED": "true",
-    // NOTE: admin-only routes (upload-file, delete-file, delete-user,
-    // login-history, log-access) are protected by requireAdminAuth() in
-    // worker.js, which verifies a Supabase Auth access token (Authorization:
-    // Bearer <token>) against ADMIN_EMAIL — not a static API key. There is
-    // no ADMIN_API_KEY in this codebase; don't set one expecting it to do
-    // anything.
-    // Public base URL of your R2 bucket (r2.dev URL or connected custom domain,
-    // NO trailing slash) — required by POST /api/upload-file in worker.js.
-    // Example: "https://pub-xxxxxxxxxxxxxxxx.r2.dev"
     "R2_PUBLIC_URL": "https://pub-3b114b0bb0f949b4a20eafa3911ee64c.r2.dev"
   },
 
