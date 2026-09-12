@@ -336,7 +336,17 @@ body.flash-on #topbar{top:56px}
 .user-dropdown-item.danger .udi-icon{background:rgba(239,68,68,.1);color:#EF4444}
 .user-dropdown-item.danger:hover{background:rgba(239,68,68,.08)}
 @media(max-width:420px){
-  .user-dropdown{width:calc(100vw - 10vw);right:-4vw}
+  /* The trigger button (#user-btn-wrap) sits inside a centered nav pill
+     that itself is inset 5vw from each edge — it is NOT flush against the
+     viewport's right edge. Positioning this dropdown via `right:-4vw`
+     relative to that button (as before) only happened to fit by
+     coincidence at some widths; at others its left edge landed off-screen,
+     clipping the icon + first letter of every menu item. Anchoring
+     directly to the viewport with position:fixed removes that guesswork
+     entirely — it's always centered with an even margin on both sides,
+     no matter where the button is. */
+  .user-dropdown{position:fixed;top:178px;left:4vw;right:4vw;width:auto}
+  body.flash-on .user-dropdown{top:216px}
 }
 
 .hamburger{display:none;flex-direction:column;gap:4px;width:32px;height:32px;
