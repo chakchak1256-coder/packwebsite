@@ -335,18 +335,18 @@ body.flash-on #topbar{top:56px}
 .user-dropdown-item.danger{color:#EF4444}
 .user-dropdown-item.danger .udi-icon{background:rgba(239,68,68,.1);color:#EF4444}
 .user-dropdown-item.danger:hover{background:rgba(239,68,68,.08)}
-@media(max-width:420px){
+@media(max-width:900px){
   /* The trigger button (#user-btn-wrap) sits inside a centered nav pill
      that itself is inset 5vw from each edge — it is NOT flush against the
-     viewport's right edge. Positioning this dropdown via `right:-4vw`
-     relative to that button (as before) only happened to fit by
-     coincidence at some widths; at others its left edge landed off-screen,
-     clipping the icon + first letter of every menu item. Anchoring
-     directly to the viewport with position:fixed removes that guesswork
-     entirely — it's always centered with an even margin on both sides,
-     no matter where the button is. */
-  .user-dropdown{position:fixed;top:178px;left:4vw;right:4vw;width:auto}
-  body.flash-on .user-dropdown{top:216px}
+     viewport's right edge, and this is the same breakpoint where the nav
+     switches to that centered hamburger layout (see .hamburger{display:
+     flex} below). Anchoring this dropdown to the viewport itself (instead
+     of positioning it relative to the button, which is what caused it to
+     land partly off-screen before) guarantees it always fits, regardless
+     of where the button sits. Vertical position (top) is set in JS by
+     toggleUserMenu() at open-time, since the nav's own top offset already
+     differs across several breakpoints and a "flash" banner state. */
+  .user-dropdown{position:fixed;left:4vw;right:4vw;width:auto}
 }
 
 .hamburger{display:none;flex-direction:column;gap:4px;width:32px;height:32px;
@@ -4653,7 +4653,24 @@ function initUserAuth() {
 }
 
 function toggleUserMenu() {
-  document.getElementById('user-menu').classList.toggle('open');
+  const menu = document.getElementById('user-menu');
+  const opening = !menu.classList.contains('open');
+  menu.classList.toggle('open');
+  // On the mobile hamburger layout (see .hamburger{display:flex} at
+  // max-width:900px), the dropdown is position:fixed and horizontally
+  // anchored to the viewport via CSS (left/right:4vw — see .user-dropdown
+  // media rule), but its vertical position has to be computed here rather
+  // than hardcoded in CSS: the nav's own top offset already differs across
+  // several breakpoints and a "flash" banner state, and hardcoding a
+  // separate magic number for each one is exactly how this broke before.
+  // Reading the real nav element's position at open-time is correct no
+  // matter how the nav's own layout changes in the future.
+  if (opening && window.innerWidth <= 900) {
+    const navEl = document.getElementById('nav');
+    if (navEl) menu.style.top = (navEl.getBoundingClientRect().bottom + 14) + 'px';
+  } else {
+    menu.style.top = '';
+  }
 }
 document.addEventListener('click', e => {
   const menu = document.getElementById('user-menu');
