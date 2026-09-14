@@ -4779,8 +4779,15 @@ async function doCompleteGoogleSignup() {
   if (wasCheckout) setTimeout(() => openCheckout(), 300);
 }
 
-function doUserLogout() {
-  UserAuth.logout(); initUserAuth();
+async function doUserLogout() {
+  // Wait for the real Supabase sign-out to finish before doing anything
+  // else — UserAuth.logout() used to fire this in the background and
+  // return immediately, so a quick sign-in right after logout could race
+  // against it: whichever one settled last would silently win, sometimes
+  // wiping out the fresh session. Only a full page reload (which just
+  // reads whatever ended up in storage) bypassed it. Awaiting here closes
+  // that window.
+  await UserAuth.logout(); initUserAuth();
   document.getElementById('user-menu').classList.remove('open');
   // If My Library (or any other overlay page) is open, signing out should
   // land back on the main storefront, not leave the person stranded on a

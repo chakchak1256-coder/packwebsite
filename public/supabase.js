@@ -345,7 +345,7 @@ const UserAuth = {
     // window.__IS_ADMIN check below is what lets admin.html's own
     // client authenticate as ADMIN_EMAIL without tripping this guard.
     if (!window.__IS_ADMIN && user && (user.email || '').toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-      _auth.signOut();
+      await _auth.signOut();
       return;
     }
 
@@ -640,7 +640,7 @@ const UserAuth = {
     }
   },
 
-  logout() { _auth.signOut(); this._current = null; window.dispatchEvent(new Event('auth:change')); },
+  async logout() { await _auth.signOut(); this._current = null; window.dispatchEvent(new Event('auth:change')); },
 
   // Updates the signed-in user's display name — used by the Account →
   // Settings panel. Writes to both Supabase Auth (source of truth for
@@ -1478,9 +1478,8 @@ function adjustColor(hex,amount){const rgb=hexToRgb(hex);if(!rgb)return hex;cons
 const Cart = {
   get(){try{return JSON.parse(localStorage.getItem('dz_cart')||'[]');}catch{return[];}},
   _save(c){try{localStorage.setItem('dz_cart',JSON.stringify(c));}catch{}window.dispatchEvent(new Event('cart:update'));},
-  add(prod,qty=1){const c=this.get();const cartId=prod.variantLabel?(prod.id+'__'+prod.variantLabel):prod.id;const ex=c.find(i=>i.id===cartId);if(ex)ex.qty+=qty;else c.push({id:cartId,productId:prod.id,name:prod.variantLabel?(prod.name+' — '+prod.variantLabel):prod.name,price:prod.price,img:(prod.images||[])[0]||null,qty,variantLabel:prod.variantLabel||null});this._save(c);},
+  add(prod,qty=1){const c=this.get();const cartId=prod.variantLabel?(prod.id+'__'+prod.variantLabel):prod.id;const ex=c.find(i=>i.id===cartId);if(ex)ex.qty=1;else c.push({id:cartId,productId:prod.id,name:prod.variantLabel?(prod.name+' — '+prod.variantLabel):prod.name,price:prod.price,img:(prod.images||[])[0]||null,qty:1,variantLabel:prod.variantLabel||null});this._save(c);},
   remove(id){this._save(this.get().filter(i=>i.id!==id));},
-  setQty(id,qty){if(qty<1)return this.remove(id);const c=this.get();const it=c.find(i=>i.id===id);if(it){it.qty=qty;this._save(c);}},
   clear(){localStorage.removeItem('dz_cart');window.dispatchEvent(new Event('cart:update'));},
   total(){return this.get().reduce((s,i)=>s+i.price*i.qty,0);},
   count(){return this.get().reduce((s,i)=>s+i.qty,0);},
