@@ -380,11 +380,24 @@ const UserAuth = {
       // fixes that: the old account still gets restored and logged in
       // normally below, it just doesn't consume the flag meant for the
       // actual redirect completion.
+      //
+      // This is stored in localStorage, not sessionStorage. It used to be
+      // sessionStorage, but the redirect to Google and back is a full
+      // navigation through a third-party origin (accounts.google.com) in
+      // between — some browsers (Safari in particular, but not only)
+      // partition or drop sessionStorage across that kind of round trip,
+      // silently losing the flag. When that happened, consumingRedirect
+      // came back false for the real SIGNED_IN event and nothing below
+      // ever ran — sign-in would appear to do nothing at all, most
+      // reliably reproduced by signing in fresh right after an account
+      // was deleted (no old session lying around to mask it). localStorage
+      // isn't tied to the browsing session/tab the way sessionStorage is,
+      // so it survives that redirect reliably.
       let consumingRedirect = false;
       let pendingFlagRaw = null;
       if (event !== 'INITIAL_SESSION') {
-        try { pendingFlagRaw = sessionStorage.getItem('_googleOAuthPending'); consumingRedirect = pendingFlagRaw === '1'; } catch (e) {}
-        if (consumingRedirect) { try { sessionStorage.removeItem('_googleOAuthPending'); } catch (e) {} }
+        try { pendingFlagRaw = localStorage.getItem('_googleOAuthPending'); consumingRedirect = pendingFlagRaw === '1'; } catch (e) {}
+        if (consumingRedirect) { try { localStorage.removeItem('_googleOAuthPending'); } catch (e) {} }
       }
       console.log('[AuthDebug] isGoogle branch | pendingFlag:', pendingFlagRaw, '| consumingRedirect:', consumingRedirect);
 
@@ -537,7 +550,7 @@ const UserAuth = {
   // 'google-redirect-result' — the login modal in index.html already
   // listens for that event, unchanged).
   async loginWithGoogle() {
-    try { sessionStorage.setItem('_googleOAuthPending', '1'); } catch (e) {}
+    try { localStorage.setItem('_googleOAuthPending', '1'); } catch (e) {}
     const { error } = await _client.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -546,7 +559,7 @@ const UserAuth = {
       },
     });
     if (error) {
-      try { sessionStorage.removeItem('_googleOAuthPending'); } catch (e) {}
+      try { localStorage.removeItem('_googleOAuthPending'); } catch (e) {}
       return { error: this._msg(error.message) };
     }
     return { redirecting: true }; // the browser is navigating to Google now
