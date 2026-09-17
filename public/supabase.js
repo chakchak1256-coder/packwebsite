@@ -303,6 +303,10 @@ const _auth = {
     const { error } = await _client.auth.resetPasswordForEmail(email);
     if (error) throw error;
   },
+  async updateUserPassword(newPassword) {
+    const { error } = await _client.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+  },
 };
 
 // ================================================================
@@ -347,6 +351,20 @@ const UserAuth = {
     if (!window.__IS_ADMIN && user && (user.email || '').toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
       await _auth.signOut();
       return;
+    }
+
+    // ── Password recovery ──────────────────────────────────────────
+    // Fired when someone lands back on the site via the "reset your
+    // password" email link (sendPasswordReset() below sends it). Supabase
+    // gives this its own distinct event type specifically so an app can
+    // tell it apart from an ordinary sign-in and prompt for a new
+    // password — previously nothing here checked for it at all, so this
+    // session was just treated as a normal sign-in with no way to actually
+    // set a new password anywhere in the UI. index.html listens for this
+    // event and opens the "Set a new password" modal. Falls through
+    // below afterward so _current still gets set normally.
+    if (event === 'PASSWORD_RECOVERY' && user) {
+      window.dispatchEvent(new CustomEvent('password-recovery', { detail: { email: user.email } }));
     }
 
     if (!user) {
@@ -701,8 +719,20 @@ const UserAuth = {
   // signed-in user's own address — used by the Account → Settings panel.
   // There's no in-app password-change form; this is the standard,
   // safest flow (no need to collect/verify the current password here).
-  async sendPasswordReset() {
-    const email = (this._current && this._current.email) || (_auth.currentUser && _auth.currentUser.email);
+  // Sets a brand-new password on the currently authenticated session.
+  // Used by the "Set a new password" modal after someone arrives via a
+  // password-recovery email link (see the PASSWORD_RECOVERY branch in
+  // _handleAuthChange) — the recovery link establishes a real session,
+  // which is what lets this update go through without the old password.
+  async setNewPassword(newPassword) {
+    if (!newPassword || newPassword.length < 6) throw new Error('Password must be at least 6 characters.');
+    try {
+      await _auth.updateUserPassword(newPassword);
+    } catch (e) { throw new Error(this._msg(e.message)); }
+    return true;
+  },
+
+  async sendPasswordReset() {    const email = (this._current && this._current.email) || (_auth.currentUser && _auth.currentUser.email);
     if (!email) throw new Error('No email on file for this account.');
     try {
       await _auth.sendPasswordResetEmail(email);
@@ -1047,7 +1077,7 @@ const Auth = {
       throw e;
     }
   },
-  logout() { _auth.signOut(); },
+  async logout() { await _auth.signOut(); },
   // Access token to send as `Authorization: Bearer <token>` on admin-only
   // Worker calls. getIdToken() auto-refreshes an expired token.
   async getIdToken(forceRefresh) {

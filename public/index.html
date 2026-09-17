@@ -1345,6 +1345,20 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:4rem 0 2
 #co-alert-modal h3{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:800;margin-bottom:.5rem}
 #co-alert-modal p{font-size:.86rem;color:var(--text-muted);line-height:1.55;margin-bottom:1.3rem}
 
+/* Set-new-password modal — shown when a password-recovery email link
+   lands back on the site. Reuses the same overlay pattern as
+   #co-alert-modal and the shared .form-input/.form-group field styles. */
+#pw-reset-modal{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2000;
+  display:flex;align-items:center;justify-content:center;padding:1rem;
+  opacity:0;pointer-events:none;transition:opacity var(--transition)}
+#pw-reset-modal.open{opacity:1;pointer-events:all}
+#pw-reset-modal .pw-reset-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:1.8rem;width:100%;max-width:380px;
+  transform:scale(.97);transition:transform .18s ease}
+#pw-reset-modal.open .pw-reset-box{transform:scale(1)}
+#pw-reset-modal h3{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:800;margin-bottom:.4rem;text-align:center}
+#pw-reset-modal p.pw-reset-lead{font-size:.85rem;color:var(--text-muted);line-height:1.55;margin-bottom:1.2rem;text-align:center}
+
 #mp-detail-content{overflow-y:auto;flex:1;min-height:0;padding-right:.5rem;margin-right:-.5rem}
 #mp-detail-content::-webkit-scrollbar{width:6px}
 #mp-detail-content::-webkit-scrollbar-track{background:transparent}
@@ -2876,6 +2890,29 @@ footer::before{
   </div>
 </div>
 
+<!-- Set-new-password modal. Opens automatically when someone lands back
+     on the site via the "reset your password" email link — see the
+     'password-recovery' listener near initUserAuth(). There was
+     previously no UI at all for this step: the email would send, but
+     clicking its link just silently signed the person in with no way to
+     actually set a new password. -->
+<div id="pw-reset-modal">
+  <div class="pw-reset-box">
+    <h3>Set a new password</h3>
+    <p class="pw-reset-lead">Choose a new password for your account.</p>
+    <div class="form-group">
+      <label>New password</label>
+      <input type="password" class="form-input" id="pw-reset-new" placeholder="At least 6 characters" autocomplete="new-password"/>
+    </div>
+    <div class="form-group">
+      <label>Confirm new password</label>
+      <input type="password" class="form-input" id="pw-reset-confirm" placeholder="Re-type the password" autocomplete="new-password"/>
+    </div>
+    <p id="pw-reset-msg" style="font-size:.8rem;color:#EF4444;margin-bottom:.9rem;display:none"></p>
+    <button class="btn btn-primary" id="pw-reset-submit" onclick="submitNewPassword()" style="width:100%">Save New Password</button>
+  </div>
+</div>
+
 <!-- defer: these 2 scripts used to block HTML parsing until fully
      downloaded + executed, on top of being requested this late in the
      document. `defer` lets the browser keep parsing/painting the rest of
@@ -3048,7 +3085,13 @@ function renderHeroPreview() {
   const el = document.getElementById('hero-preview');
   if (!el) return;
   const prods = visibleProducts();
-  const cats = DB.getAll('categories');
+  // Distinct topic names only — the same topic can exist as separate
+  // records per content type (see the dedupe note in renderAllFilters),
+  // which would otherwise inflate this count (e.g. a "Google Sheets"
+  // topic under both Digital Products and Digital Packs counting twice).
+  const cats = [...new Set(
+    DB.getAll('categories').map(c => (c.name || '').trim().toLowerCase()).filter(Boolean)
+  )];
   if (!prods.length) return; // catalog not loaded yet — leave hidden
   const courseCount = prods.filter(p => p.contentType === 'course').length;
   const packCount = prods.filter(p => p.contentType === 'pack').length;
@@ -3345,6 +3388,19 @@ function renderAllFilters(activeCat = 'all') {
   // legacy topic saved before types existed (no contentType set).
   const allCats = DB.getAll('categories');
   const cats = _typeFilter === 'all' ? allCats : allCats.filter(c => c.contentType === _typeFilter);
+  // On the "All" tab, the same topic name can exist as separate records
+  // under different content types (e.g. a "Google Sheets" topic saved for
+  // Digital Products AND another for Digital Packs), which rendered the
+  // same label twice in the chip row. Collapse them by name — filtering
+  // matches on the topic's name (see renderAllProducts), not its record,
+  // so one chip correctly shows that topic's products across every type.
+  const seenCatNames = new Set();
+  const uniqueCats = cats.filter(c => {
+    const key = (c.name || '').trim().toLowerCase();
+    if (!key || seenCatNames.has(key)) return false;
+    seenCatNames.add(key);
+    return true;
+  });
   const f = document.getElementById('filter-chips'); f.innerHTML = '';
   const makeChip = (label, val) => {
     const c = document.createElement('div');
@@ -3358,7 +3414,7 @@ function renderAllFilters(activeCat = 'all') {
     return c;
   };
   f.appendChild(makeChip('All', 'all'));
-  cats.forEach(c => f.appendChild(makeChip(c.name, c.name)));
+  uniqueCats.forEach(c => f.appendChild(makeChip(c.name, c.name)));
 }
 
 function renderAllProducts(filterCat) {
@@ -4387,8 +4443,16 @@ async function coInitiateSlickPayCheckout() {
       return;
     }
 
-    // Store order ID for the return page
-    try { sessionStorage.setItem('slickpay_order_id', data.order_id); } catch {}
+    // Store order ID for the return page. localStorage, not sessionStorage —
+    // this redirects through SATIM (a third-party domain) and back, and
+    // sessionStorage can get silently dropped across that kind of round
+    // trip in some browsers (same issue that broke Google sign-in — see
+    // the note by _googleOAuthPending in supabase.js). Losing this here is
+    // worse: the real checkout's return URL carries no order-id query
+    // param at all, so this is the *only* way payment-return.html can
+    // identify the order — losing it would tell someone who actually paid
+    // that their payment failed.
+    try { localStorage.setItem('slickpay_order_id', data.order_id); } catch {}
 
     // Redirect to SATIM payment page
     window.location.href = data.payment_url;
@@ -4624,6 +4688,47 @@ function toggleMobileNav() { document.getElementById('mobile-nav').classList.tog
 function closeMobileNav() { document.getElementById('mobile-nav').classList.remove('open'); }
 
 // ===== USER AUTH (index) =====
+// ── Password recovery: set a new password ────────────────────────
+// supabase.js dispatches 'password-recovery' when someone lands back on
+// the site via the "reset your password" email link. Before this existed,
+// that link just silently signed the person in — there was no way to
+// actually set a new password anywhere in the app.
+window.addEventListener('password-recovery', () => {
+  const modal = document.getElementById('pw-reset-modal');
+  if (!modal) return;
+  const err = document.getElementById('pw-reset-msg');
+  if (err) err.style.display = 'none';
+  const a = document.getElementById('pw-reset-new');
+  const b = document.getElementById('pw-reset-confirm');
+  if (a) a.value = ''; if (b) b.value = '';
+  modal.classList.add('open');
+  if (a) setTimeout(() => a.focus(), 120);
+});
+
+async function submitNewPassword() {
+  const pass    = (document.getElementById('pw-reset-new')     || {}).value || '';
+  const confirm = (document.getElementById('pw-reset-confirm') || {}).value || '';
+  const err     = document.getElementById('pw-reset-msg');
+  const btn     = document.getElementById('pw-reset-submit');
+  const showErr = m => { if (err) { err.textContent = m; err.style.display = 'block'; } };
+
+  if (pass.length < 6)     { showErr('Password must be at least 6 characters.'); return; }
+  if (pass !== confirm)    { showErr('The two passwords do not match.'); return; }
+  if (err) err.style.display = 'none';
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
+  try {
+    await UserAuth.setNewPassword(pass);
+    document.getElementById('pw-reset-modal').classList.remove('open');
+    showToast('Password updated — you can now sign in with it. ✅');
+  } catch (e) {
+    showErr(e.message || 'Could not update the password. Please try again.');
+  }
+  btn.disabled = false;
+  btn.innerHTML = 'Save New Password';
+}
+
 function initUserAuth() {
   const user = UserAuth.current();
 

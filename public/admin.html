@@ -1206,9 +1206,9 @@ function doLogin() {
   });
 }
 
-function doLogout() {
+async function doLogout() {
   _adminBooted = false;
-  Auth.logout();
+  await Auth.logout();
   location.reload();
 }
 
