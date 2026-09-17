@@ -494,10 +494,6 @@ function resolveVariant(product, variantLabel) {
 }
 
 // Kept as a thin wrapper for callers that only need the price.
-function resolveVariantPrice(product, variantLabel) {
-  return resolveVariant(product, variantLabel).price;
-}
-
 // ---------------------------------------------------------------
 // Delivery info — deliveryLink / deliveryType / deliveryFiles / autoDeliver
 // now live in products/{id}/private/delivery, an admin-only subdocument,
