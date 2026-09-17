@@ -1019,6 +1019,7 @@ select.form-input option{background:var(--bg2)}
                 <th>Stars</th>
                 <th>Comment</th>
                 <th>Date</th>
+                <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -2534,19 +2535,6 @@ function openAddPurchaseModal() {
   document.getElementById('purchase-modal').classList.add('open');
 }
 
-async function editPurchase(id) {
-  const all = await Purchases.getAll();
-  const p = all.find(x => x.id === id); if (!p) return;
-  document.getElementById('pur-edit-id').value = id;
-  document.getElementById('pur-modal-title').textContent = 'Edit Purchase';
-  document.getElementById('pur-user-email').value = p.userEmail || '';
-  document.getElementById('pur-product-name').value = p.productName || '';
-  document.getElementById('pur-product-type').value = p.productType || '';
-  document.getElementById('pur-access-link').value = p.accessLink || '';
-  document.getElementById('pur-date').value = (p.purchaseDate || p.createdAt || '').split('T')[0];
-  populatePurchaseModal();
-  document.getElementById('purchase-modal').classList.add('open');
-}
 
 async function populatePurchaseModal() {
   // Populate users datalist
@@ -3597,7 +3585,7 @@ function renderReviewsAdmin() {
   if (cnt) cnt.textContent = '(' + rows.length + ')';
 
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted)">No reviews found.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">No reviews found.</td></tr>`;
     return;
   }
 
@@ -3618,13 +3606,29 @@ function renderReviewsAdmin() {
       ? `<span title="${escapeHtml(r.comment)}">${escapeHtml(r.comment.length > 50 ? r.comment.slice(0,50) + '…' : r.comment)}</span>`
       : '<span style="color:var(--text-muted);font-style:italic">—</span>';
     const safeId = escapeHtml(r.id);
+    // Reviews are created as 'pending' and the storefront only ever shows
+    // 'approved' ones (see Reviews.forProduct / allApproved in
+    // supabase.js), so without these controls every review stayed pending
+    // forever and could never appear on the site — and product rating
+    // averages, which are recalculated from approved reviews only, never
+    // moved either. reviewSetStatus() already existed and worked; it just
+    // had nothing calling it.
+    const status = r.status || 'pending';
+    const statusColor = status === 'approved' ? '#10B981' : status === 'rejected' ? '#EF4444' : '#F59E0B';
+    const statusCell = `<span style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:${statusColor}">${escapeHtml(status)}</span>`;
+    const approveBtn = status !== 'approved'
+      ? `<button class="btn btn-sm" style="background:#10B981;color:#fff" title="Approve" onclick="reviewSetStatus('${safeId}','approved')"><i class="fa-solid fa-check"></i></button>` : '';
+    const rejectBtn = status !== 'rejected'
+      ? `<button class="btn btn-sm" style="background:#6B7280;color:#fff" title="Reject" onclick="reviewSetStatus('${safeId}','rejected')"><i class="fa-solid fa-xmark"></i></button>` : '';
     return `<tr>
       <td style="font-weight:600">${escapeHtml(r.userName || '—')}</td>
       <td>${escapeHtml(r.productName || '—')}</td>
       <td style="color:#F59E0B;letter-spacing:.05em;font-size:1rem">${stars}</td>
       <td style="max-width:200px;font-size:.82rem;color:var(--text-muted)">${safeComment}</td>
       <td style="font-size:.8rem;color:var(--text-muted)">${date}</td>
-      <td>
+      <td>${statusCell}</td>
+      <td style="white-space:nowrap">
+        ${approveBtn}${rejectBtn}
         <button class="btn btn-sm btn-danger" onclick="confirmDeleteReview('${safeId}')"><i class="fa-solid fa-trash"></i></button>
       </td>
     </tr>`;

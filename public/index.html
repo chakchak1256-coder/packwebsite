@@ -294,12 +294,7 @@ body.flash-on #topbar{top:56px}
 [data-theme="dark"] .avatar-btn{border-color:var(--bg)}
 .avatar-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(var(--accent-rgb),.45)}
 .avatar-btn img{width:100%;height:100%;object-fit:cover}
-.avatar-online-dot{
-  position:absolute;bottom:-1px;right:-1px;width:11px;height:11px;border-radius:50%;
-  background:var(--success);border:2px solid var(--bg2);
-}
-[data-theme="dark"] .avatar-online-dot{border-color:var(--bg)}
-
+[data-theme="dark"] 
 .user-dropdown{
   position:absolute;top:calc(100% + 14px);right:0;width:270px;
   background:var(--bg2);border:1px solid var(--border);border-radius:18px;
@@ -650,32 +645,6 @@ body.flash-on #topbar{top:56px}
 }
 .prod-add:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:scale(1.08)}
 
-/* ===== BEST SELLERS ===== */
-#best-sellers{padding:96px 0}
-.bs-list{display:flex;flex-direction:column;gap:.9rem}
-.bs-row{
-  display:flex;align-items:center;gap:1.1rem;padding:.9rem 1.1rem;
-  border-radius:var(--radius);background:var(--bg2);border:1px solid var(--border);
-  cursor:pointer;transition:border-color var(--transition),transform var(--transition);
-}
-.bs-row:hover{border-color:rgba(var(--accent-rgb),.4);transform:translateX(4px)}
-.bs-rank{
-  width:30px;height:30px;border-radius:50%;flex-shrink:0;
-  background:rgba(var(--accent-rgb),.12);color:var(--accent);
-  font-family:'Fraunces',serif;font-weight:800;font-size:.85rem;
-  display:flex;align-items:center;justify-content:center;
-}
-.bs-row:nth-child(1) .bs-rank{background:#F59E0B;color:#0a0a0a}
-.bs-img{width:56px;height:56px;border-radius:9px;overflow:hidden;flex-shrink:0;background:var(--bg3)}
-.bs-img img{width:100%;height:100%;object-fit:cover}
-.bs-info{flex:1;min-width:0}
-.bs-name{font-family:'Fraunces',serif;font-size:.86rem;font-weight:700;color:var(--text);
-  margin-bottom:.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bs-meta{display:flex;align-items:center;gap:.6rem;font-size:.74rem;color:var(--text-muted);flex-wrap:wrap}
-.bs-meta i{color:#F59E0B;font-size:.7rem}
-.bs-price{font-family:'Fraunces',serif;font-weight:800;color:var(--accent);font-size:.95rem;flex-shrink:0}
-.bs-old{font-size:.72rem;color:var(--text-muted);text-decoration:line-through;margin-right:.3rem}
-
 /* ===== TESTIMONIALS / SOCIAL PROOF CAROUSEL ===== */
 #testimonials{padding:96px 0;background:var(--bg2)}
 #testi-carousel-wrap{
@@ -711,11 +680,6 @@ body.flash-on #topbar{top:56px}
 }
 .testi-name{font-size:.84rem;font-weight:700;color:var(--text)}
 .testi-role{font-size:.74rem;color:var(--text-muted)}
-.testi-empty{
-  flex:0 0 100%;width:100%;text-align:center;padding:2.4rem 1rem;color:var(--text-muted);
-}
-.testi-empty i{font-size:2rem;opacity:.2;margin-bottom:.8rem;display:block}
-.testi-empty p{font-size:.88rem}
 .testi-cta{display:flex;justify-content:center;margin-top:2rem}
 
 /* ===== BRAND STATEMENT — a single editorial line, no card wall ===== */
@@ -795,11 +759,6 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:4rem 0 2
 .cart-item-name{font-weight:600;font-size:.84rem;margin-bottom:.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
 .cart-item-price{color:var(--accent);font-weight:700;font-size:.8rem;font-family:'Fraunces',serif}
 .cart-item-row{display:flex;align-items:center;gap:.35rem;margin-top:.35rem}
-.qty-btn{width:22px;height:22px;border-radius:5px;background:var(--bg3);
-  border:1px solid var(--border);font-size:.7rem;display:flex;align-items:center;justify-content:center;
-  transition:all var(--transition);color:var(--text-muted)}
-.qty-btn:hover{background:rgba(var(--accent-rgb),.15);border-color:var(--accent);color:var(--accent)}
-.qty-num{font-size:.84rem;font-weight:600;min-width:16px;text-align:center;color:var(--text)}
 .cart-del{width:24px;height:24px;border-radius:5px;color:var(--text-muted);margin-left:auto;
   display:flex;align-items:center;justify-content:center;font-size:.72rem;transition:color var(--transition)}
 .cart-del:hover{color:#EF4444}
@@ -1187,9 +1146,6 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:4rem 0 2
   .about-right{grid-template-columns:1fr 1fr}
   .about-card.span2{grid-column:span 2}
   .products-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
-  .bs-row{padding:.7rem .8rem;gap:.7rem}
-  .bs-img{width:46px;height:46px}
-  .bs-meta span:last-child{display:none}
 }
 
 /* ===== MY PRODUCTS PAGE ===== */
@@ -1554,14 +1510,10 @@ body.flash-on #mobile-nav{top:150px}
 /* Default (logged out): show sign-in, hide user btn + my products */
 #login-nav-btn { display: flex !important; }
 #user-btn      { display: none  !important; }
-#my-products-link { display: none !important; }
-#my-products-link-mobile { display: none !important; }
 
 /* Logged in: flip everything */
 [data-authed="true"] #login-nav-btn    { display: none !important; }
 [data-authed="true"] #user-btn         { display: flex !important; }
-[data-authed="true"] #my-products-link { display: flex !important; }
-[data-authed="true"] #my-products-link-mobile { display: flex !important; }
 
 /* ===== DIGITAL TOOLS CAROUSEL ===== */
 #game-carousel-section {
@@ -1770,9 +1722,9 @@ body.flash-on #mobile-nav{top:150px}
 
 /* ---- global motion defaults ---- */
 *{ scroll-behavior:smooth; }
-a,button,.btn,.product-card,.about-card,.testi-card,.bs-row,.about-feat,
+a,button,.btn,.product-card,.about-card,.testi-card,.about-feat,
 .purchase-card,
-.prod-add,.qty-btn,.cart-close,#cart-btn,.cart-del,.pc-access-btn{
+.prod-add,.cart-close,#cart-btn,.cart-del,.pc-access-btn{
   transition:transform .4s cubic-bezier(.22,.85,.32,1),
              box-shadow .4s cubic-bezier(.22,.85,.32,1),
              background .35s ease, border-color .35s ease, color .35s ease, opacity .35s ease;
@@ -1838,7 +1790,7 @@ a,button,.btn,.product-card,.about-card,.testi-card,.bs-row,.about-feat,
 
 /* ---- section separators ---- */
 section{ position:relative; }
-#about::before,#products::before,#best-sellers::before,
+#about::before,#products::before,
 #statement::before,#testimonials::before{
   content:'';position:absolute;top:0;left:8%;right:8%;height:1px;z-index:1;pointer-events:none;
   background:var(--border);
@@ -1861,11 +1813,6 @@ section{ position:relative; }
 .prod-img,.pc-image{ position:relative; }
 .prod-add{ position:relative; }
 .prod-add:hover{ box-shadow:0 6px 16px -6px rgba(var(--accent-rgb),.6); }
-.qty-btn:hover{ transform:translateY(-1px); }
-
-.bs-row{ position:relative; overflow:hidden; }
-.bs-img img{ transition:transform .45s cubic-bezier(.22,.85,.32,1); }
-.bs-row:hover .bs-img img{ transform:scale(1.08); }
 
 /* testimonial cards: lift + soft glow border */
 .testi-card{ position:relative; }
@@ -1957,7 +1904,6 @@ footer::before{
 
 .pd-wish-btn:hover{ transform:translateY(-2px) scale(1.05); }
 
-.qty-btn:hover{ transform:scale(1.15); background:var(--accent); color:#fff; border-color:var(--accent); }
 
 .cart-close:hover,.pc-access-btn:hover{ transform:scale(1.1) rotate(-8deg); }
 
@@ -2234,37 +2180,6 @@ footer::before{
   </div>
 </section>
 
-<!-- ===== DIGITAL PACKS ===== -->
-<section id="packs-section" style="display:none">
-  <div class="container">
-    <div class="products-hdr">
-      <div>
-        <div class="section-tag">More value, one place</div>
-        <h2 class="section-title" style="margin-bottom:0">Digital Packs</h2>
-      </div>
-      <button class="btn btn-outline" onclick="openAllProducts('all','pack')">
-        Explore Packs <i class="fa-solid fa-arrow-right"></i>
-      </button>
-    </div>
-    <div class="products-grid" id="packs-grid"></div>
-  </div>
-</section>
-
-<!-- ===== COURSES ===== -->
-<section id="courses-section" style="display:none">
-  <div class="container">
-    <div class="products-hdr">
-      <div>
-        <div class="section-tag">Learn by doing</div>
-        <h2 class="section-title" style="margin-bottom:0">Courses</h2>
-      </div>
-      <button class="btn btn-outline" onclick="openAllProducts('all','course')">
-        Explore Courses <i class="fa-solid fa-arrow-right"></i>
-      </button>
-    </div>
-    <div class="products-grid" id="courses-grid"></div>
-  </div>
-</section>
 
 <!-- ===== ABOUT ===== -->
 <section id="about">
@@ -2955,7 +2870,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   initUserAuth();
   updateCartBadge();
-  updateWishlistBadge();
   initScrollSpy();
   Presence.start();
   CartLive.start();
@@ -2981,7 +2895,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // cached/defaulted) and again whenever settings:update actually fires
   // (fresh data in) makes them track their OWN data source instead of
   // hitching a ride on an unrelated one.
-  window.addEventListener('settings:update', () => { Settings.applyTheme(); applyContentTypeCardImages(); applyContentTypeVisibility(); renderTopbarSocials(); updateWaFloat(); renderProducts(); renderFeaturedPacks(); renderFeaturedCourses(); });
+  window.addEventListener('settings:update', () => { Settings.applyTheme(); applyContentTypeCardImages(); applyContentTypeVisibility(); renderTopbarSocials(); updateWaFloat(); renderProducts(); });
   // Handle ?open= param (e.g. redirects from payment-return.html)
   (function handleOpenParam() {
     const p = new URLSearchParams(window.location.search).get('open');
@@ -3030,8 +2944,6 @@ function handleDbUpdate() {
       Wishlist.prune(validIds);
     }
     renderProducts();
-    renderFeaturedPacks();
-    renderFeaturedCourses();
     renderHeroPreview();
     renderHeroShowcase();
     renderTopbarSocials();
@@ -3161,38 +3073,6 @@ function renderProducts() {
     return;
   }
   prods.slice(0, 4).forEach(p => g.appendChild(makeProductCard(p)));
-}
-
-// ===== DIGITAL PACKS (homepage) — real catalog items with contentType 'pack' =====
-function renderFeaturedPacks() {
-  const g = document.getElementById('packs-grid');
-  const section = document.getElementById('packs-section');
-  if (!g || !DB.isLoaded('products')) return;
-  const packs = visibleProducts().filter(p => p.contentType === 'pack');
-  g.innerHTML = '';
-  if (!packs.length) {
-    // Nothing to feature yet — hide the whole section instead of showing
-    // an empty grid on the homepage.
-    if (section) section.style.display = 'none';
-    return;
-  }
-  if (section) section.style.display = '';
-  packs.slice(0, 4).forEach(p => g.appendChild(makeProductCard(p)));
-}
-
-// ===== COURSES (homepage) — real catalog items with contentType 'course' =====
-function renderFeaturedCourses() {
-  const g = document.getElementById('courses-grid');
-  const section = document.getElementById('courses-section');
-  if (!g || !DB.isLoaded('products')) return;
-  const courses = visibleProducts().filter(p => p.contentType === 'course');
-  g.innerHTML = '';
-  if (!courses.length) {
-    if (section) section.style.display = 'none';
-    return;
-  }
-  if (section) section.style.display = '';
-  courses.slice(0, 4).forEach(p => g.appendChild(makeProductCard(p)));
 }
 
 function makeProductCard(prod) {
@@ -4974,16 +4854,12 @@ function updateTopbarLogoForTheme(theme) {
 }
 function initTheme() {
   const theme = document.documentElement.getAttribute('data-theme') || 'dark';
-  const icon = document.getElementById('theme-icon');
-  if (icon) icon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
   updateDefaultLogoForTheme(theme);
   updateTopbarLogoForTheme(theme);
 }
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('dz_theme', theme);
-  const icon = document.getElementById('theme-icon');
-  if (icon) icon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
   updateDefaultLogoForTheme(theme);
   updateTopbarLogoForTheme(theme);
 }
@@ -5011,10 +4887,6 @@ function openMyProducts() {
   if (mpBackBtn) { mpBackBtn.innerHTML = '<i class="fa-solid fa-arrow-left"></i> Back to Home'; mpBackBtn.onclick = closeMyProducts; }
   // Mark My Library as active in nav
   document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
-  const mpLink = document.getElementById('my-products-link');
-  if (mpLink) mpLink.classList.add('active');
-  const mpLinkMobile = document.getElementById('my-products-link-mobile');
-  if (mpLinkMobile) mpLinkMobile.classList.add('active');
 }
 
 // If My Library is open when auth state finally resolves, re-render
@@ -5033,10 +4905,6 @@ function closeMyProducts() {
   document.getElementById('my-products-page').classList.remove('active');
   document.getElementById('wishlist-page').classList.remove('active');
   document.body.classList.remove('no-scroll');
-  const mpLink = document.getElementById('my-products-link');
-  if (mpLink) mpLink.classList.remove('active');
-  const mpLinkMobile = document.getElementById('my-products-link-mobile');
-  if (mpLinkMobile) mpLinkMobile.classList.remove('active');
   // Unsubscribe realtime listener to avoid memory leaks
   if (_mpUnsubscribe) { _mpUnsubscribe(); _mpUnsubscribe = null; }
 }
@@ -5229,9 +5097,6 @@ function mpGetTypeIcon(type) {
   if (t.includes('gaming')||t.includes('game')) return '🎮';
   if (t.includes('template')) return '📄';
   return '📦';
-}
-function mpGetAccessLabel(type) {
-  return 'Download';
 }
 function mpPaymentLabel(method) {
   if (method === 'eddahabia') return '🏧 EDDAHABIA';
@@ -5607,17 +5472,9 @@ function toggleWishlist(prodId, btn) {
     btn.innerHTML = `<i class="${isNow?'fa-solid':'fa-regular'} fa-heart"></i>`;
     btn.title = isNow ? 'Remove from wishlist' : 'Add to wishlist';
   }
-  updateWishlistBadge();
   showToast(isNow ? '❤️ Added to wishlist' : 'Removed from wishlist');
 }
 
-function updateWishlistBadge() {
-  const c = Wishlist.count();
-  const b = document.getElementById('wishlist-badge');
-  if (!b) return;
-  b.textContent = c;
-  b.style.display = c ? 'flex' : 'none';
-}
 
 function openWishlist() {
   _wlCtx = 'page';
@@ -5632,9 +5489,6 @@ function openWishlist() {
 function closeWishlist() {
   document.getElementById('wishlist-page').classList.remove('active');
   document.body.classList.remove('no-scroll');
-}
-function toggleWishlistPanel() {
-  document.getElementById('wishlist-page').classList.contains('active') ? closeWishlist() : openWishlist();
 }
 // Same wishlist data, rendered either in the standalone #wishlist-page or
 // embedded in the Account area's Wishlist tab — _wlCtx picks the container id.
@@ -5659,7 +5513,6 @@ function renderWishlist() {
 }
 
 window.addEventListener('wishlist:update', () => {
-  updateWishlistBadge();
   if (document.getElementById('wishlist-page').classList.contains('active')) { _wlCtx = 'page'; renderWishlist(); }
   if (document.getElementById('account-page').classList.contains('active') && _acctTab === 'wishlist') { _wlCtx = 'account'; renderWishlist(); }
 });
@@ -6488,7 +6341,7 @@ function updateWaFloat() {
     var selectors = [
       '#about .about-title','#about .about-desc','#about .about-feat',
       '#about .about-card','.product-card','.purchase-card',
-      '.statement-text','.bs-row','.testi-card',
+      '.statement-text','.testi-card',
       '.section-header'
     ];
     selectors.forEach(function(sel){
