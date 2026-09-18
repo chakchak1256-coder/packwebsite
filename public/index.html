@@ -294,7 +294,12 @@ body.flash-on #topbar{top:56px}
 [data-theme="dark"] .avatar-btn{border-color:var(--bg)}
 .avatar-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(var(--accent-rgb),.45)}
 .avatar-btn img{width:100%;height:100%;object-fit:cover}
-[data-theme="dark"] 
+.avatar-online-dot{
+  position:absolute;bottom:-1px;right:-1px;width:11px;height:11px;border-radius:50%;
+  background:var(--success);border:2px solid var(--bg2);
+}
+[data-theme="dark"] .avatar-online-dot{border-color:var(--bg)}
+
 .user-dropdown{
   position:absolute;top:calc(100% + 14px);right:0;width:270px;
   background:var(--bg2);border:1px solid var(--border);border-radius:18px;
@@ -330,18 +335,8 @@ body.flash-on #topbar{top:56px}
 .user-dropdown-item.danger{color:#EF4444}
 .user-dropdown-item.danger .udi-icon{background:rgba(239,68,68,.1);color:#EF4444}
 .user-dropdown-item.danger:hover{background:rgba(239,68,68,.08)}
-@media(max-width:900px){
-  /* The trigger button (#user-btn-wrap) sits inside a centered nav pill
-     that itself is inset 5vw from each edge — it is NOT flush against the
-     viewport's right edge, and this is the same breakpoint where the nav
-     switches to that centered hamburger layout (see .hamburger{display:
-     flex} below). Anchoring this dropdown to the viewport itself (instead
-     of positioning it relative to the button, which is what caused it to
-     land partly off-screen before) guarantees it always fits, regardless
-     of where the button sits. Vertical position (top) is set in JS by
-     toggleUserMenu() at open-time, since the nav's own top offset already
-     differs across several breakpoints and a "flash" banner state. */
-  .user-dropdown{position:fixed;left:4vw;right:4vw;width:auto}
+@media(max-width:420px){
+  .user-dropdown{width:calc(100vw - 10vw);right:-4vw}
 }
 
 .hamburger{display:none;flex-direction:column;gap:4px;width:32px;height:32px;
@@ -645,6 +640,32 @@ body.flash-on #topbar{top:56px}
 }
 .prod-add:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:scale(1.08)}
 
+/* ===== BEST SELLERS ===== */
+#best-sellers{padding:96px 0}
+.bs-list{display:flex;flex-direction:column;gap:.9rem}
+.bs-row{
+  display:flex;align-items:center;gap:1.1rem;padding:.9rem 1.1rem;
+  border-radius:var(--radius);background:var(--bg2);border:1px solid var(--border);
+  cursor:pointer;transition:border-color var(--transition),transform var(--transition);
+}
+.bs-row:hover{border-color:rgba(var(--accent-rgb),.4);transform:translateX(4px)}
+.bs-rank{
+  width:30px;height:30px;border-radius:50%;flex-shrink:0;
+  background:rgba(var(--accent-rgb),.12);color:var(--accent);
+  font-family:'Fraunces',serif;font-weight:800;font-size:.85rem;
+  display:flex;align-items:center;justify-content:center;
+}
+.bs-row:nth-child(1) .bs-rank{background:#F59E0B;color:#0a0a0a}
+.bs-img{width:56px;height:56px;border-radius:9px;overflow:hidden;flex-shrink:0;background:var(--bg3)}
+.bs-img img{width:100%;height:100%;object-fit:cover}
+.bs-info{flex:1;min-width:0}
+.bs-name{font-family:'Fraunces',serif;font-size:.86rem;font-weight:700;color:var(--text);
+  margin-bottom:.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bs-meta{display:flex;align-items:center;gap:.6rem;font-size:.74rem;color:var(--text-muted);flex-wrap:wrap}
+.bs-meta i{color:#F59E0B;font-size:.7rem}
+.bs-price{font-family:'Fraunces',serif;font-weight:800;color:var(--accent);font-size:.95rem;flex-shrink:0}
+.bs-old{font-size:.72rem;color:var(--text-muted);text-decoration:line-through;margin-right:.3rem}
+
 /* ===== TESTIMONIALS / SOCIAL PROOF CAROUSEL ===== */
 #testimonials{padding:96px 0;background:var(--bg2)}
 #testi-carousel-wrap{
@@ -680,6 +701,11 @@ body.flash-on #topbar{top:56px}
 }
 .testi-name{font-size:.84rem;font-weight:700;color:var(--text)}
 .testi-role{font-size:.74rem;color:var(--text-muted)}
+.testi-empty{
+  flex:0 0 100%;width:100%;text-align:center;padding:2.4rem 1rem;color:var(--text-muted);
+}
+.testi-empty i{font-size:2rem;opacity:.2;margin-bottom:.8rem;display:block}
+.testi-empty p{font-size:.88rem}
 .testi-cta{display:flex;justify-content:center;margin-top:2rem}
 
 /* ===== BRAND STATEMENT — a single editorial line, no card wall ===== */
@@ -759,6 +785,11 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:4rem 0 2
 .cart-item-name{font-weight:600;font-size:.84rem;margin-bottom:.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
 .cart-item-price{color:var(--accent);font-weight:700;font-size:.8rem;font-family:'Fraunces',serif}
 .cart-item-row{display:flex;align-items:center;gap:.35rem;margin-top:.35rem}
+.qty-btn{width:22px;height:22px;border-radius:5px;background:var(--bg3);
+  border:1px solid var(--border);font-size:.7rem;display:flex;align-items:center;justify-content:center;
+  transition:all var(--transition);color:var(--text-muted)}
+.qty-btn:hover{background:rgba(var(--accent-rgb),.15);border-color:var(--accent);color:var(--accent)}
+.qty-num{font-size:.84rem;font-weight:600;min-width:16px;text-align:center;color:var(--text)}
 .cart-del{width:24px;height:24px;border-radius:5px;color:var(--text-muted);margin-left:auto;
   display:flex;align-items:center;justify-content:center;font-size:.72rem;transition:color var(--transition)}
 .cart-del:hover{color:#EF4444}
@@ -963,14 +994,6 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:4rem 0 2
 }
 .back-btn:hover{color:var(--text)}
 .detail-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:3.5rem;align-items:start}
-/* Grid items default to min-width:auto, not 0 — without this, a gallery
-   with many thumbnails (their fixed 60px widths adding up past the
-   column's normal width) forces the whole grid column, and therefore the
-   whole page, to grow wider instead of letting .gallery-thumbs's own
-   overflow-x:auto scroll internally as intended. Only shows up once a
-   product has enough images (e.g. 16) to exceed the column width — a
-   product with 2-5 images never hits it. */
-.detail-grid > div{min-width:0}
 .gallery-main{aspect-ratio:4/3;border-radius:var(--radius);overflow:hidden;
   background:var(--bg3);border:1px solid var(--border);margin-bottom:.6rem;
   position:relative}
@@ -1146,6 +1169,9 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:4rem 0 2
   .about-right{grid-template-columns:1fr 1fr}
   .about-card.span2{grid-column:span 2}
   .products-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .bs-row{padding:.7rem .8rem;gap:.7rem}
+  .bs-img{width:46px;height:46px}
+  .bs-meta span:last-child{display:none}
 }
 
 /* ===== MY PRODUCTS PAGE ===== */
@@ -1301,20 +1327,6 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:4rem 0 2
 #co-alert-modal h3{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:800;margin-bottom:.5rem}
 #co-alert-modal p{font-size:.86rem;color:var(--text-muted);line-height:1.55;margin-bottom:1.3rem}
 
-/* Set-new-password modal — shown when a password-recovery email link
-   lands back on the site. Reuses the same overlay pattern as
-   #co-alert-modal and the shared .form-input/.form-group field styles. */
-#pw-reset-modal{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2000;
-  display:flex;align-items:center;justify-content:center;padding:1rem;
-  opacity:0;pointer-events:none;transition:opacity var(--transition)}
-#pw-reset-modal.open{opacity:1;pointer-events:all}
-#pw-reset-modal .pw-reset-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
-  padding:1.8rem;width:100%;max-width:380px;
-  transform:scale(.97);transition:transform .18s ease}
-#pw-reset-modal.open .pw-reset-box{transform:scale(1)}
-#pw-reset-modal h3{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:800;margin-bottom:.4rem;text-align:center}
-#pw-reset-modal p.pw-reset-lead{font-size:.85rem;color:var(--text-muted);line-height:1.55;margin-bottom:1.2rem;text-align:center}
-
 #mp-detail-content{overflow-y:auto;flex:1;min-height:0;padding-right:.5rem;margin-right:-.5rem}
 #mp-detail-content::-webkit-scrollbar{width:6px}
 #mp-detail-content::-webkit-scrollbar-track{background:transparent}
@@ -1368,7 +1380,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:4rem 0 2
 .acct-help-cat p{font-size:.85rem;color:var(--text-muted);line-height:1.7}
 @media(max-width:820px){
   .acct-layout{grid-template-columns:1fr}
-  .acct-side{position:static;display:flex;flex-direction:row;overflow-x:auto;gap:.3rem;padding:.5rem;min-width:0}
+  .acct-side{position:static;display:flex;flex-direction:row;overflow-x:auto;gap:.3rem;padding:.5rem}
   .acct-side-user{display:none}
   .acct-nav-item{white-space:nowrap;flex-shrink:0;width:auto}
   .acct-nav-divider{display:none}
@@ -1510,10 +1522,14 @@ body.flash-on #mobile-nav{top:150px}
 /* Default (logged out): show sign-in, hide user btn + my products */
 #login-nav-btn { display: flex !important; }
 #user-btn      { display: none  !important; }
+#my-products-link { display: none !important; }
+#my-products-link-mobile { display: none !important; }
 
 /* Logged in: flip everything */
 [data-authed="true"] #login-nav-btn    { display: none !important; }
 [data-authed="true"] #user-btn         { display: flex !important; }
+[data-authed="true"] #my-products-link { display: flex !important; }
+[data-authed="true"] #my-products-link-mobile { display: flex !important; }
 
 /* ===== DIGITAL TOOLS CAROUSEL ===== */
 #game-carousel-section {
@@ -1722,9 +1738,9 @@ body.flash-on #mobile-nav{top:150px}
 
 /* ---- global motion defaults ---- */
 *{ scroll-behavior:smooth; }
-a,button,.btn,.product-card,.about-card,.testi-card,.about-feat,
+a,button,.btn,.product-card,.about-card,.testi-card,.bs-row,.about-feat,
 .purchase-card,
-.prod-add,.cart-close,#cart-btn,.cart-del,.pc-access-btn{
+.prod-add,.qty-btn,.cart-close,#cart-btn,.cart-del,.pc-access-btn{
   transition:transform .4s cubic-bezier(.22,.85,.32,1),
              box-shadow .4s cubic-bezier(.22,.85,.32,1),
              background .35s ease, border-color .35s ease, color .35s ease, opacity .35s ease;
@@ -1790,7 +1806,7 @@ a,button,.btn,.product-card,.about-card,.testi-card,.about-feat,
 
 /* ---- section separators ---- */
 section{ position:relative; }
-#about::before,#products::before,
+#about::before,#products::before,#best-sellers::before,
 #statement::before,#testimonials::before{
   content:'';position:absolute;top:0;left:8%;right:8%;height:1px;z-index:1;pointer-events:none;
   background:var(--border);
@@ -1813,6 +1829,11 @@ section{ position:relative; }
 .prod-img,.pc-image{ position:relative; }
 .prod-add{ position:relative; }
 .prod-add:hover{ box-shadow:0 6px 16px -6px rgba(var(--accent-rgb),.6); }
+.qty-btn:hover{ transform:translateY(-1px); }
+
+.bs-row{ position:relative; overflow:hidden; }
+.bs-img img{ transition:transform .45s cubic-bezier(.22,.85,.32,1); }
+.bs-row:hover .bs-img img{ transform:scale(1.08); }
 
 /* testimonial cards: lift + soft glow border */
 .testi-card{ position:relative; }
@@ -1904,6 +1925,7 @@ footer::before{
 
 .pd-wish-btn:hover{ transform:translateY(-2px) scale(1.05); }
 
+.qty-btn:hover{ transform:scale(1.15); background:var(--accent); color:#fff; border-color:var(--accent); }
 
 .cart-close:hover,.pc-access-btn:hover{ transform:scale(1.1) rotate(-8deg); }
 
@@ -2179,7 +2201,6 @@ footer::before{
     </div>
   </div>
 </section>
-
 
 <!-- ===== ABOUT ===== -->
 <section id="about">
@@ -2532,6 +2553,18 @@ footer::before{
             <div class="co-method-name">EDDAHABIA</div>
           </label>
 
+          <!-- Test/dev-only "pay nothing" method — only ever shown when
+               window.DIGISTORE_TEST_MODE is true (see backend URL config
+               near the bottom of this file). Hidden by default so real
+               customers never see it. Lets you test everything AFTER the
+               payment step (delivery, My Learning, cart clearing) without
+               touching SlickPay or spending real money. -->
+          <label class="co-method-card" id="co-method-test" style="display:none">
+            <input type="radio" name="co-payment" value="test" onchange="coShowPaymentInstructions('test')" style="display:none"/>
+            <div class="co-method-icon">🧪</div>
+            <div class="co-method-name">Test Payment (no charge)</div>
+          </label>
+
         </div>
       </div>
 
@@ -2699,8 +2732,8 @@ footer::before{
         <div class="gallery-thumbs" id="gal-thumbs"></div>
       </div>
       <div>
-        <div class="pd-cat" id="pd-cat" dir="auto"></div>
-        <h1 class="pd-name" id="pd-name" dir="auto"></h1>
+        <div class="pd-cat" id="pd-cat"></div>
+        <h1 class="pd-name" id="pd-name"></h1>
         <div class="pd-prices">
           <span class="pd-price" id="pd-price"></span>
           <span class="pd-old" id="pd-old" style="display:none"></span>
@@ -2709,7 +2742,7 @@ footer::before{
         <div class="pd-badges" id="pd-badges"></div>
         <div id="pd-viewing" class="pd-viewing" style="display:none"><i class="fa-solid fa-circle" style="font-size:.5rem;color:var(--success)"></i> <span id="pd-viewing-text"></span></div>
         <div id="pd-stars-row"></div>
-        <p class="pd-desc" id="pd-desc" dir="auto"></p>
+        <p class="pd-desc" id="pd-desc"></p>
         <!-- Variant selector — shown only if product has variants -->
         <div class="pd-variant-wrap" id="pd-variant-wrap" style="display:none">
           <div id="pd-variant-groups"></div>
@@ -2805,29 +2838,6 @@ footer::before{
   </div>
 </div>
 
-<!-- Set-new-password modal. Opens automatically when someone lands back
-     on the site via the "reset your password" email link — see the
-     'password-recovery' listener near initUserAuth(). There was
-     previously no UI at all for this step: the email would send, but
-     clicking its link just silently signed the person in with no way to
-     actually set a new password. -->
-<div id="pw-reset-modal">
-  <div class="pw-reset-box">
-    <h3>Set a new password</h3>
-    <p class="pw-reset-lead">Choose a new password for your account.</p>
-    <div class="form-group">
-      <label>New password</label>
-      <input type="password" class="form-input" id="pw-reset-new" placeholder="At least 6 characters" autocomplete="new-password"/>
-    </div>
-    <div class="form-group">
-      <label>Confirm new password</label>
-      <input type="password" class="form-input" id="pw-reset-confirm" placeholder="Re-type the password" autocomplete="new-password"/>
-    </div>
-    <p id="pw-reset-msg" style="font-size:.8rem;color:#EF4444;margin-bottom:.9rem;display:none"></p>
-    <button class="btn btn-primary" id="pw-reset-submit" onclick="submitNewPassword()" style="width:100%">Save New Password</button>
-  </div>
-</div>
-
 <!-- defer: these 2 scripts used to block HTML parsing until fully
      downloaded + executed, on top of being requested this late in the
      document. `defer` lets the browser keep parsing/painting the rest of
@@ -2870,6 +2880,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   initUserAuth();
   updateCartBadge();
+  updateWishlistBadge();
   initScrollSpy();
   Presence.start();
   CartLive.start();
@@ -2997,13 +3008,7 @@ function renderHeroPreview() {
   const el = document.getElementById('hero-preview');
   if (!el) return;
   const prods = visibleProducts();
-  // Distinct topic names only — the same topic can exist as separate
-  // records per content type (see the dedupe note in renderAllFilters),
-  // which would otherwise inflate this count (e.g. a "Google Sheets"
-  // topic under both Digital Products and Digital Packs counting twice).
-  const cats = [...new Set(
-    DB.getAll('categories').map(c => (c.name || '').trim().toLowerCase()).filter(Boolean)
-  )];
+  const cats = DB.getAll('categories');
   if (!prods.length) return; // catalog not loaded yet — leave hidden
   const courseCount = prods.filter(p => p.contentType === 'course').length;
   const packCount = prods.filter(p => p.contentType === 'pack').length;
@@ -3093,8 +3098,8 @@ function makeProductCard(prod) {
       </button>
     </div>
     <div class="prod-info">
-      <div class="prod-cat" dir="auto">${prod.category||''}${prod.contentType && prod.contentType !== 'product' ? ` <span class="prod-type-tag">· ${prod.contentType === 'course' ? 'Course' : 'Pack'}</span>` : ''}</div>
-      <div class="prod-name" dir="auto">${prod.name}</div>
+      <div class="prod-cat">${prod.category||''}${prod.contentType && prod.contentType !== 'product' ? ` <span class="prod-type-tag">· ${prod.contentType === 'course' ? 'Course' : 'Pack'}</span>` : ''}</div>
+      <div class="prod-name">${prod.name}</div>
       ${starsHtml}
       <div class="prod-price-row">
         <div class="prod-prices">
@@ -3268,19 +3273,6 @@ function renderAllFilters(activeCat = 'all') {
   // legacy topic saved before types existed (no contentType set).
   const allCats = DB.getAll('categories');
   const cats = _typeFilter === 'all' ? allCats : allCats.filter(c => c.contentType === _typeFilter);
-  // On the "All" tab, the same topic name can exist as separate records
-  // under different content types (e.g. a "Google Sheets" topic saved for
-  // Digital Products AND another for Digital Packs), which rendered the
-  // same label twice in the chip row. Collapse them by name — filtering
-  // matches on the topic's name (see renderAllProducts), not its record,
-  // so one chip correctly shows that topic's products across every type.
-  const seenCatNames = new Set();
-  const uniqueCats = cats.filter(c => {
-    const key = (c.name || '').trim().toLowerCase();
-    if (!key || seenCatNames.has(key)) return false;
-    seenCatNames.add(key);
-    return true;
-  });
   const f = document.getElementById('filter-chips'); f.innerHTML = '';
   const makeChip = (label, val) => {
     const c = document.createElement('div');
@@ -3294,7 +3286,7 @@ function renderAllFilters(activeCat = 'all') {
     return c;
   };
   f.appendChild(makeChip('All', 'all'));
-  uniqueCats.forEach(c => f.appendChild(makeChip(c.name, c.name)));
+  cats.forEach(c => f.appendChild(makeChip(c.name, c.name)));
 }
 
 function renderAllProducts(filterCat) {
@@ -3822,7 +3814,7 @@ function renderCartItems() {
     d.innerHTML = `
       <div class="cart-item-img"><img src="${img}" alt="" loading="lazy" decoding="async"/></div>
       <div class="cart-item-info">
-        <div class="cart-item-name" dir="auto">${item.name}</div>
+        <div class="cart-item-name">${item.name}</div>
         <div class="cart-item-price">${(() => { const lt = item.price*item.qty; return lt > 0 ? lt.toLocaleString()+' '+(s.currency||'DA') : 'FREE'; })()}</div>
         <div class="cart-item-row">
           <button class="cart-del" onclick="removeItem('${item.id}')"><i class="fa-solid fa-trash"></i></button>
@@ -3855,6 +3847,9 @@ function openCheckout() {
     return;
   }
   document.getElementById('checkout-modal').classList.add('open');
+  // Reveal the dev-only "Test Payment" method card, if enabled.
+  const testCard = document.getElementById('co-method-test');
+  if (testCard) testCard.style.display = window.DIGISTORE_TEST_MODE ? '' : 'none';
   // Skip step 0 — go straight to form, auto-fill from account if available
   coChooseAccount(!!user);
 }
@@ -3971,6 +3966,8 @@ function coShowPaymentInstructions(method) {
   if (nextBtn) {
     if (method === 'cib') {
       nextBtn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Pay with Card →';
+    } else if (method === 'test') {
+      nextBtn.innerHTML = '<i class="fa-solid fa-flask"></i> Complete Test Order →';
     } else {
       nextBtn.innerHTML = '<i class="fa-solid fa-arrow-right"></i> Next: Payment Proof';
     }
@@ -3980,6 +3977,13 @@ function coShowPaymentInstructions(method) {
   // computed and applied server-side only (see worker.js) — never shown
   // or added to the total on this screen.
   if (method === 'cib') {
+    if (instrEl) instrEl.style.display = 'none';
+    _coRefreshOrderSummary(0, 0);
+    return;
+  }
+
+  // Test payment — same as CIB, no instruction card, no fee.
+  if (method === 'test') {
     if (instrEl) instrEl.style.display = 'none';
     _coRefreshOrderSummary(0, 0);
     return;
@@ -4060,7 +4064,7 @@ function buildOrderSummaryHTML(surchargeRate, surchargeFlat) {
     // Use data-cartid attribute — avoids any quote/injection issues with the id string
     return `<div style="display:flex;align-items:center;gap:.6rem;padding:.55rem 0;border-bottom:1px solid var(--border)">
       <div style="flex:1;min-width:0">
-        <div style="font-size:.86rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" dir="auto">${item.name}</div>
+        <div style="font-size:.86rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.name}</div>
         ${variant}
       </div>
       <div style="font-family:'Fraunces',serif;font-size:.9rem;font-weight:700;color:var(--accent);white-space:nowrap;flex-shrink:0;margin-right:.35rem">${((item.price)*(item.qty||1)).toLocaleString()} ${s.currency||'DA'}</div>
@@ -4240,8 +4244,90 @@ async function coHandleNextStep() {
   const method = document.querySelector('input[name="co-payment"]:checked')?.value || '';
   if (method === 'cib') {
     coInitiateSlickPayCheckout();
+  } else if (method === 'test') {
+    coInitiateTestCheckout();
   } else {
     coProceedToProofStep();
+  }
+}
+
+// ── Test Payment — dev-only, no real money, no SlickPay ────────────
+// Only reachable when window.DIGISTORE_TEST_MODE is true (the "Test
+// Payment" method card is hidden otherwise) AND the backend Worker has
+// TEST_CHECKOUT_ENABLED = "true" (see wrangler.jsonc) — the backend
+// refuses this route entirely if that var isn't set, so leaving
+// DIGISTORE_TEST_MODE on by accident in a deployed copy is harmless as
+// long as the Worker var stays off.
+async function coInitiateTestCheckout() {
+  const currentUser = UserAuth.current();
+  if (!currentUser) { openLoginModal('checkout'); closeCheckout(); return; }
+  const cartItems = Cart.get();
+  if (!cartItems.length) { closeCheckout(); return; }
+
+  const name        = (document.getElementById('co-name')?.value || '').trim();
+  const email       = (document.getElementById('co-email')?.value || currentUser.email || '').trim();
+  const phonePfx    = (document.getElementById('co-phone-prefix')?.value || '07');
+  const phoneDigits = (document.getElementById('co-phone')?.value || '').trim();
+  const phone       = phonePfx + phoneDigits;
+
+  if (!name) { coShowFormError('Please enter your full name.'); return; }
+
+  const nameParts = name.split(' ');
+  const firstname = nameParts[0];
+  const lastname  = nameParts.slice(1).join(' ') || nameParts[0];
+
+  const productName = cartItems.length === 1
+    ? (cartItems[0].variantLabel ? `${cartItems[0].name} — ${cartItems[0].variantLabel}` : cartItems[0].name)
+    : `Order (${cartItems.length} items)`;
+
+  const btn = document.getElementById('co-submit-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Completing test order...';
+
+  try {
+    const idToken = await UserAuth.getIdToken();
+    if (!idToken) { openLoginModal('checkout'); closeCheckout(); return; }
+
+    const backendUrl = (window.DIGISTORE_BACKEND_URL || '').replace(/\/+$/, '');
+    const res = await fetch(`${backendUrl}/api/checkout/test`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({
+        items: cartItems.map(it => ({
+          product_id:    it.productId || it.id,
+          variant_label: it.variantLabel || null,
+          qty:           it.qty || 1,
+        })),
+        user_id:      currentUser.id,
+        user_email:   currentUser.email || email,
+        product_id:   cartItems[0]?.productId || cartItems[0]?.id || '',
+        product_name: productName,
+        firstname,
+        lastname,
+        email,
+        phone,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.payment_url) {
+      coShowFormError((data.error || 'Test checkout failed.') + (data.detail ? ' (' + data.detail + ')' : ''));
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-flask"></i> Complete Test Order →';
+      return;
+    }
+
+    try { sessionStorage.setItem('slickpay_order_id', data.order_id); } catch {}
+    window.location.href = data.payment_url;
+
+  } catch (err) {
+    coShowFormError('Network error. Please check your connection and try again.');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-flask"></i> Complete Test Order →';
   }
 }
 
@@ -4323,16 +4409,8 @@ async function coInitiateSlickPayCheckout() {
       return;
     }
 
-    // Store order ID for the return page. localStorage, not sessionStorage —
-    // this redirects through SATIM (a third-party domain) and back, and
-    // sessionStorage can get silently dropped across that kind of round
-    // trip in some browsers (same issue that broke Google sign-in — see
-    // the note by _googleOAuthPending in supabase.js). Losing this here is
-    // worse: the real checkout's return URL carries no order-id query
-    // param at all, so this is the *only* way payment-return.html can
-    // identify the order — losing it would tell someone who actually paid
-    // that their payment failed.
-    try { localStorage.setItem('slickpay_order_id', data.order_id); } catch {}
+    // Store order ID for the return page
+    try { sessionStorage.setItem('slickpay_order_id', data.order_id); } catch {}
 
     // Redirect to SATIM payment page
     window.location.href = data.payment_url;
@@ -4568,47 +4646,6 @@ function toggleMobileNav() { document.getElementById('mobile-nav').classList.tog
 function closeMobileNav() { document.getElementById('mobile-nav').classList.remove('open'); }
 
 // ===== USER AUTH (index) =====
-// ── Password recovery: set a new password ────────────────────────
-// supabase.js dispatches 'password-recovery' when someone lands back on
-// the site via the "reset your password" email link. Before this existed,
-// that link just silently signed the person in — there was no way to
-// actually set a new password anywhere in the app.
-window.addEventListener('password-recovery', () => {
-  const modal = document.getElementById('pw-reset-modal');
-  if (!modal) return;
-  const err = document.getElementById('pw-reset-msg');
-  if (err) err.style.display = 'none';
-  const a = document.getElementById('pw-reset-new');
-  const b = document.getElementById('pw-reset-confirm');
-  if (a) a.value = ''; if (b) b.value = '';
-  modal.classList.add('open');
-  if (a) setTimeout(() => a.focus(), 120);
-});
-
-async function submitNewPassword() {
-  const pass    = (document.getElementById('pw-reset-new')     || {}).value || '';
-  const confirm = (document.getElementById('pw-reset-confirm') || {}).value || '';
-  const err     = document.getElementById('pw-reset-msg');
-  const btn     = document.getElementById('pw-reset-submit');
-  const showErr = m => { if (err) { err.textContent = m; err.style.display = 'block'; } };
-
-  if (pass.length < 6)     { showErr('Password must be at least 6 characters.'); return; }
-  if (pass !== confirm)    { showErr('The two passwords do not match.'); return; }
-  if (err) err.style.display = 'none';
-
-  btn.disabled = true;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
-  try {
-    await UserAuth.setNewPassword(pass);
-    document.getElementById('pw-reset-modal').classList.remove('open');
-    showToast('Password updated — you can now sign in with it. ✅');
-  } catch (e) {
-    showErr(e.message || 'Could not update the password. Please try again.');
-  }
-  btn.disabled = false;
-  btn.innerHTML = 'Save New Password';
-}
-
 function initUserAuth() {
   const user = UserAuth.current();
 
@@ -4638,24 +4675,7 @@ function initUserAuth() {
 }
 
 function toggleUserMenu() {
-  const menu = document.getElementById('user-menu');
-  const opening = !menu.classList.contains('open');
-  menu.classList.toggle('open');
-  // On the mobile hamburger layout (see .hamburger{display:flex} at
-  // max-width:900px), the dropdown is position:fixed and horizontally
-  // anchored to the viewport via CSS (left/right:4vw — see .user-dropdown
-  // media rule), but its vertical position has to be computed here rather
-  // than hardcoded in CSS: the nav's own top offset already differs across
-  // several breakpoints and a "flash" banner state, and hardcoding a
-  // separate magic number for each one is exactly how this broke before.
-  // Reading the real nav element's position at open-time is correct no
-  // matter how the nav's own layout changes in the future.
-  if (opening && window.innerWidth <= 900) {
-    const navEl = document.getElementById('nav');
-    if (navEl) menu.style.top = (navEl.getBoundingClientRect().bottom + 14) + 'px';
-  } else {
-    menu.style.top = '';
-  }
+  document.getElementById('user-menu').classList.toggle('open');
 }
 document.addEventListener('click', e => {
   const menu = document.getElementById('user-menu');
@@ -4764,15 +4784,8 @@ async function doCompleteGoogleSignup() {
   if (wasCheckout) setTimeout(() => openCheckout(), 300);
 }
 
-async function doUserLogout() {
-  // Wait for the real Supabase sign-out to finish before doing anything
-  // else — UserAuth.logout() used to fire this in the background and
-  // return immediately, so a quick sign-in right after logout could race
-  // against it: whichever one settled last would silently win, sometimes
-  // wiping out the fresh session. Only a full page reload (which just
-  // reads whatever ended up in storage) bypassed it. Awaiting here closes
-  // that window.
-  await UserAuth.logout(); initUserAuth();
+function doUserLogout() {
+  UserAuth.logout(); initUserAuth();
   document.getElementById('user-menu').classList.remove('open');
   // If My Library (or any other overlay page) is open, signing out should
   // land back on the main storefront, not leave the person stranded on a
@@ -4854,12 +4867,16 @@ function updateTopbarLogoForTheme(theme) {
 }
 function initTheme() {
   const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+  const icon = document.getElementById('theme-icon');
+  if (icon) icon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
   updateDefaultLogoForTheme(theme);
   updateTopbarLogoForTheme(theme);
 }
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('dz_theme', theme);
+  const icon = document.getElementById('theme-icon');
+  if (icon) icon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
   updateDefaultLogoForTheme(theme);
   updateTopbarLogoForTheme(theme);
 }
@@ -4887,6 +4904,10 @@ function openMyProducts() {
   if (mpBackBtn) { mpBackBtn.innerHTML = '<i class="fa-solid fa-arrow-left"></i> Back to Home'; mpBackBtn.onclick = closeMyProducts; }
   // Mark My Library as active in nav
   document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  const mpLink = document.getElementById('my-products-link');
+  if (mpLink) mpLink.classList.add('active');
+  const mpLinkMobile = document.getElementById('my-products-link-mobile');
+  if (mpLinkMobile) mpLinkMobile.classList.add('active');
 }
 
 // If My Library is open when auth state finally resolves, re-render
@@ -4905,6 +4926,10 @@ function closeMyProducts() {
   document.getElementById('my-products-page').classList.remove('active');
   document.getElementById('wishlist-page').classList.remove('active');
   document.body.classList.remove('no-scroll');
+  const mpLink = document.getElementById('my-products-link');
+  if (mpLink) mpLink.classList.remove('active');
+  const mpLinkMobile = document.getElementById('my-products-link-mobile');
+  if (mpLinkMobile) mpLinkMobile.classList.remove('active');
   // Unsubscribe realtime listener to avoid memory leaks
   if (_mpUnsubscribe) { _mpUnsubscribe(); _mpUnsubscribe = null; }
 }
@@ -5097,6 +5122,9 @@ function mpGetTypeIcon(type) {
   if (t.includes('gaming')||t.includes('game')) return '🎮';
   if (t.includes('template')) return '📄';
   return '📦';
+}
+function mpGetAccessLabel(type) {
+  return 'Download';
 }
 function mpPaymentLabel(method) {
   if (method === 'eddahabia') return '🏧 EDDAHABIA';
@@ -5472,9 +5500,17 @@ function toggleWishlist(prodId, btn) {
     btn.innerHTML = `<i class="${isNow?'fa-solid':'fa-regular'} fa-heart"></i>`;
     btn.title = isNow ? 'Remove from wishlist' : 'Add to wishlist';
   }
+  updateWishlistBadge();
   showToast(isNow ? '❤️ Added to wishlist' : 'Removed from wishlist');
 }
 
+function updateWishlistBadge() {
+  const c = Wishlist.count();
+  const b = document.getElementById('wishlist-badge');
+  if (!b) return;
+  b.textContent = c;
+  b.style.display = c ? 'flex' : 'none';
+}
 
 function openWishlist() {
   _wlCtx = 'page';
@@ -5489,6 +5525,9 @@ function openWishlist() {
 function closeWishlist() {
   document.getElementById('wishlist-page').classList.remove('active');
   document.body.classList.remove('no-scroll');
+}
+function toggleWishlistPanel() {
+  document.getElementById('wishlist-page').classList.contains('active') ? closeWishlist() : openWishlist();
 }
 // Same wishlist data, rendered either in the standalone #wishlist-page or
 // embedded in the Account area's Wishlist tab — _wlCtx picks the container id.
@@ -5513,6 +5552,7 @@ function renderWishlist() {
 }
 
 window.addEventListener('wishlist:update', () => {
+  updateWishlistBadge();
   if (document.getElementById('wishlist-page').classList.contains('active')) { _wlCtx = 'page'; renderWishlist(); }
   if (document.getElementById('account-page').classList.contains('active') && _acctTab === 'wishlist') { _wlCtx = 'account'; renderWishlist(); }
 });
@@ -6331,6 +6371,15 @@ function updateWaFloat() {
      ─────────────────────────────────────────────────────────────── -->
 <script>
   window.DIGISTORE_BACKEND_URL = 'https://packwebsite.digitch.workers.dev';
+
+  // Set to true ONLY while testing what happens AFTER payment (delivery,
+  // My Learning, cart clearing) — it reveals a "🧪 Test Payment (no
+  // charge)" method in checkout that skips SlickPay entirely. The Worker
+  // independently refuses that request unless TEST_CHECKOUT_ENABLED="true"
+  // is also set in wrangler.jsonc, so this flag alone can't let anyone buy
+  // for free — but set it back to false once you're done testing, so
+  // customers never see the option.
+  window.DIGISTORE_TEST_MODE = true;
 </script>
 
 <!-- ===== PREMIUM POLISH: scroll-reveal (visual only, no logic touched) ===== -->
@@ -6341,7 +6390,7 @@ function updateWaFloat() {
     var selectors = [
       '#about .about-title','#about .about-desc','#about .about-feat',
       '#about .about-card','.product-card','.purchase-card',
-      '.statement-text','.testi-card',
+      '.statement-text','.bs-row','.testi-card',
       '.section-header'
     ];
     selectors.forEach(function(sel){
