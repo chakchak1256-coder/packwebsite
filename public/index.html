@@ -2598,6 +2598,8 @@ let _pendingHashScroll = window.location.hash || '';
 // If the page was loaded via a shared per-product link (?product=<id>),
 // open that product's detail page once the catalog has loaded.
 let _pendingProductOpen = new URLSearchParams(window.location.search).get('product') || '';
+// ?search=… (sent by the 404 page's search box) — applied once products exist.
+let _pendingSearch = (new URLSearchParams(window.location.search).get('search') || '').trim().slice(0, 100);
 
 function _hideDeepLinkLoader() {
   const el = document.getElementById('deep-link-loader');
@@ -2686,6 +2688,20 @@ function handleDbUpdate() {
     renderRecentlyViewed();
     renderSocialProof();
     initFlashBanner();
+    // ?search=… — the 404 page's search box sends people here. Put the term in
+    // the search box and show the matches, once there are products to search.
+    if (_pendingSearch && allProducts.length) {
+      const term = _pendingSearch;
+      _pendingSearch = '';
+      try {
+        const q = new URLSearchParams(window.location.search);
+        q.delete('search');
+        history.replaceState(null, '', window.location.pathname + (q.toString() ? '?' + q.toString() : '') + window.location.hash);
+      } catch (e) {}
+      const mobile = !!(window.matchMedia && window.matchMedia('(max-width:700px)').matches);
+      const input = document.getElementById(mobile ? 'mobile-search-q' : 'topbar-search-q');
+      if (input) { input.value = term; navSearchQuery(term, mobile ? 'mobile' : 'topbar'); }
+    }
     // Re-align to the URL's target section once real content has rendered —
     // async data above it (categories/products) can shift its position after
     // the browser's initial (pre-data) anchor jump.
@@ -2735,7 +2751,7 @@ function renderHeroPreview() {
   const el = document.getElementById('hero-preview');
   if (!el) return;
   const prods = visibleProducts();
-  const cats = DB.getAll('categories');
+  const cats = uniqueTopics(DB.getAll('categories'));
   if (!prods.length) return; // catalog not loaded yet — leave hidden
   const courseCount = prods.filter(p => p.contentType === 'course').length;
   const packCount = prods.filter(p => p.contentType === 'pack').length;
@@ -2989,13 +3005,29 @@ function closeAllProducts() {
   document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
 }
 
+// Topics are saved per content type, so the same topic name (say "Google
+// Sheets") can exist once under Digital Products and once under Digital Packs.
+// Shoppers should only ever see it once — products are filtered by the topic's
+// NAME anyway, so one chip already covers both. Names are compared ignoring
+// capital letters and stray spaces.
+function _topicKey(name) { return String(name || '').trim().toLowerCase(); }
+function uniqueTopics(cats) {
+  const seen = new Set();
+  return (cats || []).filter(c => {
+    const k = _topicKey(c.name);
+    if (!k || seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
 function renderAllFilters(activeCat = 'all') {
   // Topics are type-scoped (each has a contentType of product/pack/course,
   // set in the admin panel). On a specific type tab, only show that type's
   // topics. On "All", show every topic regardless of type — including any
   // legacy topic saved before types existed (no contentType set).
   const allCats = DB.getAll('categories');
-  const cats = _typeFilter === 'all' ? allCats : allCats.filter(c => c.contentType === _typeFilter);
+  const cats = uniqueTopics(_typeFilter === 'all' ? allCats : allCats.filter(c => c.contentType === _typeFilter));
   const f = document.getElementById('filter-chips'); f.innerHTML = '';
   const makeChip = (label, val) => {
     const c = document.createElement('div');
@@ -3009,7 +3041,7 @@ function renderAllFilters(activeCat = 'all') {
     return c;
   };
   f.appendChild(makeChip('All', 'all'));
-  cats.forEach(c => f.appendChild(makeChip(c.name, c.name)));
+  cats.forEach(c => f.appendChild(makeChip(c.name, _topicKey(c.name))));
 }
 
 function renderAllProducts(filterCat) {
@@ -3020,7 +3052,7 @@ function renderAllProducts(filterCat) {
   const q = (document.getElementById('search-input')||{}).value?.toLowerCase()||'';
   let prods = visibleProducts();
   if (_typeFilter && _typeFilter !== 'all') prods = prods.filter(p => (p.contentType || 'product') === _typeFilter);
-  if (filterCat !== 'all') prods = prods.filter(p => p.category === filterCat);
+  if (filterCat !== 'all') prods = prods.filter(p => _topicKey(p.category) === _topicKey(filterCat));
   if (q) prods = prods.filter(p => p.name.toLowerCase().includes(q) || (p.description||'').toLowerCase().includes(q));
   const minVal = parseFloat((document.getElementById('price-min')||{}).value);
   const maxVal = parseFloat((document.getElementById('price-max')||{}).value);
@@ -3648,6 +3680,18 @@ async function coPay() {
   btn.disabled = true;
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Please wait...';
 
+  // Buying needs a signed-in account (the purchase goes to its My Library) —
+  // the server checks this token, so if the session has quietly ended, ask
+  // them to sign in again rather than failing at payment time.
+  const token = await UserAuth.getAccessToken();
+  if (!token) {
+    coResetPayButton();
+    _coHide();
+    openLoginModal('checkout');
+    showToast('Please sign in again to continue.');
+    return;
+  }
+
   // Re-check ownership right before paying (they may have bought it in another tab).
   if (await coIsAlreadyOwned(currentUser.id, item)) {
     coResetPayButton();
@@ -3670,7 +3714,9 @@ async function coPay() {
     const backendUrl = (window.DIGISTORE_BACKEND_URL || '').replace(/\/+$/, '');
     const res = await fetch(`${backendUrl}/api/checkout`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      // The login token tells the server WHO is buying — it never trusts a
+      // user id sent in the body.
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       // The server looks the price up itself from the product id — the total
       // shown on screen is never trusted.
       body: JSON.stringify({
@@ -3679,8 +3725,6 @@ async function coPay() {
           variant_label: item.variantLabel || null,
           qty:           1,
         }],
-        user_id:      currentUser.id,
-        user_email:   email,
         product_id:   item.productId || item.id,
         product_name: item.name,
         firstname,
@@ -3692,6 +3736,14 @@ async function coPay() {
 
     const data = await res.json();
 
+    if (res.status === 401) {
+      // Session ended between clicking Pay and the server checking it.
+      coResetPayButton();
+      _coHide();
+      openLoginModal('checkout');
+      showToast('Your session expired — please sign in again.');
+      return;
+    }
     if (!res.ok || !data.payment_url) {
       coShowFormError(data.error || 'Payment initiation failed. Please try again.');
       coResetPayButton();

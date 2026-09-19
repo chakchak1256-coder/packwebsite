@@ -610,6 +610,15 @@ const UserAuth = {
 
   current() { return this._current; },
 
+  // The signed-in person's access token, for calling the Worker on their
+  // behalf (e.g. checkout). null if nobody is signed in / the session ended.
+  async getAccessToken() {
+    try {
+      const { data } = await _client.auth.getSession();
+      return (data && data.session && data.session.access_token) || null;
+    } catch (e) { return null; }
+  },
+
   // Create an account with email + password. Just those two fields — the
   // display name defaults to the part of the email before the @.
   // Resolves { user } when signed in straight away, { notice } when the
