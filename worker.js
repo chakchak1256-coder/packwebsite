@@ -1225,9 +1225,15 @@ export default {
     // ============================================================
     // ROUTE: POST /api/checkout
     // Creates a SlickPay invoice and returns { order_id, payment_url, amount }
-    // Body: { items | product_id, firstname, lastname, email, user_id, user_email }
+    // Body: { items | product_id, firstname, lastname, email }
+    // Requires a signed-in customer (Authorization: Bearer <login token>) —
+    // a purchase is delivered to that account's My Library, so there's no
+    // such thing as buying without one. The account comes from the verified
+    // token, never from anything in the request body.
     // ============================================================
     if (path === '/api/checkout' && method === 'POST') {
+      const auth = await requireUserAuth(request, env);
+      if (!auth.ok) return json({ error: 'Please sign in to complete your purchase.' }, 401);
       try {
         if (!env.SLICKPAY_KEY) {
           return json({ error: 'Payment gateway not configured.' }, 503);
@@ -1237,9 +1243,10 @@ export default {
         try { body = await request.json(); } catch { return json({ error: 'Invalid JSON body.' }, 400); }
 
         const {
-          product_id, product_name, firstname, lastname, email, address,
-          items: rawItems, user_id, user_email,
+          product_id, product_name, firstname, lastname, email: bodyEmail, address,
+          items: rawItems,
         } = body || {};
+        const email = String(bodyEmail || auth.email || '').trim();
         // NOTE: a client-supplied `amount` field, if present in the request body,
         // is intentionally ignored below. Price is ALWAYS re-derived server-side
         // from product IDs looked up in Firestore — never trust a client-computed
@@ -1359,8 +1366,8 @@ export default {
             productsAmount: Number(computedAmount),  // products-only subtotal, for reference
             gatewayFee:   gatewayFee,
             items:        pricedItems || null,
-            userId:       user_id    || '',
-            userEmail:    user_email || email || '',
+            userId:       auth.uid,
+            userEmail:    auth.email || email || '',
             firstname,
             lastname,
             email:        email        || '',
