@@ -684,6 +684,22 @@ async function constantTimeEqual(a, b) {
   return diff === 0;
 }
 
+// ---------------------------------------------------------------
+// Devices — how many browsers/devices an account is used from
+// ---------------------------------------------------------------
+// Each browser gets a random ID (kept in its localStorage) and reports it
+// after the customer signs in — see DeviceTracker in supabase.js. One
+// `user_devices` doc per (account, browser). This is an estimate: clearing
+// site data, private windows and a second browser on the same computer each
+// count as another device.
+const MAX_DEVICES_PER_USER = 50; // stops anyone from spamming random IDs to fill the database
+
+async function clearUserDevices(env, uid) {
+  const devices = await Docs.queryCollection(env, 'user_devices', [['uid', uid]], 200);
+  await Promise.all(devices.map(d => Docs.deleteDoc(env, 'user_devices', d.id)));
+  return devices.length;
+}
+
 export default {
   async fetch(request, env) {
     const url    = new URL(request.url);
@@ -923,11 +939,203 @@ export default {
 
         await Docs.deleteDoc(env, 'users', uid);
         await deleteSupabaseAuthUser(env, uid);
+        // Their device records go with them (best-effort — never blocks the delete).
+        try { await clearUserDevices(env, uid); } catch (e) { console.error('[delete-user] device cleanup failed:', e.message); }
 
         return json({ ok: true });
       } catch (err) {
         console.error('[delete-user] error:', err.message);
         return json({ error: 'Internal server error.', message: err.message }, 500);
+      }
+    }
+
+    // ============================================================
+    // ROUTE: POST /api/device-ping
+    // Called by the storefront after a customer is signed in (at most once
+    // every few hours per browser). Records which browser/device this
+    // account is being used from. IP and rough location come from
+    // Cloudflare's request metadata, same as the admin login log.
+    // ============================================================
+    if (path === '/api/device-ping' && method === 'POST') {
+      const auth = await requireUserAuth(request, env);
+      if (!auth.ok) return json({ error: auth.error }, auth.status);
+      try {
+        let body = {};
+        try { body = await request.json(); } catch { /* body is required, checked below */ }
+        const deviceId = String(body.deviceId || '').trim();
+        if (!/^[A-Za-z0-9-]{16,64}$/.test(deviceId)) return json({ error: 'Invalid device id.' }, 400);
+
+        // The admin account isn't a customer — don't track it.
+        if (env.ADMIN_EMAIL && (auth.email || '').toLowerCase() === env.ADMIN_EMAIL.toLowerCase()) {
+          return json({ ok: true, skipped: true });
+        }
+
+        const docId = `${auth.uid}_${deviceId}`;
+        const existing = await Docs.getDoc(env, 'user_devices', docId);
+        if (!existing) {
+          const mine = await Docs.queryCollection(env, 'user_devices', [['uid', auth.uid]], MAX_DEVICES_PER_USER);
+          if (mine.length >= MAX_DEVICES_PER_USER) return json({ ok: true, capped: true });
+        }
+
+        const cf  = request.cf || {};
+        const now = new Date().toISOString();
+        await Docs.setDoc(env, 'user_devices', docId, {
+          uid:       auth.uid,
+          email:     auth.email || '',
+          deviceId,
+          userAgent: (request.headers.get('User-Agent') || 'unknown').slice(0, 300),
+          ip:        request.headers.get('CF-Connecting-IP') || 'unknown',
+          country:   cf.country || '',
+          region:    cf.region  || '',
+          city:      cf.city    || '',
+          firstSeen: (existing && existing.firstSeen) || now,
+          lastSeen:  now,
+          visits:    ((existing && existing.visits) || 0) + 1,
+        });
+        return json({ ok: true });
+      } catch (err) {
+        console.error('[device-ping] error:', err.message);
+        // Non-critical — never surface an error to the customer over this.
+        return json({ ok: false }, 200);
+      }
+    }
+
+    // ============================================================
+    // ROUTE: GET /api/admin/user-devices[?uid=…]
+    // Device records for the admin's Members page: every account's devices
+    // (most recently seen first, up to 1000), or just one account's.
+    // ============================================================
+    if (path === '/api/admin/user-devices' && method === 'GET') {
+      const auth = await requireAdminAuth(request, env);
+      if (!auth.ok) return json({ error: auth.error }, auth.status);
+      try {
+        const uid = (url.searchParams.get('uid') || '').trim();
+        let devices;
+        if (uid) {
+          devices = await Docs.queryCollection(env, 'user_devices', [['uid', uid]], 200);
+        } else {
+          const limit = Math.min(parseInt(url.searchParams.get('limit') || '1000', 10) || 1000, 1000);
+          devices = await Docs.listCollection(env, 'user_devices', { orderByField: 'lastSeen', direction: 'DESCENDING', limit });
+        }
+        devices.sort((a, b) => new Date(b.lastSeen || 0) - new Date(a.lastSeen || 0));
+        return json({ devices });
+      } catch (err) {
+        console.error('[admin/user-devices] error:', err.message);
+        return json({ error: 'Internal server error.' }, 500);
+      }
+    }
+
+    // ============================================================
+    // ROUTE: POST /api/admin/clear-devices   { uid }
+    // Forgets an account's device history (e.g. after warning the customer
+    // about sharing) so the count starts again from zero.
+    // ============================================================
+    if (path === '/api/admin/clear-devices' && method === 'POST') {
+      const auth = await requireAdminAuth(request, env);
+      if (!auth.ok) return json({ error: auth.error }, auth.status);
+      try {
+        let body;
+        try { body = await request.json(); } catch { return json({ error: 'Invalid JSON body.' }, 400); }
+        const uid = (body.uid || '').toString().trim();
+        if (!uid) return json({ error: 'uid is required.' }, 400);
+        const removed = await clearUserDevices(env, uid);
+        return json({ ok: true, removed });
+      } catch (err) {
+        console.error('[admin/clear-devices] error:', err.message);
+        return json({ error: 'Internal server error.' }, 500);
+      }
+    }
+
+    // ============================================================
+    // ROUTE: POST /api/admin/grant-product   { userId, productId, variantLabel?, note? }
+    // Gives a member a product without them paying — it appears in their My
+    // Library exactly like a purchased one. Same server-side derivation as
+    // /api/claim-free: what gets delivered (link, files, course content) is
+    // read from the product itself, never taken from the request.
+    // ============================================================
+    if (path === '/api/admin/grant-product' && method === 'POST') {
+      const auth = await requireAdminAuth(request, env);
+      if (!auth.ok) return json({ error: auth.error }, auth.status);
+      try {
+        let body;
+        try { body = await request.json(); } catch { return json({ error: 'Invalid JSON body.' }, 400); }
+
+        const userId    = (body.userId || '').toString().trim();
+        const productId = (body.productId || '').toString().trim();
+        if (!userId || !productId) return json({ error: 'userId and productId are required.' }, 400);
+
+        const profile = await Docs.getDoc(env, 'users', userId);
+        if (!profile) return json({ error: 'Member not found.' }, 404);
+        const product = await Docs.getDoc(env, 'products', productId);
+        if (!product) return json({ error: 'Product not found.' }, 404);
+
+        // Products with options (e.g. Gold / Silver) need one picked, and it
+        // has to be a real option of THIS product.
+        const optionLabels = [];
+        (Array.isArray(product.variables) ? product.variables : []).forEach(g => (g.items || []).forEach(it => it && it.label && optionLabels.push(it.label)));
+        (Array.isArray(product.variants) ? product.variants : []).forEach(v => v && v.label && optionLabels.push(v.label));
+        let variantLabel = null;
+        if (optionLabels.length) {
+          const requested = (body.variantLabel || body.variant_label || '').toString().trim();
+          if (!requested) return json({ error: 'This product has options — choose one.' }, 400);
+          if (!requested.split(' / ').every(part => optionLabels.includes(part))) {
+            return json({ error: 'That option does not exist on this product.' }, 400);
+          }
+          variantLabel = requested;
+        }
+
+        // Don't hand out a second copy of the same product/option.
+        const existing = await Docs.queryCollection(env, 'purchases', [
+          ['userId', userId], ['productId', productId], ['variantLabel', variantLabel],
+        ], 1);
+        if (existing[0]) return json({ ok: true, alreadyOwned: true, purchase: existing[0] });
+
+        const now = new Date().toISOString();
+        const delivery = await getProductDelivery(env, productId, product);
+        const contentType = product.contentType || 'product';
+        const isAuto = !!(delivery.autoDeliver && delivery.deliveryLink) || contentType === 'course';
+
+        let accessData = {};
+        if (isAuto && contentType !== 'course') {
+          accessData = { '_DeliveryType': delivery.deliveryType || 'link', 'Download Link': delivery.deliveryLink };
+          if (Array.isArray(delivery.deliveryFiles) && delivery.deliveryFiles.length) {
+            accessData['_Files'] = delivery.deliveryFiles.map(f => ({ url: f.url, name: f.name }));
+          }
+        }
+
+        const note = (body.note || '').toString().trim().slice(0, 300);
+        const purchaseDoc = {
+          userId,
+          userEmail:     profile.email || '',
+          productId,
+          productName:   variantLabel ? `${product.name || ''} — ${variantLabel}` : (product.name || ''),
+          productImage:  (product.images || [])[0] || '',
+          productType:   product.category || 'Digital',
+          contentType,
+          accessLink:    isAuto && contentType !== 'course' ? delivery.deliveryLink : '',
+          accessData,
+          proofImages:   [],
+          customerName:  profile.name || '',
+          customerEmail: profile.email || '',
+          paymentMethod: 'admin_grant',
+          orderNotes:    note,
+          status:        isAuto ? 'completed' : 'pending',
+          purchaseDate:  now,
+          createdAt:     now,
+          orderId:       'GIFT-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7).toUpperCase(),
+          variantLabel,
+          deliveryType:  isAuto ? (delivery.deliveryType || 'link') : '',
+          grantedBy:     auth.email || '',
+          grantedAt:     now,
+        };
+        if (isAuto) purchaseDoc.deliveredAt = now;
+
+        const created = await Docs.addDoc(env, 'purchases', purchaseDoc);
+        return json({ ok: true, purchase: created });
+
+      } catch (err) {
+        console.error('[admin/grant-product] error:', err.message);
+        return json({ error: 'Internal server error.' }, 500);
       }
     }
 
