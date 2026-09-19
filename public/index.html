@@ -2673,10 +2673,14 @@ function handleDbUpdate() {
     // async data above it (categories/products) can shift its position after
     // the browser's initial (pre-data) anchor jump.
     if (_pendingHashScroll) {
-      const target = document.querySelector(_pendingHashScroll);
-      if (target) {
-        requestAnimationFrame(() => target.scrollIntoView());
-      }
+      // A sign-in / password-reset link lands here as "#access_token=…" — not
+      // a valid selector, and not a section to scroll to. Never let it throw.
+      try {
+        const target = /^#[A-Za-z][\w-]*$/.test(_pendingHashScroll) ? document.querySelector(_pendingHashScroll) : null;
+        if (target) {
+          requestAnimationFrame(() => target.scrollIntoView());
+        }
+      } catch (e) {}
       _pendingHashScroll = '';
     }
     // Deep link to a single product (e.g. someone opened a shared product link)
@@ -3863,7 +3867,7 @@ async function doForgotPassword() {
   if (!email) { showAuthModalError('Type your email address above first, then click "Forgot password?".'); return; }
   try {
     await UserAuth.sendPasswordResetTo(email);
-    showAuthNotice('If an account exists for ' + email + ', we\'ve emailed you a link to reset the password.');
+    showAuthNotice('If an account exists for ' + email + ', a password reset link is on its way. It can take a minute to arrive — please also check your spam folder.');
   } catch (e) {
     showAuthModalError(e.message || 'Could not send the reset email. Please try again.');
   }
@@ -3900,6 +3904,19 @@ async function doSetNewPassword() {
 }
 // Fired by supabase.js when someone arrives via the password-reset email link.
 window.addEventListener('password-recovery', () => { closeLoginModal(); openPasswordModal(); });
+
+// A sign-in, confirmation link or reset link came back with an error (expired,
+// already used, cancelled…) — show what happened instead of failing silently.
+window.addEventListener('auth-url-error', (evt) => {
+  openLoginModal('');
+  showAuthModalError((evt.detail && evt.detail.message) || 'Sign-in could not be completed. Please try again.');
+});
+
+// They clicked the confirmation link in their signup email and are now signed in.
+window.addEventListener('email-confirmed', () => {
+  closeLoginModal();
+  showToast('Email confirmed — welcome aboard! 🎉');
+});
 
 // Sign-in with Google is a full-page redirect to Google and back (Supabase's
 // OAuth flow has no popup mode), so this click handler never gets a normal
@@ -4875,7 +4892,7 @@ async function acctSendPasswordReset() {
   msg.textContent = 'Sending…'; msg.style.color = 'var(--text-muted)';
   try {
     const email = await UserAuth.sendPasswordReset();
-    msg.textContent = `Sent to ${email}`; msg.style.color = 'var(--accent)';
+    msg.textContent = `Reset link sent to ${email} — check your inbox (and spam folder).`; msg.style.color = 'var(--accent)';
   } catch (e) {
     msg.textContent = e.message || 'Could not send email.'; msg.style.color = '#EF4444';
   }

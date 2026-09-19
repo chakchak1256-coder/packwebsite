@@ -332,7 +332,76 @@ const UserAuth = {
   },
 
   init() {
+    // Must run before anything else touches the URL: it reads (and cleans up)
+    // errors that Supabase / Google put in the address when a link or a
+    // sign-in didn't work — otherwise the person just lands back on the site
+    // with no explanation.
+    this._readAuthUrl();
     _auth.onAuthStateChanged((user, event) => this._handleAuthChange(user, event));
+  },
+
+  // The "pending" flag written by loginWithGoogle() is a timestamp; it's only
+  // trusted for 10 minutes so an abandoned attempt can't be mistaken for a
+  // real return trip later. ('1' is what older versions of this file wrote.)
+  _oauthFlagFresh(raw) {
+    if (!raw) return false;
+    if (raw === '1') return true;
+    const t = Number(raw);
+    return t > 0 && (Date.now() - t) < 10 * 60 * 1000;
+  },
+
+  // Tells the login window a Google sign-in didn't complete, and why. Does
+  // nothing unless a Google sign-in was actually just started.
+  _reportGoogleFailure(message) {
+    let raw = null;
+    try { raw = localStorage.getItem('_googleOAuthPending'); localStorage.removeItem('_googleOAuthPending'); } catch (e) {}
+    if (!this._oauthFlagFresh(raw)) return;
+    window.dispatchEvent(new CustomEvent('google-redirect-result', { detail: { error: message } }));
+  },
+
+  // Looks at the address the page was opened with:
+  //   • #error=… / ?error_description=…  — a Google sign-in, confirmation link
+  //     or password-reset link that failed (expired, already used, cancelled…).
+  //     Shows the person a plain-English message and cleans the URL.
+  //   • type=signup — they just clicked the confirmation link in their email,
+  //     so a "you're confirmed" message can be shown once they're signed in.
+  _readAuthUrl() {
+    if (window.__IS_ADMIN) return;
+    let blob = '';
+    try { blob = (location.hash || '') + '&' + (location.search || ''); } catch (e) { return; }
+
+    if (/[#&]type=(signup|email)(&|$)/.test(blob)) this._arrivedFromConfirmLink = true;
+
+    const errDesc = blob.match(/[#?&]error_description=([^&#]*)/);
+    const errCode = blob.match(/[#?&]error=([^&#]*)/);
+    const errType = blob.match(/[#?&]error_code=([^&#]*)/);
+    if (!errDesc && !errCode) return;
+
+    const dec = v => { try { return decodeURIComponent(String(v).replace(/\+/g, ' ')); } catch (e) { return String(v); } };
+    const desc = errDesc ? dec(errDesc[1]) : '';
+    const code = errCode ? dec(errCode[1]) : '';
+    const kind = errType ? dec(errType[1]) : '';
+    console.warn('[Auth] returned to the site with an error:', code, kind, desc);
+
+    let message;
+    if (kind === 'otp_expired' || /invalid or has expired|expired|already been used/i.test(desc)) {
+      message = 'That email link is invalid or has expired. Please request a new one.';
+    } else if (/multiple accounts|already.*(linked|registered)|identity/i.test(desc)) {
+      message = 'This email address is already used by another sign-in method. Please log in with your email and password instead.';
+    } else if (code === 'access_denied') {
+      message = 'Sign-in was cancelled.';
+    } else {
+      message = 'Sign-in could not be completed' + (desc ? ' (' + desc + ')' : '') + '. Please try again.';
+    }
+
+    try { localStorage.removeItem('_googleOAuthPending'); } catch (e) {}
+    // Clean the address bar (synchronously — before supabase-js reads it).
+    try {
+      const q = new URLSearchParams(location.search);
+      ['error', 'error_code', 'error_description'].forEach(k => q.delete(k));
+      history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q.toString() : ''));
+    } catch (e) {}
+    setTimeout(() => window.dispatchEvent(new CustomEvent('auth-url-error', { detail: { message } })), 0);
   },
 
   async _handleAuthChange(user, event) {
@@ -352,6 +421,9 @@ const UserAuth = {
     // client authenticate as ADMIN_EMAIL without tripping this guard.
     if (!window.__IS_ADMIN && user && (user.email || '').toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
       await _auth.signOut();
+      // If this came from clicking "Continue with Google", tell the person why
+      // nothing happened instead of silently bouncing them back signed out.
+      this._reportGoogleFailure('This Google account is not available for sign-in. Please use a different account.');
       return;
     }
 
@@ -375,12 +447,35 @@ const UserAuth = {
       return;
     }
 
+    // A session restored from browser storage on page load is NOT proof the
+    // account still exists — if it was deleted (from the admin panel or the
+    // Supabase dashboard) after this browser signed in, the saved login token
+    // keeps working locally until it expires. Check with the server, and sign
+    // out for real if the account is gone. Deliberately NOT awaited: awaiting
+    // another Supabase call inside this callback can deadlock the auth lock.
+    if (event === 'INITIAL_SESSION' && !window.__IS_ADMIN) {
+      const uid = user.uid;
+      setTimeout(() => this._verifyRestoredSession(uid), 0);
+    }
+
     // Google sign-ins go through _afterGoogleAuth() first, which makes sure
     // the account has a users row (creating it automatically the first time
     // someone signs in) before it's treated as logged in. Email/password sessions
     // (created via register()/login() below, which already write/verify
     // the users doc themselves) skip straight to the normal path.
-    const isGoogle = user.app_metadata && user.app_metadata.provider === 'google';
+    // "Did this session just come back from clicking Continue with Google?"
+    // Normally app_metadata.provider === 'google'. But if the same email
+    // already had an email + password account, Supabase links the Google
+    // identity to it and the provider stays 'email' (providers becomes
+    // ['email','google']) — so a fresh pending flag is checked as well.
+    const meta = user.app_metadata || {};
+    const providers = Array.isArray(meta.providers) ? meta.providers : [];
+    let pendingFlagRaw = null;
+    if (event !== 'INITIAL_SESSION') {
+      try { pendingFlagRaw = localStorage.getItem('_googleOAuthPending'); } catch (e) {}
+    }
+    const flagFresh = this._oauthFlagFresh(pendingFlagRaw);
+    const isGoogle = meta.provider === 'google' || (flagFresh && providers.includes('google'));
     console.log('[AuthDebug] auth event:', event, '| provider:', isGoogle ? 'google' : 'email', '| email:', user.email);
     if (isGoogle) {
       // On the page load right after Google redirects back, Supabase fires
@@ -413,12 +508,8 @@ const UserAuth = {
       // was deleted (no old session lying around to mask it). localStorage
       // isn't tied to the browsing session/tab the way sessionStorage is,
       // so it survives that redirect reliably.
-      let consumingRedirect = false;
-      let pendingFlagRaw = null;
-      if (event !== 'INITIAL_SESSION') {
-        try { pendingFlagRaw = localStorage.getItem('_googleOAuthPending'); consumingRedirect = pendingFlagRaw === '1'; } catch (e) {}
-        if (consumingRedirect) { try { localStorage.removeItem('_googleOAuthPending'); } catch (e) {} }
-      }
+      const consumingRedirect = flagFresh; // flagFresh is always false on INITIAL_SESSION
+      if (consumingRedirect) { try { localStorage.removeItem('_googleOAuthPending'); } catch (e) {} }
       console.log('[AuthDebug] isGoogle branch | pendingFlag:', pendingFlagRaw, '| consumingRedirect:', consumingRedirect);
 
       let result;
@@ -427,10 +518,21 @@ const UserAuth = {
         console.log('[AuthDebug] _afterGoogleAuth resolved:', JSON.stringify(result));
       } catch (e) {
         console.error('[AuthDebug] _afterGoogleAuth THREW (this is likely the bug):', e);
+        // Sign-in didn't complete — make sure the header shows "Sign in"
+        // instead of staying stuck on the optimistic logged-in state.
+        this._current = null;
+        window.dispatchEvent(new Event('auth:change'));
         if (consumingRedirect) {
           window.dispatchEvent(new CustomEvent('google-redirect-result', { detail: { error: 'Something went wrong finishing sign-in: ' + (e.message || e) } }));
         }
         return;
+      }
+      if (result && result.error) {
+        // Same as above: no usable account behind this session (for example it
+        // was deleted, so re-creating its profile is refused). Resolve the
+        // header to the signed-out state rather than leaving it half-logged-in.
+        this._current = null;
+        window.dispatchEvent(new Event('auth:change'));
       }
       // Only fire the 'google-redirect-result' event (which the login
       // modal listens for — see index.html) when this session change was
@@ -446,6 +548,12 @@ const UserAuth = {
       return;
     }
 
+    // They arrived by clicking the confirmation link in their email.
+    if (this._arrivedFromConfirmLink && event !== 'INITIAL_SESSION') {
+      this._arrivedFromConfirmLink = false;
+      setTimeout(() => window.dispatchEvent(new Event('email-confirmed')), 0);
+    }
+
     // Email/password session (signed in just now, or restored on page load).
     // Dispatch auth:change immediately from Auth data so the UI renders
     // without waiting for the users table...
@@ -458,6 +566,37 @@ const UserAuth = {
     this._ensureUserRow(user, false).catch(() => {});
   },
 
+  // Confirms with the auth server that the restored session's account still
+  // exists. Only a definite "no" (401/403/404 — e.g. "User from sub claim in
+  // JWT does not exist") signs the browser out; a network error or timeout
+  // leaves the session alone, so being offline never logs anyone out.
+  async _verifyRestoredSession(uid) {
+    let gone = false;
+    try {
+      const { data, error } = await _client.auth.getUser();
+      if (error) {
+        const st = error.status;
+        gone = st === 401 || st === 403 || st === 404 ||
+               /does not exist|user_not_found|user not found|invalid jwt/i.test(error.message || '');
+      } else if (!data || !data.user) {
+        gone = true;
+      }
+    } catch (e) { return; }
+    if (!gone) return;
+
+    try {
+      // If a DIFFERENT account has signed in since this check started (e.g. the
+      // Google redirect just completed), leave that new session alone.
+      const { data } = await _client.auth.getSession();
+      if (data && data.session && data.session.user && data.session.user.id !== uid) return;
+    } catch (e) {}
+
+    console.warn('[Auth] The saved session belongs to an account that no longer exists — signing out.');
+    try { await _client.auth.signOut({ scope: 'local' }); } catch (e) {}
+    this._current = null;
+    window.dispatchEvent(new Event('auth:change'));
+  },
+
   current() { return this._current; },
 
   // Create an account with email + password. Just those two fields — the
@@ -466,6 +605,7 @@ const UserAuth = {
   // project requires email confirmation first, or { error }.
   async register(email, password) {
     try {
+      try { localStorage.removeItem('_googleOAuthPending'); } catch (e) {}
       const cleanEmail = (email || '').trim();
       // Never let the public sign-up form create an account using the
       // reserved admin email — that is the exact path used to hijack
@@ -494,7 +634,7 @@ const UserAuth = {
         // exists but there's no active session until the link is clicked.
         // Turn it off in Supabase → Authentication → Providers → Email if
         // you'd rather people be signed in instantly.
-        return { notice: 'Account created! Check your email for a confirmation link, then log in.' };
+        return { notice: 'Almost there — we sent a confirmation link to ' + cleanEmail + '. Open it to activate your account, then log in. If you don\'t see it within a few minutes, check your spam folder.' };
       }
 
       const wrapped = _wrapUser(data.user);
@@ -512,6 +652,7 @@ const UserAuth = {
 
   async login(email, password, remember = true) {
     try {
+      try { localStorage.removeItem('_googleOAuthPending'); } catch (e) {}
       const cleanEmail = (email || '').trim();
       // The admin account only signs in through admin.html. Answer exactly
       // like a wrong password so this form doesn't confirm it exists.
@@ -542,11 +683,18 @@ const UserAuth = {
   // 'google-redirect-result' — the login modal in index.html already
   // listens for that event, unchanged).
   async loginWithGoogle() {
-    try { localStorage.setItem('_googleOAuthPending', '1'); } catch (e) {}
+    try { localStorage.setItem('_googleOAuthPending', String(Date.now())); } catch (e) {}
+    // The address Google sends the person back to. It must NOT include a
+    // '#fragment': Supabase appends "#access_token=…" to it, and if the page
+    // URL already had one (e.g. "/#hero" after clicking Home) the result is
+    // "/#hero#access_token=…", which the auth library can't read — the person
+    // landed back on the site still signed out with no error. Query string
+    // (e.g. ?product=…) is kept so a shared product link still reopens.
+    const returnTo = window.location.origin + window.location.pathname + window.location.search;
     const { error } = await _client.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.href,
+        redirectTo: returnTo,
         queryParams: { prompt: 'select_account' },
       },
     });
