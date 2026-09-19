@@ -196,7 +196,6 @@ body.flash-on #topbar{top:56px}
   background:var(--bg2);border:1px solid var(--border-strong);border-radius:var(--radius);
   box-shadow:var(--shadow-md);z-index:999;max-height:320px;overflow-y:auto;display:none}
 #topbar-search-results.show{display:block}
-#topbar #cart-btn{flex-shrink:0}
 #topbar-socials{display:flex;align-items:center;gap:.5rem;flex-shrink:0}
 .topbar-soc-btn{width:32px;height:32px;border-radius:50%;
   background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);
@@ -264,22 +263,6 @@ body.flash-on #topbar{top:56px}
 .nav-links a.active::after{content:'';position:absolute;left:0;right:0;bottom:-9px;height:2px;
   background:var(--accent);border-radius:2px}
 .nav-actions{display:flex;gap:8px;align-items:center;overflow:visible}
-#cart-btn{
-  position:relative;width:38px;height:38px;border-radius:50%;
-  background:#fff;border:1px solid rgba(0,0,0,.08);
-  display:flex;align-items:center;justify-content:center;font-size:.9rem;
-  transition:all var(--transition);color:#3F3F46;
-}
-[data-theme="dark"] #cart-btn{background:var(--card);border-color:var(--border);color:var(--text-muted)}
-#cart-btn:hover{background:#F4F5F7;color:#0A0A0A}
-[data-theme="dark"] #cart-btn:hover{background:var(--bg3);color:var(--text)}
-#cart-badge{
-  position:absolute;top:-6px;right:-6px;background:var(--accent);color:#fff;
-  font-size:.68rem;font-weight:800;min-width:18px;height:18px;border-radius:99px;
-  display:none;align-items:center;justify-content:center;padding:0 4px;
-  border:2px solid #fff;line-height:1;z-index:2;
-}
-[data-theme="dark"] #cart-badge{border-color:var(--bg2)}
 #user-btn-wrap{position:relative}
 
 /* ===== ACCOUNT AVATAR + DROPDOWN (redesign) ===== */
@@ -631,14 +614,6 @@ body.flash-on #topbar{top:56px}
 .prod-prices{display:flex;align-items:baseline;gap:.4rem;flex-wrap:wrap}
 .prod-price{font-family:'Fraunces',serif;font-size:1.08rem;font-weight:600;color:var(--text)}
 .prod-old{font-size:.75rem;color:var(--text-muted);text-decoration:line-through}
-.prod-add{
-  width:32px;height:32px;border-radius:9px;flex-shrink:0;
-  background:rgba(var(--accent-rgb),.1);border:1px solid rgba(var(--accent-rgb),.2);
-  color:var(--accent);font-size:.8rem;
-  display:flex;align-items:center;justify-content:center;
-  transition:all var(--transition);
-}
-.prod-add:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:scale(1.08)}
 
 /* ===== BEST SELLERS ===== */
 #best-sellers{padding:96px 0}
@@ -758,52 +733,6 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:4rem 0 2
   .footer-brand{grid-column:span 1}
 }
 
-/* ===== CART DRAWER ===== */
-#cart-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;
-  opacity:0;pointer-events:none;transition:opacity var(--transition)}
-#cart-overlay.open{opacity:1;pointer-events:all}
-#cart-drawer{
-  position:fixed;top:0;right:0;bottom:0;width:380px;max-width:95vw;
-  background:var(--bg2);border-left:1px solid var(--border);z-index:1001;
-  display:flex;flex-direction:column;
-  transform:translateX(100%);transition:transform .22s ease;
-}
-#cart-drawer.open{transform:translateX(0)}
-.cart-hdr{padding:1.2rem 1.4rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
-.cart-hdr h3{font-family:'Fraunces',serif;font-size:1rem;font-weight:700;color:var(--text)}
-.cart-close{width:32px;height:32px;border-radius:7px;background:var(--card);border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;font-size:.8rem;color:var(--text-muted);transition:all var(--transition)}
-.cart-close:hover{background:var(--bg3);color:var(--text)}
-.cart-body{flex:1;overflow-y:auto;padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.6rem}
-.cart-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
-  height:100%;color:var(--text-muted);gap:.7rem;text-align:center}
-.cart-empty i{font-size:2rem;opacity:.2}
-.cart-item{display:flex;gap:.75rem;padding:.8rem;border-radius:var(--radius-sm);background:var(--card);border:1px solid var(--border)}
-.cart-item-img{width:54px;height:54px;border-radius:7px;overflow:hidden;flex-shrink:0;background:var(--bg3)}
-.cart-item-img img{width:100%;height:100%;object-fit:cover}
-.cart-item-info{flex:1;min-width:0}
-.cart-item-name{font-weight:600;font-size:.84rem;margin-bottom:.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
-.cart-item-price{color:var(--accent);font-weight:700;font-size:.8rem;font-family:'Fraunces',serif}
-.cart-item-row{display:flex;align-items:center;gap:.35rem;margin-top:.35rem}
-.qty-btn{width:22px;height:22px;border-radius:5px;background:var(--bg3);
-  border:1px solid var(--border);font-size:.7rem;display:flex;align-items:center;justify-content:center;
-  transition:all var(--transition);color:var(--text-muted)}
-.qty-btn:hover{background:rgba(var(--accent-rgb),.15);border-color:var(--accent);color:var(--accent)}
-.qty-num{font-size:.84rem;font-weight:600;min-width:16px;text-align:center;color:var(--text)}
-.cart-del{width:24px;height:24px;border-radius:5px;color:var(--text-muted);margin-left:auto;
-  display:flex;align-items:center;justify-content:center;font-size:.72rem;transition:color var(--transition)}
-.cart-del:hover{color:#EF4444}
-.cart-foot{padding:1.1rem;border-top:1px solid var(--border)}
-.cart-total-row{display:flex;justify-content:space-between;margin-bottom:.9rem;align-items:center}
-.cart-total-lbl{color:var(--text-muted);font-size:.85rem}
-.cart-total-val{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:800;color:var(--accent)}
-.btn-checkout{
-  width:100%;padding:12px;border-radius:var(--radius-sm);
-  background:var(--accent);color:#fff;font-weight:700;font-size:.875rem;
-  display:flex;align-items:center;justify-content:center;gap:.5rem;transition:all var(--transition);
-}
-.btn-checkout:hover{background:var(--accent-dark);transform:translateY(-1px)}
-
 /* ===== CHECKOUT MODAL ===== */
 #checkout-modal{
   position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1100;
@@ -833,103 +762,27 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:4rem 0 2
 }
 .checkout-box-inner::-webkit-scrollbar{width:3px}
 .checkout-box-inner::-webkit-scrollbar-thumb{background:var(--accent);border-radius:99px}
-.co-title{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:700;margin-bottom:1.4rem;color:var(--text)}
-.co-success{display:none;text-align:center;padding:2rem 1rem}
-.co-success i.fa-circle-check{font-size:2.5rem;color:var(--accent);margin-bottom:.7rem;display:block}
-.co-success h3{font-size:1.2rem;margin-bottom:.5rem;color:var(--text);font-family:'Fraunces',serif;font-weight:800}
-.co-success p{color:var(--text-muted);font-size:.88rem;line-height:1.6}
-
-/* ── Checkout phone prefix (matches signup) ─────────────────── */
-.co-phone-wrap{display:flex;gap:.4rem;align-items:center}
-.co-phone-prefix{
-  padding:10px 8px;border-radius:var(--radius-sm);
-  background:var(--bg3);border:1px solid var(--border);
-  color:var(--text);font-size:.875rem;outline:none;
-  cursor:pointer;flex-shrink:0;font-weight:700;
-  transition:border-color var(--transition);
-  appearance:none;-webkit-appearance:none;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717A' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 6px center;padding-right:22px;
-}
-.co-phone-prefix:focus{border-color:var(--accent)}
-.co-phone-prefix option{background:var(--bg2);color:var(--text)}
-.co-phone-digits-wrap{position:relative;flex:1}
-
-/* ── Payment method radio cards ────────────────────────────── */
-.co-method-card {
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:.4rem;padding:.9rem .6rem;border-radius:var(--radius-sm);cursor:pointer;
-  background:var(--card);border:2px solid var(--border-strong);
-  transition:all var(--transition);text-align:center;user-select:none;
-}
-.co-method-card:hover { border-color:rgba(var(--accent-rgb),.5); background:rgba(var(--accent-rgb),.04); }
-.co-method-card.selected { border-color:var(--accent); background:rgba(var(--accent-rgb),.08); box-shadow:0 0 0 3px rgba(var(--accent-rgb),.12); }
-.co-method-icon { font-size:1.5rem; line-height:1; }
-.co-method-name { font-size:.82rem;font-weight:700;color:var(--text); }
-
-/* ── Premium payment instruction card ─────────────────────── */
-.co-pay-instr-card{
-  margin-bottom:.9rem;border-radius:var(--radius-sm);
-  background:rgba(var(--accent-rgb),.05);
-  border:1px solid rgba(var(--accent-rgb),.2);
-  overflow:hidden;
-}
-.co-pay-instr-header{
-  display:flex;align-items:center;gap:.6rem;
-  padding:.65rem 1rem;
-  background:rgba(var(--accent-rgb),.09);
-  border-bottom:1px solid rgba(var(--accent-rgb),.15);
-}
-.co-pay-instr-header-icon{font-size:1.1rem;flex-shrink:0}
-.co-pay-instr-header-title{
-  font-size:.75rem;font-weight:700;letter-spacing:.05em;
-  text-transform:uppercase;color:var(--accent);flex:1;
-}
-.co-pay-instr-body{padding:.85rem 1rem}
-.co-pay-instr-text{
-  font-size:.84rem;color:var(--text-muted);line-height:1.8;
-  direction:rtl;text-align:right;white-space:pre-line;
-  font-family:'Segoe UI',Tahoma,Arial,sans-serif;
-  margin-bottom:.85rem;
-}
-/* Copy number rows */
-.co-copy-numbers{display:flex;flex-direction:column;gap:.4rem;margin-top:.1rem}
-.co-copy-row{
-  display:flex;align-items:center;justify-content:space-between;gap:.5rem;
-  background:var(--bg3);border:1px solid var(--border-strong);
-  border-radius:var(--radius-sm);padding:.45rem .75rem;
-}
-.co-copy-number{
-  font-family:monospace;font-size:.92rem;font-weight:700;
-  color:var(--text);letter-spacing:.04em;flex:1;
-  user-select:all;cursor:text;
-}
-.co-copy-btn{
-  display:inline-flex;align-items:center;gap:.3rem;
-  padding:4px 10px;border-radius:6px;font-size:.72rem;font-weight:700;
-  background:rgba(var(--accent-rgb),.1);border:1px solid rgba(var(--accent-rgb),.25);
-  color:var(--accent);cursor:pointer;transition:all var(--transition);flex-shrink:0;
-  white-space:nowrap;
-}
-.co-copy-btn:hover{background:rgba(var(--accent-rgb),.18);transform:translateY(-1px)}
-.co-copy-btn.copied{background:rgba(var(--accent-rgb),.15);border-color:rgba(var(--accent-rgb),.4);color:var(--accent)}
-
-/* ── Payment method selector ───────────────────────────── */
-.co-pay-method-btn {
-  display:flex;align-items:center;gap:1rem;
-  width:100%;padding:1rem 1.1rem;border-radius:var(--radius-sm);
-  background:var(--card);border:1px solid var(--border-strong);
-  color:var(--text);cursor:pointer;font-family:inherit;
-  transition:all var(--transition);text-align:left;
-}
-.co-pay-method-btn:hover{border-color:var(--accent);background:rgba(52,84,209,.06);transform:translateY(-1px)}
-.co-pay-method-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
-.co-pay-icon{width:42px;height:42px;border-radius:10px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;font-size:1.1rem}
-.co-pay-info{flex:1;display:flex;flex-direction:column;gap:2px}
-.co-pay-info strong{font-size:.9rem;font-weight:700;color:var(--text)}
-.co-pay-info span{font-size:.77rem;color:var(--text-muted)}
-.co-pay-arrow{color:var(--text-muted);font-size:.75rem;flex-shrink:0}
+.co-title{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:700;margin-bottom:1.2rem;color:var(--text)}
+/* The product being bought */
+.co-item{display:flex;align-items:center;gap:.8rem;padding:.8rem;border-radius:var(--radius-sm);
+  background:var(--card);border:1px solid var(--border);margin-bottom:1rem}
+.co-item-img{width:56px;height:56px;border-radius:9px;overflow:hidden;flex-shrink:0;background:var(--bg3)}
+.co-item-img img{width:100%;height:100%;object-fit:cover;display:block}
+.co-item-info{flex:1;min-width:0}
+.co-item-name{font-weight:600;font-size:.9rem;color:var(--text);line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.co-item-variant{font-size:.75rem;color:var(--text-muted);margin-top:.15rem}
+.co-total{display:flex;justify-content:space-between;align-items:center;padding:0 .15rem 1rem}
+.co-total-lbl{font-size:.9rem;font-weight:700;color:var(--text)}
+.co-total-val{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:800;color:var(--accent)}
+/* The one payment method */
+.co-method{display:flex;align-items:center;gap:.75rem;padding:.75rem .9rem;border-radius:var(--radius-sm);
+  border:1px solid rgba(var(--accent-rgb),.5);background:rgba(var(--accent-rgb),.06);margin-bottom:.9rem}
+.co-method-icon{font-size:1.4rem;line-height:1;flex-shrink:0}
+.co-method strong{display:block;font-size:.85rem;font-weight:700;color:var(--text)}
+.co-method small{display:block;font-size:.75rem;color:var(--text-muted);margin-top:.1rem}
+.co-account{font-size:.78rem;color:var(--text-muted);text-align:center;margin-bottom:1.1rem;overflow-wrap:anywhere}
+.co-actions{display:flex;gap:.7rem}
 
 /* ===== ALL PRODUCTS OVERLAY ===== */
 #all-products-page{
@@ -1155,7 +1008,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:4rem 0 2
   .about-right{grid-template-columns:repeat(4,1fr)}
   .about-card.span2{grid-column:span 4}
 }
-/* Collapse Sign In to icon-only circle on mobile — matches theme/cart/wishlist buttons */
+/* Collapse Sign In to icon-only circle on mobile — matches theme/wishlist buttons */
 @media(max-width:640px){
   [data-theme="dark"] #login-nav-btn{
     background:var(--card) !important;border-color:var(--border) !important;color:var(--text-muted) !important;
@@ -1432,7 +1285,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:4rem 0 2
 .nav-logo-text .accent-text{color:var(--accent)}
 /* Light mode form input bg fix */
 [data-theme="light"] .form-input{background:var(--bg3)}
-[data-theme="light"] #cart-drawer,[data-theme="light"] #checkout-modal .checkout-box,[data-theme="light"] #all-products-page,[data-theme="light"] #product-page{background:var(--bg)}
+[data-theme="light"] #checkout-modal .checkout-box,[data-theme="light"] #all-products-page,[data-theme="light"] #product-page{background:var(--bg)}
 [data-theme="light"] .product-card,[data-theme="light"] .about-feat,[data-theme="light"] .about-card{background:var(--bg2)}
 [data-theme="light"] #nav{border-bottom-color:var(--border)}
 
@@ -1740,7 +1593,7 @@ body.flash-on #mobile-nav{top:150px}
 *{ scroll-behavior:smooth; }
 a,button,.btn,.product-card,.about-card,.testi-card,.bs-row,.about-feat,
 .purchase-card,
-.prod-add,.qty-btn,.cart-close,#cart-btn,.cart-del,.pc-access-btn{
+.pc-access-btn{
   transition:transform .4s cubic-bezier(.22,.85,.32,1),
              box-shadow .4s cubic-bezier(.22,.85,.32,1),
              background .35s ease, border-color .35s ease, color .35s ease, opacity .35s ease;
@@ -1782,10 +1635,6 @@ a,button,.btn,.product-card,.about-card,.testi-card,.bs-row,.about-feat,
 }
 .nav-links a:hover::before{ width:70%; }
 .nav-links a.active::after{ box-shadow:0 0 10px rgba(var(--accent-rgb),.7); }
-#cart-btn{ position:relative; overflow:visible; }
-#cart-btn:hover{ transform:translateY(-2px); box-shadow:0 8px 18px -8px rgba(var(--accent-rgb),.45); }
-#cart-badge{ box-shadow:0 0 0 4px rgba(var(--accent-rgb),.25),0 2px 6px rgba(0,0,0,.3); animation:dzPop .35s cubic-bezier(.22,1.4,.36,1); }
-@keyframes dzPop{ from{ transform:scale(0); } to{ transform:scale(1); } }
 
 /* ---- buttons: flat, no shine sweep ---- */
 .btn{ position:relative; }
@@ -1827,9 +1676,6 @@ section{ position:relative; }
   box-shadow:0 26px 50px -18px rgba(0,0,0,.32),0 0 0 1px rgba(var(--accent-rgb),.14);
 }
 .prod-img,.pc-image{ position:relative; }
-.prod-add{ position:relative; }
-.prod-add:hover{ box-shadow:0 6px 16px -6px rgba(var(--accent-rgb),.6); }
-.qty-btn:hover{ transform:translateY(-1px); }
 
 .bs-row{ position:relative; overflow:hidden; }
 .bs-img img{ transition:transform .45s cubic-bezier(.22,.85,.32,1); }
@@ -1847,11 +1693,8 @@ section{ position:relative; }
 .form-input{ transition:border-color .3s ease, box-shadow .3s ease, background .3s ease; }
 .form-input:focus{ box-shadow:0 0 0 3px rgba(var(--accent-rgb),.16); }
 
-/* cart drawer + checkout modal: smoother easing */
-#cart-drawer{ transition:transform .45s cubic-bezier(.22,.85,.32,1); }
+/* checkout modal: smoother easing */
 #checkout-modal .checkout-box{ transition:transform .3s cubic-bezier(.22,.85,.32,1); }
-.cart-item{ transition:transform .3s ease, border-color .3s ease, box-shadow .3s ease; }
-.cart-item:hover{ transform:translateX(2px); border-color:rgba(var(--accent-rgb),.3); }
 
 /* footer polish */
 footer{ position:relative; }
@@ -1895,19 +1738,11 @@ footer::before{
 
 
 /* =========================================================
-   HOVER EFFECTS — cart / wishlist / product buttons
+   HOVER EFFECTS — wishlist / product buttons
    Fires only on :hover (mouse users), pure transform/opacity,
    so it's cheap and still fully neutralised by .low-perf /
    prefers-reduced-motion like everything else on the page.
    ========================================================= */
-@keyframes dzWiggle{
-  0%,100%{ transform:rotate(0); }
-  25%{ transform:rotate(-14deg); }
-  50%{ transform:rotate(10deg); }
-  75%{ transform:rotate(-6deg); }
-}
-#cart-btn:hover i.fa-bag-shopping{ animation:dzWiggle .5s ease; }
-
 @keyframes dzHeartBeat{
   0%,100%{ transform:scale(1); }
   25%{ transform:scale(1.25); }
@@ -1921,13 +1756,9 @@ footer::before{
 .prod-heart:hover{ transform:scale(1.12); }
 .prod-heart.active:hover i{ color:#EF4444; }
 
-.prod-add:hover{ transform:scale(1.15) rotate(90deg); }
-
 .pd-wish-btn:hover{ transform:translateY(-2px) scale(1.05); }
 
-.qty-btn:hover{ transform:scale(1.15); background:var(--accent); color:#fff; border-color:var(--accent); }
-
-.cart-close:hover,.pc-access-btn:hover{ transform:scale(1.1) rotate(-8deg); }
+.pc-access-btn:hover{ transform:scale(1.1) rotate(-8deg); }
 
 .product-card:hover .prod-img img{ transform:scale(1.06); }
 .prod-img img{ transition:transform .5s cubic-bezier(.22,.85,.32,1); }
@@ -2014,10 +1845,6 @@ footer::before{
     </div>
     <div id="topbar-search-results"></div>
   </div>
-  <button id="cart-btn" onclick="toggleCart()" aria-label="Open cart">
-    <i class="fa-solid fa-bag-shopping"></i>
-    <span id="cart-badge">0</span>
-  </button>
   <div id="topbar-socials"></div>
 </div>
 
@@ -2405,7 +2232,7 @@ footer::before{
 <!-- ===== AUTH MODAL ===== -->
 <div id="auth-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1200;backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:1rem">
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;width:100%;max-width:400px;position:relative">
-    <button onclick="closeLoginModal()" style="position:absolute;top:1rem;right:1rem;width:30px;height:30px;border-radius:50%;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-muted);cursor:pointer;font-size:.8rem"><i class="fa-solid fa-xmark"></i></button>
+    <button onclick="dismissLoginModal()" style="position:absolute;top:1rem;right:1rem;width:30px;height:30px;border-radius:50%;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-muted);cursor:pointer;font-size:.8rem"><i class="fa-solid fa-xmark"></i></button>
 
     <div id="am-checkout-note" style="display:none;align-items:center;gap:.6rem;background:rgba(var(--accent-rgb),.08);border:1px solid rgba(var(--accent-rgb),.2);border-radius:var(--radius-sm);padding:.65rem 1rem;font-size:.82rem;color:var(--accent);margin-bottom:1rem">
       <i class="fa-solid fa-box-archive" style="flex-shrink:0"></i>
@@ -2426,200 +2253,48 @@ footer::before{
       </button>
     </div>
 
-    <!-- ── New User: choose username + phone ── -->
-    <div id="am-google-step" style="display:none">
-      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.3rem;padding-bottom:1rem;border-bottom:1px solid var(--border)">
-        <div style="width:40px;height:40px;border-radius:50%;background:rgba(var(--accent-rgb),.1);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">👋</div>
-        <div>
-          <div style="font-family:'Fraunces',serif;font-size:.95rem;font-weight:700;color:var(--text)">Almost there!</div>
-          <div id="am-gs-email-display" style="font-size:.78rem;color:var(--text-muted)"></div>
-        </div>
-      </div>
-      <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:1.2rem;line-height:1.6">Choose a username and enter your phone number to complete your account.</p>
-      <div id="am-gs-error" style="display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:var(--radius-sm);padding:.65rem 1rem;font-size:.83rem;color:#EF4444;margin-bottom:1rem"></div>
-      <div style="margin-bottom:1rem">
-        <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-muted);margin-bottom:.35rem">Username</label>
-        <input class="form-input" id="am-gs-username" type="text" placeholder="Choose a username"/>
-      </div>
-      <div style="margin-bottom:1.4rem">
-        <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-muted);margin-bottom:.35rem">Phone Number</label>
-        <div style="display:flex;gap:.4rem;align-items:center">
-          <select id="am-gs-phone-prefix" style="padding:10px 8px;border-radius:var(--radius-sm);background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:.875rem;outline:none;cursor:pointer;flex-shrink:0;font-weight:700;transition:border-color var(--transition)">
-            <option value="07">07</option>
-            <option value="06">06</option>
-            <option value="05">05</option>
-          </select>
-          <div style="position:relative;flex:1">
-            <input class="form-input" id="am-gs-phone" type="tel" placeholder="XXXXXXXX" maxlength="8" oninput="gsValidatePhone(this)" style="padding-right:2.2rem;letter-spacing:.04em"/>
-            <span id="am-gs-phone-icon" style="position:absolute;right:.7rem;top:50%;transform:translateY(-50%);font-size:.85rem;pointer-events:none"></span>
-          </div>
-        </div>
-        <span id="am-gs-phone-hint" style="font-size:.73rem;margin-top:.3rem;display:block;color:var(--text-muted)">Enter 8 digits after the prefix</span>
-      </div>
-      <button onclick="doCompleteGoogleSignup()" id="am-gs-submit-btn" style="width:100%;padding:12px;border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-weight:700;font-size:.9rem;transition:all var(--transition)"><i class="fa-solid fa-user-plus"></i> Complete Sign Up</button>
-    </div>
 
     </div>
   </div>
 </div>
 
 
-<!-- ===== CART DRAWER ===== -->
-<div id="cart-overlay" onclick="toggleCart()"></div>
-<div id="cart-drawer">
-  <div class="cart-hdr">
-    <h3><i class="fa-solid fa-bag-shopping"></i> Your Cart</h3>
-    <button class="cart-close" onclick="toggleCart()" aria-label="Close cart"><i class="fa-solid fa-xmark"></i></button>
-  </div>
-  <div class="cart-body" id="cart-body"></div>
-  <div class="cart-foot" id="cart-foot" style="display:none">
-    <div class="cart-total-row">
-      <span class="cart-total-lbl">Total</span>
-      <span class="cart-total-val" id="cart-total-val">0 DA</span>
-    </div>
-    <button class="btn-checkout" onclick="openCheckout()"><i class="fa-solid fa-lock"></i> Checkout</button>
-  </div>
-</div>
-
-<!-- ===== CHECKOUT MODAL ===== -->
-<div id="checkout-modal">
+<!-- ===== CHECKOUT MODAL =====
+     Opened straight from "Buy Now" / "Unlock Pack" / "Enroll Now". One
+     product, one payment method, no form — name and email come from the
+     signed-in account. -->
+<div id="checkout-modal" onclick="if(event.target===this)closeCheckout()">
   <div class="checkout-box">
     <div class="checkout-box-inner">
+      <h3 class="co-title"><i class="fa-solid fa-lock"></i> Checkout</h3>
 
-    <!-- STEP 0: Use account info? (hidden — skipped automatically) -->
-    <div id="co-step-account" style="display:none">
-      <h3 class="co-title"><i class="fa-solid fa-lock"></i> Complete Order</h3>
-      <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1.6rem;text-align:center">Would you like to use your account information for this order?</p>
-      <div style="display:flex;flex-direction:column;gap:.75rem">
-        <button type="button" class="co-pay-method-btn" onclick="coChooseAccount(true)">
-          <div class="co-pay-icon" style="background:rgba(var(--accent-rgb),.12);color:var(--accent)"><i class="fa-solid fa-user-check"></i></div>
-          <div class="co-pay-info"><strong>Yes, use my account info</strong><span>Auto-fill name, email &amp; phone</span></div>
-          <i class="fa-solid fa-chevron-right co-pay-arrow"></i>
-        </button>
-        <button type="button" class="co-pay-method-btn" onclick="coChooseAccount(false)">
-          <div class="co-pay-icon" style="background:rgba(255,255,255,.06);color:var(--text-muted)"><i class="fa-solid fa-pen-to-square"></i></div>
-          <div class="co-pay-info"><strong>No, enter manually</strong><span>Fill in your details by hand</span></div>
-          <i class="fa-solid fa-chevron-right co-pay-arrow"></i>
-        </button>
+      <div class="co-item">
+        <div class="co-item-img"><img id="co-item-img" alt=""/></div>
+        <div class="co-item-info">
+          <div class="co-item-name" id="co-item-name"></div>
+          <div class="co-item-variant" id="co-item-variant" style="display:none"></div>
+        </div>
       </div>
-      <div style="display:flex;gap:.7rem;margin-top:1.2rem">
+
+      <div class="co-total">
+        <span class="co-total-lbl">Total</span>
+        <span class="co-total-val" id="co-total">—</span>
+      </div>
+
+      <div class="co-method">
+        <span class="co-method-icon">💳</span>
+        <div>
+          <strong>CIB / EDAHABIA</strong>
+          <small>Secure online payment</small>
+        </div>
+      </div>
+
+      <div class="co-account">Signed in as <strong id="co-account-email"></strong></div>
+
+      <div class="co-actions">
         <button type="button" class="btn btn-outline" onclick="closeCheckout()" style="flex:1">Cancel</button>
+        <button type="button" class="btn btn-primary" id="co-pay-btn" onclick="coPay()" style="flex:2"><i class="fa-solid fa-credit-card"></i> Pay now</button>
       </div>
-    </div>
-
-    <!-- STEP 1: Customer info form -->
-    <div id="co-form-wrap" style="display:none">
-      <h3 class="co-title"><i class="fa-solid fa-lock"></i> Complete Order</h3>
-
-      <div class="form-group" id="co-name-group">
-        <label>Full Name</label>
-        <input class="form-input" id="co-name" type="text" required placeholder="Your name"/>
-      </div>
-
-      <div class="form-group" id="co-email-group">
-        <label>Email</label>
-        <input class="form-input" id="co-email" type="email" placeholder="your@email.com" required/>
-      </div>
-
-      <!-- Phone field — same design as signup -->
-      <div class="form-group">
-        <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-muted);margin-bottom:.35rem">Phone Number</label>
-        <div class="co-phone-wrap">
-          <select id="co-phone-prefix" class="co-phone-prefix">
-            <option value="07">07</option>
-            <option value="06">06</option>
-            <option value="05">05</option>
-          </select>
-          <div class="co-phone-digits-wrap">
-            <input class="form-input" id="co-phone" type="tel" placeholder="XXXXXXXX" maxlength="8" oninput="coValidatePhone(this)" style="padding-right:2.2rem;letter-spacing:.04em"/>
-            <span id="co-phone-icon" style="position:absolute;right:.7rem;top:50%;transform:translateY(-50%);font-size:.85rem;pointer-events:none"></span>
-          </div>
-        </div>
-        <span id="co-phone-hint" style="font-size:.73rem;margin-top:.3rem;display:none;color:var(--text-muted)"></span>
-      </div>
-
-      <!-- Payment Method Selection -->
-      <div class="form-group">
-        <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-muted);margin-bottom:.45rem">Payment Method</label>
-        <div style="display:grid;grid-template-columns:1fr;gap:.6rem" id="co-pay-method-wrap">
-          <label class="co-method-card" id="co-method-cib">
-            <input type="radio" name="co-payment" value="cib" checked onchange="coShowPaymentInstructions('cib')" style="display:none"/>
-            <div class="co-method-icon">💳</div>
-            <div class="co-method-name">CIB / EDAHABIA</div>
-          </label>
-          <label class="co-method-card" id="co-method-eddahabia" style="display:none">
-            <input type="radio" name="co-payment" value="eddahabia" onchange="coShowPaymentInstructions('eddahabia')" style="display:none"/>
-            <div class="co-method-icon">🏧</div>
-            <div class="co-method-name">EDDAHABIA</div>
-          </label>
-
-          <!-- Test/dev-only "pay nothing" method — only ever shown when
-               window.DIGISTORE_TEST_MODE is true (see backend URL config
-               near the bottom of this file). Hidden by default so real
-               customers never see it. Lets you test everything AFTER the
-               payment step (delivery, My Learning, cart clearing) without
-               touching SlickPay or spending real money. -->
-          <label class="co-method-card" id="co-method-test" style="display:none">
-            <input type="radio" name="co-payment" value="test" onchange="coShowPaymentInstructions('test')" style="display:none"/>
-            <div class="co-method-icon">🧪</div>
-            <div class="co-method-name">Test Payment (no charge)</div>
-          </label>
-
-        </div>
-      </div>
-
-      <!-- Premium payment instruction card -->
-      <div id="co-payment-instructions" style="display:none" class="co-pay-instr-card">
-        <div class="co-pay-instr-header">
-          <span class="co-pay-instr-header-icon" id="co-instr-icon">📱</span>
-          <span class="co-pay-instr-header-title" id="co-instr-title">Payment Instructions</span>
-        </div>
-        <div class="co-pay-instr-body">
-          <p id="co-instr-text" class="co-pay-instr-text"></p>
-          <div id="co-copy-numbers" class="co-copy-numbers"></div>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label>Notes <span style="font-size:.74rem;color:var(--text-muted)">(optional)</span></label>
-        <textarea class="form-input" id="co-notes" rows="2" placeholder="Special requests..."></textarea>
-      </div>
-
-      <div style="display:flex;gap:.7rem;margin-top:1rem">
-        <button type="button" class="btn btn-outline" onclick="closeCheckout()" style="flex:1"><i class="fa-solid fa-xmark"></i> Cancel</button>
-        <button type="button" class="btn btn-primary" id="co-submit-btn" onclick="coHandleNextStep()" style="flex:2"><i class="fa-solid fa-arrow-right"></i> Next</button>
-      </div>
-
-    </div>
-
-    <!-- Proof of payment upload step -->
-    <div id="co-payment-step" style="display:none">
-      <h3 class="co-title"><i class="fa-solid fa-camera"></i> Upload Payment Proof</h3>
-      <p style="font-size:.83rem;color:var(--text-muted);margin-bottom:1.1rem;text-align:center">Send your payment, then upload screenshot(s) as proof. The admin will verify and unlock your content.</p>
-      <div id="co-proof-zone" style="border:2px dashed var(--border-strong);border-radius:var(--radius);padding:1.4rem;text-align:center;cursor:pointer;transition:border-color .18s;position:relative;margin-bottom:.9rem" onclick="document.getElementById('co-proof-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor=''" ondrop="coHandleProofDrop(event)">
-        <input type="file" id="co-proof-input" accept="image/*" multiple style="display:none" onchange="coHandleProofFiles(this.files)"/>
-        <i class="fa-solid fa-images" style="font-size:1.8rem;color:var(--text-muted);margin-bottom:.5rem;display:block"></i>
-        <div style="font-size:.88rem;color:var(--text-muted)"><strong style="color:var(--accent)">Click to upload</strong> or drag &amp; drop</div>
-        <div style="font-size:.72rem;color:var(--text-muted);margin-top:.2rem">JPG, PNG, WEBP — multiple screenshots allowed</div>
-      </div>
-      <div id="co-proof-previews" style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.9rem"></div>
-      <div style="display:flex;gap:.6rem">
-        <button type="button" class="btn btn-outline" style="flex:1" onclick="coBackToInfoStep()"><i class="fa-solid fa-arrow-left"></i> Back</button>
-        <button type="button" class="btn btn-primary" style="flex:2" id="co-proof-submit-btn" onclick="placeOrderWithProof()"><i class="fa-solid fa-paper-plane"></i> Submit Order</button>
-      </div>
-    </div>
-
-    <div class="co-success" id="co-success">
-      <div style="font-size:2.4rem;margin-bottom:.6rem">🎉</div>
-      <i class="fa-solid fa-circle-check" style="color:var(--accent);font-size:2rem;display:block;margin-bottom:.7rem"></i>
-      <h3>Order Placed!</h3>
-      <p>Your purchase has been saved.<br/>Check <strong>My Library</strong> for your access link once delivered.</p>
-      <div style="display:flex;gap:.6rem;justify-content:center;margin-top:1.4rem;flex-wrap:wrap">
-        <button class="btn btn-primary" id="co-success-myprods-btn"><i class="fa-solid fa-box-archive"></i> My Library</button>
-        <button class="btn btn-outline" id="co-success-continue-btn">Continue Shopping</button>
-      </div>
-    </div>
-
     </div><!-- /checkout-box-inner -->
   </div>
 </div>
@@ -2821,7 +2496,7 @@ footer::before{
       <button class="btn btn-primary" onclick="closeCoOwnedModal();openMyProducts();closeCheckout()">
         <i class="fa-solid fa-box-archive"></i> My Library
       </button>
-      <button class="btn btn-outline" onclick="closeCoOwnedModal()">OK</button>
+      <button class="btn btn-outline" onclick="closeCoOwnedModal();closeCheckout()">OK</button>
     </div>
   </div>
 </div>
@@ -2879,11 +2554,10 @@ if (_pendingProductOpen) {
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   initUserAuth();
-  updateCartBadge();
   updateWishlistBadge();
   initScrollSpy();
   Presence.start();
-  CartLive.start();
+  CheckoutLive.start();
   // Apply store branding (logo, store name, brand colors) from Settings —
   // once immediately with whatever's cached in localStorage/defaults, and
   // again every time Settings.load() resolves fresh data from Supabase
@@ -2917,7 +2591,6 @@ document.addEventListener('DOMContentLoaded', () => {
     else if (p === 'products') { openAllProducts(); }
     else if (p === 'my-products') { openMyProducts(); }
   })();
-  window.addEventListener('cart:update', () => { updateCartBadge(); _coRefreshOrderSummary(); });
   // db:update fires when catalog data arrives — renders happen here.
   window.addEventListener('db:update', handleDbUpdate);
   // supabase.js runs as a deferred <script> earlier in this page and, as
@@ -2937,21 +2610,12 @@ document.addEventListener('DOMContentLoaded', () => {
 function handleDbUpdate() {
     // Clean up stale references to products that were deleted by the
     // seller (or whose whole content type was switched off): drop them
-    // from anyone's cart and wishlist so people can no longer buy a
-    // removed/hidden product, and the wishlist badge count stays
-    // accurate. Guarded on validIds.size so this never wipes carts before
-    // the product list has actually loaded.
+    // from anyone's wishlist so the wishlist badge count stays accurate.
+    // Guarded on validIds.size so this never wipes anything before the
+    // product list has actually loaded.
     const allProducts = visibleProducts();
     const validIds = new Set(allProducts.map(p => p.id));
     if (validIds.size) {
-      const removedFromCart = Cart.prune(validIds);
-      if (removedFromCart > 0) {
-        showToast(`${removedFromCart} item${removedFromCart > 1 ? 's' : ''} removed from your cart — no longer available`);
-      }
-      // Keep any cached cart-line prices in sync with the live catalog —
-      // otherwise a price edited in admin after the item was already in
-      // someone's cart keeps showing/charging the stale amount.
-      Cart.syncPrices(allProducts);
       Wishlist.prune(validIds);
     }
     renderProducts();
@@ -3106,17 +2770,13 @@ function makeProductCard(prod) {
           <span class="prod-price">${formatPrice(prod.price, s.currency)}</span>
           ${(prod.oldPrice && prod.oldPrice > prod.price) ? `<span class="prod-old">${prod.oldPrice.toLocaleString()} ${s.currency}</span>` : ''}
         </div>
-        <button class="prod-add" title="Add to cart"><i class="fa-solid fa-plus"></i></button>
       </div>
     </div>`;
-  d.querySelector('.prod-add').onclick = e => { e.stopPropagation(); if ((Number(prod.price)||0) <= 0) claimFreeProduct(prod); else addToCart(prod); };
   d.onclick = () => { trackRecentlyViewed(prod); openProductDetail(prod.id, false); };
   return d;
 }
 
-function addToCart(prod) { Cart.add(prod); Analytics.logCart(prod.id, prod.name); showToast(`"${prod.name}" added to cart`); }
-
-// ── FREE products (price === 0) — no cart, no payment ──────────────
+// ── FREE products (price === 0) — no payment ──────────────
 // Delivers the product straight to My Library for a signed-in user.
 // If auto-delivery (a link/PDF) is configured on the product, the
 // purchase is created already completed; otherwise it's queued as
@@ -3423,7 +3083,7 @@ function openProductDetail(id, fromAllPage = true) {
     updatePdActionButtons();
   }
 
-  // Free products (price <= 0) skip cart/payment entirely — only action
+  // Free products (price <= 0) skip payment entirely — only action
   // is claiming it straight into "My Library". Re-run whenever the
   // selected variant changes price, in case a variant makes it free (or not).
   function updatePdActionButtons() {
@@ -3479,10 +3139,8 @@ function openProductDetail(id, fromAllPage = true) {
 
   window.onVariantChange = function() {}; // no-op, replaced by per-group listeners
 
-  document.getElementById('pd-buy-btn').onclick = () => {
-    if ((Number(activeProd.price)||0) <= 0) { claimFreeProduct(activeProd); return; }
-    addToCart(activeProd); closeProductDetail(); toggleCart();
-  };
+  // Buy Now / Unlock Pack / Enroll Now → straight to checkout for this product.
+  document.getElementById('pd-buy-btn').onclick = () => buyNow(activeProd);
   document.getElementById('pd-free-btn').onclick = () => claimFreeProduct(activeProd);
   updatePdActionButtons(); // set correct buttons immediately, even with no variants
   const wBtn = document.getElementById('pd-wish-btn');
@@ -3786,430 +3444,109 @@ function showMain() {
   closeAccount();
 }
 
-// ===== CART =====
-function toggleCart() {
-  const ov = document.getElementById('cart-overlay');
-  const dr = document.getElementById('cart-drawer');
-  ov.classList.toggle('open'); dr.classList.toggle('open');
-  if (dr.classList.contains('open')) { renderCartItems(); document.body.classList.add('no-scroll'); }
-  else document.body.classList.remove('no-scroll');
-}
-
-function renderCartItems() {
-  const allProducts = visibleProducts();
-  const validIds = new Set(allProducts.map(p => p.id));
-  if (validIds.size) Cart.prune(validIds); // drop items for products the seller has since removed or hidden
-  if (validIds.size) Cart.syncPrices(allProducts); // never show a cached/stale price
-  const items = Cart.get(); const s = Settings.get();
-  const body = document.getElementById('cart-body');
-  const foot = document.getElementById('cart-foot');
-  if (!items.length) {
-    body.innerHTML = `<div class="cart-empty"><i class="fa-solid fa-bag-shopping"></i><p>Your cart is empty</p><button class="btn btn-primary" style="margin-top:.5rem" onclick="toggleCart();document.getElementById('products').scrollIntoView({behavior:'smooth'})">Browse Products</button></div>`;
-    foot.style.display = 'none'; return;
-  }
-  foot.style.display = 'block'; body.innerHTML = '';
-  items.forEach(item => {
-    const d = document.createElement('div'); d.className = 'cart-item';
-    const img = item.img || generatePlaceholder(item.name, 60, 60);
-    d.innerHTML = `
-      <div class="cart-item-img"><img src="${img}" alt="" loading="lazy" decoding="async"/></div>
-      <div class="cart-item-info">
-        <div class="cart-item-name">${item.name}</div>
-        <div class="cart-item-price">${(() => { const lt = item.price*item.qty; return lt > 0 ? lt.toLocaleString()+' '+(s.currency||'DA') : 'FREE'; })()}</div>
-        <div class="cart-item-row">
-          <button class="cart-del" onclick="removeItem('${item.id}')"><i class="fa-solid fa-trash"></i></button>
-        </div>
-      </div>`;
-    body.appendChild(d);
-  });
-  document.getElementById('cart-total-val').textContent = Cart.total().toLocaleString() + ' ' + s.currency;
-}
-
-function removeItem(id) { Cart.remove(id); renderCartItems(); }
-function updateCartBadge() { const c=Cart.count(); const b=document.getElementById('cart-badge'); b.textContent=c; b.style.display=c?'flex':'none'; }
-
 // ===== CHECKOUT =====
-let _coProofFiles = []; // proof screenshots (File objects or data URLs)
-let _coUseAccount = false;
+// There is no cart. "Buy Now" / "Unlock Pack" / "Enroll Now" calls buyNow(),
+// which opens the checkout window directly for that ONE product. One payment
+// method (CIB / EDAHABIA through SlickPay/SATIM) and no form: the name and
+// email come from the signed-in account, and the customer is sent straight to
+// the bank's payment page. The outcome is shown by payment-return.html.
+let _coLockedScroll = false;
+
+// Entry point for every buy button. Free products skip payment entirely.
+function buyNow(prod) {
+  if (!prod) return;
+  if ((Number(prod.price) || 0) <= 0) { claimFreeProduct(prod); return; }
+  BuyNow.set(prod);
+  Analytics.logCheckoutStart(prod.id, prod.name);
+  openCheckout();
+}
 
 function openCheckout() {
+  if (!BuyNow.get()) return;
   const user = UserAuth.current();
-  if (!user) { openLoginModal('checkout'); return; }
-  const allProducts = visibleProducts();
-  const validIds = new Set(allProducts.map(p => p.id));
-  if (validIds.size) Cart.prune(validIds); // never let someone check out a product that was removed or hidden
-  if (validIds.size) Cart.syncPrices(allProducts); // never charge a cached/stale price
-  const cartItems = Cart.get();
-  if (cartItems.length && Cart.total() <= 0) {
-    // Entire cart is free (e.g. free items added before this update) —
-    // claim everything directly, no payment step needed.
-    claimFreeCart(cartItems);
+  if (!user) { openLoginModal('checkout'); return; } // resumes after sign-in (see google-redirect-result)
+
+  // Never show — or charge — a stale price, or a product the seller has
+  // since removed or hidden.
+  if (!BuyNow.syncWithCatalog(visibleProducts())) {
+    BuyNow.clear();
+    showToast('This product is no longer available.');
     return;
   }
+  const item = BuyNow.get();
+  if (BuyNow.total() <= 0) {
+    // Price dropped to free since the page loaded — no payment needed.
+    const free = { id: item.productId, name: item.name, price: 0, variantLabel: item.variantLabel };
+    BuyNow.clear();
+    claimFreeProduct(free);
+    return;
+  }
+
+  const s = Settings.get();
+  document.getElementById('co-item-img').src = item.img || generatePlaceholder(item.name, 112, 112);
+  document.getElementById('co-item-name').textContent =
+    item.variantLabel ? item.name.replace(' — ' + item.variantLabel, '') : item.name;
+  const variantEl = document.getElementById('co-item-variant');
+  variantEl.textContent = item.variantLabel ? 'Option: ' + item.variantLabel : '';
+  variantEl.style.display = item.variantLabel ? '' : 'none';
+  document.getElementById('co-total').textContent = formatPrice(BuyNow.total(), s.currency);
+  document.getElementById('co-account-email').textContent = user.email || '';
+  coResetPayButton();
+
   document.getElementById('checkout-modal').classList.add('open');
-  // Reveal the dev-only "Test Payment" method card, if enabled.
-  const testCard = document.getElementById('co-method-test');
-  if (testCard) testCard.style.display = window.DIGISTORE_TEST_MODE ? '' : 'none';
-  // Skip step 0 — go straight to form, auto-fill from account if available
-  coChooseAccount(!!user);
-}
+  if (!document.body.classList.contains('no-scroll')) { document.body.classList.add('no-scroll'); _coLockedScroll = true; }
 
-async function claimFreeCart(cartItems) {
-  const items = cartItems || Cart.get();
-  for (const item of items) {
-    await claimFreeProduct({
-      id: item.productId || item.id,
-      name: item.name,
-      price: 0,
-      variantLabel: item.variantLabel || null,
-    });
-  }
-  Cart.clear();
-  toggleCart();
-}
-
-function _showCoStep(step) {
-  // step: 'account' | 'form' | 'proof' | 'success'
-  document.getElementById('co-step-account').style.display  = step === 'account'  ? '' : 'none';
-  document.getElementById('co-form-wrap').style.display     = step === 'form'     ? '' : 'none';
-  document.getElementById('co-payment-step').style.display  = step === 'proof'    ? '' : 'none';
-  document.getElementById('co-success').style.display       = step === 'success'  ? 'block' : 'none';
-
-  if (step === 'success') {
-    // Wire up buttons here so they always work regardless of DOM state
-    const myProdsBtn = document.getElementById('co-success-myprods-btn');
-    const continueBtn = document.getElementById('co-success-continue-btn');
-    // Safety net: whichever flow got us here (proof order or SlickPay
-    // return) already empties the cart, but make sure the cart drawer is
-    // fully closed and cleared before moving on — it shouldn't still be
-    // sitting open with old items in it.
-    const closeCartDrawer = () => {
-      const cartOverlay = document.getElementById('cart-overlay');
-      const cartDrawer = document.getElementById('cart-drawer');
-      if (cartDrawer) cartDrawer.classList.remove('open');
-      if (cartOverlay) cartOverlay.classList.remove('open');
-      document.body.classList.remove('no-scroll');
-      Cart.clear();
-    };
-    if (myProdsBtn) myProdsBtn.onclick = () => { _doCloseCheckout(); closeCartDrawer(); openMyProducts(); };
-    if (continueBtn) continueBtn.onclick = () => { _doCloseCheckout(); closeCartDrawer(); };
-  }
-}
-
-function coChooseAccount(useAccount) {
-  _coUseAccount = useAccount;
-  const user = UserAuth.current();
-  if (useAccount && user) {
-    // Pre-fill from account
-    const nameEl = document.getElementById('co-name');
-    const emailEl = document.getElementById('co-email');
-    const phoneEl = document.getElementById('co-phone');
-    if (nameEl)  nameEl.value  = user.name  || '';
-    if (emailEl) emailEl.value = user.email || '';
-    // Phone stored as "07XXXXXXXX" — split into prefix dropdown + 8-digit input
-    if (user.phone && user.phone.length >= 10) {
-      const pfx    = user.phone.slice(0, 2); // e.g. "07"
-      const digits = user.phone.slice(2);     // e.g. "12345678"
-      const prefixSel = document.getElementById('co-phone-prefix');
-      if (prefixSel && ['05','06','07'].includes(pfx)) prefixSel.value = pfx;
-      if (phoneEl) {
-        phoneEl.value = digits;
-        coValidatePhone(phoneEl);
-      }
-    } else if (phoneEl && user.phone) {
-      phoneEl.value = user.phone;
-    }
-    // Show email field
-    document.getElementById('co-email-group').style.display = '';
-  } else {
-    // Manual mode — hide email (optional)
-    const emailEl = document.getElementById('co-email');
-    if (emailEl) emailEl.value = '';
-  }
-  // Load payment instructions from settings
-  coLoadPaymentInstructions();
-  coShowPaymentInstructions('cib');
-  _showCoStep('form');
-  _coRefreshOrderSummary();
-}
-
-function coBackToInfoStep() {
-  _showCoStep('form');
-}
-
-function coLoadPaymentInstructions() {
-  const s = Settings.get();
-  // Will be used when a payment method is selected
-}
-
-function coShowPaymentInstructions(method) {
-  const s = Settings.get();
-  const instrEl = document.getElementById('co-payment-instructions');
-  const textEl  = document.getElementById('co-instr-text');
-  const titleEl = document.getElementById('co-instr-title');
-  const copyEl  = document.getElementById('co-copy-numbers');
-
-  // Mark selected card
-  document.querySelectorAll('.co-method-card').forEach(c => c.classList.remove('selected'));
-  const card = document.getElementById('co-method-' + method);
-  if (card) card.classList.add('selected');
-
-  // Keep the actual radio input in sync with the visual selection — closing
-  // checkout unchecks all radios (_doCloseCheckout), but the card still
-  // *looked* selected on reopen, so the form thought no method was chosen
-  // and asked the user to pick one even though only CIB is ever shown.
-  const radio = document.querySelector(`input[name="co-payment"][value="${method}"]`);
-  if (radio) radio.checked = true;
-
-  // Update Next button label
-  const nextBtn = document.getElementById('co-submit-btn');
-  if (nextBtn) {
-    if (method === 'cib') {
-      nextBtn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Pay with Card →';
-    } else if (method === 'test') {
-      nextBtn.innerHTML = '<i class="fa-solid fa-flask"></i> Complete Test Order →';
-    } else {
-      nextBtn.innerHTML = '<i class="fa-solid fa-arrow-right"></i> Next: Payment Proof';
-    }
-  }
-
-  // CIB online payment — no instruction card needed. The gateway fee is
-  // computed and applied server-side only (see worker.js) — never shown
-  // or added to the total on this screen.
-  if (method === 'cib') {
-    if (instrEl) instrEl.style.display = 'none';
-    _coRefreshOrderSummary(0, 0);
-    return;
-  }
-
-  // Test payment — same as CIB, no instruction card, no fee.
-  if (method === 'test') {
-    if (instrEl) instrEl.style.display = 'none';
-    _coRefreshOrderSummary(0, 0);
-    return;
-  }
-
-  // EDDAHABIA manual transfer — single fixed account/card number, no fees
-  const eddahabiaNumbers = [
-    s.eddahabiaNumber || '00799999004421651019'
-  ].filter(Boolean);
-
-  const defaultEddahabiaText = `يرجى تحويل المبلغ المطلوب عبر بطاقة EDDAHABIA إلى الرقم التالي:\n\nبعد إتمام التحويل، قم برفع صورة أو لقطة شاشة تثبت عملية الدفع حتى يتم التحقق من طلبك ومعالجته بسرعة.`;
-
-  const text = (s.eddahabiaInstructions || defaultEddahabiaText);
-
-  titleEl.textContent = '🏧 تعليمات الدفع عبر EDDAHABIA';
-  textEl.textContent  = text;
-
-  // No fees for EDDAHABIA manual transfer
-  _coRefreshOrderSummary(0, 0);
-
-  // Build copy-number rows
-  const numbers = eddahabiaNumbers;
-  if (copyEl) {
-    copyEl.innerHTML = '';
-    numbers.forEach((num, i) => {
-      const row = document.createElement('div');
-      row.className = 'co-copy-row';
-      const numSpan = document.createElement('span');
-      numSpan.className = 'co-copy-number';
-      numSpan.textContent = num;
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'co-copy-btn';
-      btn.innerHTML = '<i class="fa-regular fa-copy"></i> نسخ';
-      btn.onclick = function() {
-        navigator.clipboard.writeText(num).then(() => {
-          btn.innerHTML = '<i class="fa-solid fa-check"></i> تم النسخ';
-          btn.classList.add('copied');
-          showToast('✓ تم نسخ الرقم');
-          setTimeout(() => { btn.innerHTML = '<i class="fa-regular fa-copy"></i> نسخ'; btn.classList.remove('copied'); }, 2200);
-        }).catch(() => showToast('Copy failed'));
-      };
-      row.appendChild(numSpan);
-      row.appendChild(btn);
-      copyEl.appendChild(row);
-    });
-  }
-
-  instrEl.style.display = '';
-  // Scroll the instructions into view inside the checkout box's own scroll container.
-  // We wait two animation frames so the order-summary re-render above has finished
-  // resizing the layout first — otherwise the scroll position is calculated against
-  // a stale height and the card can end up just out of view.
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      const scrollBox = instrEl.closest('.checkout-box-inner') || instrEl.parentElement;
-      if (scrollBox) {
-        const boxRect = scrollBox.getBoundingClientRect();
-        const elRect = instrEl.getBoundingClientRect();
-        const offset = (elRect.top - boxRect.top) - 16; // small top padding
-        scrollBox.scrollBy({ top: offset, behavior: 'smooth' });
-      } else {
-        instrEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
-    });
+  // If they already own this, say so right away rather than after they click Pay.
+  coIsAlreadyOwned(user.id, item).then(owned => {
+    if (owned && BuyNow.get() === item) coShowAlreadyOwnedError(item);
   });
 }
 
-// ── Build order summary HTML ───────────────────────────────────
-function buildOrderSummaryHTML(surchargeRate, surchargeFlat) {
-  const items = Cart.get();
-  const s = Settings.get();
-  if (!items.length) return '';
-  const rate = surchargeRate != null ? surchargeRate : (_coSurchargeRate || 0);
-  const flat = surchargeFlat != null ? surchargeFlat : (_coSurchargeFlat || 0);
-  let rows = items.map((item, idx) => {
-    const variant = item.variantLabel ? `<div style="font-size:.74rem;color:var(--text-muted);margin-top:.1rem">Variant: ${item.variantLabel}</div>` : '';
-    // Use data-cartid attribute — avoids any quote/injection issues with the id string
-    return `<div style="display:flex;align-items:center;gap:.6rem;padding:.55rem 0;border-bottom:1px solid var(--border)">
-      <div style="flex:1;min-width:0">
-        <div style="font-size:.86rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.name}</div>
-        ${variant}
-      </div>
-      <div style="font-family:'Fraunces',serif;font-size:.9rem;font-weight:700;color:var(--accent);white-space:nowrap;flex-shrink:0;margin-right:.35rem">${((item.price)*(item.qty||1)).toLocaleString()} ${s.currency||'DA'}</div>
-      <button type="button" class="co-summary-remove" data-cartid="${idx}" title="Remove item"
-        style="width:26px;height:26px;border-radius:6px;border:1px solid rgba(239,68,68,.25);background:rgba(239,68,68,.07);color:#EF4444;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:.7rem;transition:all .15s ease"
-        onmouseover="this.style.background='rgba(239,68,68,.18)'" onmouseout="this.style.background='rgba(239,68,68,.07)'">
-        <i class="fa-solid fa-trash-can"></i>
-      </button>
-    </div>`;
-  }).join('');
-  const baseTotal = Cart.total();
-  // The SlickPay gateway fee is intentionally NOT added to the total shown
-  // here — the order summary always mirrors the admin-panel price. The fee
-  // is only ever shown to the customer on SlickPay's own payment page,
-  // where it's added to the actual charge server-side (see
-  // coInitiateSlickPayCheckout / worker.js), independent of this display.
-  const finalTotal = baseTotal;
-  const feeRow = '';
-  return `<div style="border-radius:var(--radius-sm);background:var(--bg3);border:1px solid var(--border);padding:.85rem 1rem;margin-bottom:1rem">
-    <div style="font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-muted);margin-bottom:.5rem"><i class="fa-solid fa-receipt" style="color:var(--accent)"></i> Order Summary</div>
-    ${rows}
-    ${feeRow}
-    <div style="display:flex;justify-content:space-between;align-items:center;padding-top:.55rem;margin-top:.1rem;">
-      <span style="font-size:.88rem;font-weight:700;color:var(--text)">Total</span>
-      <span style="font-family:'Fraunces',serif;font-size:1.1rem;font-weight:800;color:var(--accent)">${finalTotal.toLocaleString()} ${s.currency||'DA'}</span>
-    </div>
-  </div>`;
+// Hides the window but keeps the selected product (used when sign-in is needed).
+function _coHide() {
+  document.getElementById('checkout-modal').classList.remove('open');
+  if (_coLockedScroll) { document.body.classList.remove('no-scroll'); _coLockedScroll = false; }
+  closeCoOwnedModal();
+  closeCoAlertModal();
 }
 
-// Inject/refresh order summary into co-form-wrap
-let _coSurchargeRate = 0; // 0 = none (EDDAHABIA and CIB both have no surcharge)
-let _coSurchargeFlat = 0; // 0 = none (flat DA fee — used for the SlickPay/CIB gateway fee)
-
-function _coRefreshOrderSummary(surchargeRate, surchargeFlat) {
-  // Previously, the fee only got (re)computed when explicitly passed in by
-  // coShowPaymentInstructions() — every other call site (cart updates,
-  // reopening the form, resuming checkout after login) just trusted
-  // whatever was last remembered in these module vars. Any gap between
-  // those calls could leave a stale/zeroed fee showing. To make this
-  // bulletproof, whenever no explicit override is passed, we now derive
-  // the fee straight from whichever payment method radio is actually
-  // checked on the page right now — so the total on screen can never
-  // drift from what's really selected.
-  if (surchargeRate !== undefined) {
-    _coSurchargeRate = surchargeRate;
-  } else {
-    _coSurchargeRate = 0; // neither method uses a percentage fee
-    _coSurchargeFlat = 0; // neither method uses a flat fee — gateway fee is server-side only
-  }
-  if (surchargeFlat !== undefined) _coSurchargeFlat = surchargeFlat;
-  const wrap = document.getElementById('co-form-wrap');
-  if (!wrap) return;
-  const old = document.getElementById('co-order-summary-block');
-  if (old) old.remove();
-  const html = buildOrderSummaryHTML(_coSurchargeRate, _coSurchargeFlat);
-  if (!html) return;
-  const block = document.createElement('div');
-  block.id = 'co-order-summary-block';
-  block.innerHTML = html;
-  // Insert before the notes group (last form-group before buttons)
-  const notesGroup = wrap.querySelector('#co-notes')?.closest('.form-group');
-  if (notesGroup) {
-    wrap.insertBefore(block, notesGroup);
-  } else {
-    const btnRow = wrap.querySelector('[style*="display:flex;gap:.7rem;margin-top:1rem"]');
-    if (btnRow) wrap.insertBefore(block, btnRow);
-    else wrap.appendChild(block);
-  }
-  // Attach remove handlers using the index to look up the actual cart id
-  block.querySelectorAll('.co-summary-remove').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const idx = parseInt(this.dataset.cartid);
-      const items = Cart.get();
-      if (isNaN(idx) || idx >= items.length) return;
-      const cartId = items[idx].id; // the real cart key (may include variant suffix)
-      Cart.remove(cartId);
-      updateCartBadge();
-      if (!Cart.get().length) { closeCheckout(); return; }
-      _coRefreshOrderSummary();
-    });
-  });
+function closeCheckout() {
+  _coHide();
+  BuyNow.clear();
 }
 
-function coValidatePhone(input) {
-  // Only allow digits, max 8 (prefix is separate)
-  input.value = input.value.replace(/\D/g, '').slice(0, 8);
-  const val  = input.value;
-  const hint = document.getElementById('co-phone-hint');
-  const icon = document.getElementById('co-phone-icon');
-
-  if (!val) {
-    hint.style.display = 'none';
-    input.style.borderColor = '';
-    icon.textContent = '';
-    return;
-  }
-  if (val.length === 8) {
-    hint.style.display = 'none';
-    input.style.borderColor = 'rgba(52,84,209,.6)';
-    icon.textContent = '✓'; icon.style.color = '#3454D1';
-  } else {
-    // Don't show a hint while typing — just no border feedback
-    hint.style.display = 'none';
-    input.style.borderColor = '';
-    icon.textContent = '';
-  }
+function coResetPayButton() {
+  const btn = document.getElementById('co-pay-btn');
+  if (!btn) return;
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Pay now';
 }
+// Coming back from the bank's page with the browser's Back button can restore
+// this page frozen mid-redirect — make sure the button isn't stuck disabled.
+window.addEventListener('pageshow', (e) => { if (e.persisted) coResetPayButton(); });
 
-// Returns the cart items (if any) the signed-in user already owns, by
-// cross-checking against their existing "My Library" purchase records
-// (same product id + variant). Used to stop someone from re-buying
-// something they already have.
-async function coGetAlreadyOwnedCartItems(userId) {
+// Does the signed-in user already have this exact product (and variant) in
+// My Library? Used to stop someone from paying for something they own.
+async function coIsAlreadyOwned(userId, item) {
   try {
     const owned = await Purchases.forUser(userId);
-    const cartItems = Cart.get();
-    return cartItems.filter(item =>
-      owned.some(p =>
-        p.productId === (item.productId || item.id) &&
-        (p.variantLabel || '') === (item.variantLabel || '')
-      )
+    return owned.some(p =>
+      p.productId === (item.productId || item.id) &&
+      (p.variantLabel || '') === (item.variantLabel || '')
     );
   } catch (e) {
     console.warn('[Checkout] ownership check failed:', e);
-    return []; // fail open — a transient read error shouldn't block a legitimate purchase
+    return false; // fail open — a transient read error shouldn't block a legitimate purchase
   }
 }
 
-// Shows the "you already have this" warning as a popup, always centered
-// on screen — not the inline banner, which lived at the top of a scrollable
-// form and could be scrolled out of view (so it sometimes went unnoticed).
-// One owned item → names it. More than one → a single summary message,
-// since listing every duplicate gets noisy.
-function coShowAlreadyOwnedError(ownedItems) {
+// "You already have this" popup, always centered on screen.
+function coShowAlreadyOwnedError(item) {
   const msgEl = document.getElementById('co-owned-msg');
   const modal = document.getElementById('co-owned-modal');
   if (!msgEl || !modal) return;
-  msgEl.textContent = ownedItems.length === 1
-    ? `You already have "${ownedItems[0].name}". It's been removed from your cart — check My Library to access it.`
-    : `You already have ${ownedItems.length} of the products in your cart. They've been removed — check My Library to access them.`;
+  msgEl.textContent = `You already have "${item.name}" — check My Library to access it.`;
   modal.classList.add('open');
-  // Drop the already-owned line items from the cart so the person isn't
-  // stuck re-hitting this same warning on their next checkout attempt.
-  ownedItems.forEach(item => Cart.remove(item.id));
-  renderCartItems();
 }
 
 function closeCoOwnedModal() {
@@ -4217,9 +3554,7 @@ function closeCoOwnedModal() {
   if (modal) modal.classList.remove('open');
 }
 
-// Generic popup for all other checkout messages (validation errors, payment
-// failures, network errors, etc.) — replaces the old inline red banner at
-// the top of the checkout form, which could be scrolled out of view.
+// Popup for checkout errors (payment failures, network errors, etc.).
 function coShowFormError(msg) {
   const msgEl = document.getElementById('co-alert-msg');
   const modal = document.getElementById('co-alert-modal');
@@ -4233,147 +3568,39 @@ function closeCoAlertModal() {
   if (modal) modal.classList.remove('open');
 }
 
-// STEP 1 → STEP 2: validate info, then show proof upload
-// Route the "Next" button based on selected payment method
-async function coHandleNextStep() {
+// ── Pay: create the SlickPay invoice server-side and go to the bank page ──
+async function coPay() {
   const currentUser = UserAuth.current();
-  if (currentUser) {
-    const owned = await coGetAlreadyOwnedCartItems(currentUser.id);
-    if (owned.length) { coShowAlreadyOwnedError(owned); return; }
-  }
-  const method = document.querySelector('input[name="co-payment"]:checked')?.value || '';
-  if (method === 'cib') {
-    coInitiateSlickPayCheckout();
-  } else if (method === 'test') {
-    coInitiateTestCheckout();
-  } else {
-    coProceedToProofStep();
-  }
-}
+  if (!currentUser) { _coHide(); openLoginModal('checkout'); return; }
+  const item = BuyNow.get();
+  if (!item) { closeCheckout(); return; }
 
-// ── Test Payment — dev-only, no real money, no SlickPay ────────────
-// Only reachable when window.DIGISTORE_TEST_MODE is true (the "Test
-// Payment" method card is hidden otherwise) AND the backend Worker has
-// TEST_CHECKOUT_ENABLED = "true" (see wrangler.jsonc) — the backend
-// refuses this route entirely if that var isn't set, so leaving
-// DIGISTORE_TEST_MODE on by accident in a deployed copy is harmless as
-// long as the Worker var stays off.
-async function coInitiateTestCheckout() {
-  const currentUser = UserAuth.current();
-  if (!currentUser) { openLoginModal('checkout'); closeCheckout(); return; }
-  const cartItems = Cart.get();
-  if (!cartItems.length) { closeCheckout(); return; }
+  const email = (currentUser.email || '').trim();
+  if (!email) { coShowFormError('Your account has no email address, which is required for online payment. Please contact support.'); return; }
 
-  const name        = (document.getElementById('co-name')?.value || '').trim();
-  const email       = (document.getElementById('co-email')?.value || currentUser.email || '').trim();
-  const phonePfx    = (document.getElementById('co-phone-prefix')?.value || '07');
-  const phoneDigits = (document.getElementById('co-phone')?.value || '').trim();
-  const phone       = phonePfx + phoneDigits;
+  const total = BuyNow.total();
+  if (total <= 100) { coShowFormError('Total must be greater than 100 DA for online payment.'); return; }
 
-  if (!name) { coShowFormError('Please enter your full name.'); return; }
-
-  const nameParts = name.split(' ');
-  const firstname = nameParts[0];
-  const lastname  = nameParts.slice(1).join(' ') || nameParts[0];
-
-  const productName = cartItems.length === 1
-    ? (cartItems[0].variantLabel ? `${cartItems[0].name} — ${cartItems[0].variantLabel}` : cartItems[0].name)
-    : `Order (${cartItems.length} items)`;
-
-  const btn = document.getElementById('co-submit-btn');
+  const btn = document.getElementById('co-pay-btn');
   btn.disabled = true;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Completing test order...';
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Please wait...';
 
-  try {
-    const idToken = await UserAuth.getIdToken();
-    if (!idToken) { openLoginModal('checkout'); closeCheckout(); return; }
-
-    const backendUrl = (window.DIGISTORE_BACKEND_URL || '').replace(/\/+$/, '');
-    const res = await fetch(`${backendUrl}/api/checkout/test`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${idToken}`,
-      },
-      body: JSON.stringify({
-        items: cartItems.map(it => ({
-          product_id:    it.productId || it.id,
-          variant_label: it.variantLabel || null,
-          qty:           it.qty || 1,
-        })),
-        user_id:      currentUser.id,
-        user_email:   currentUser.email || email,
-        product_id:   cartItems[0]?.productId || cartItems[0]?.id || '',
-        product_name: productName,
-        firstname,
-        lastname,
-        email,
-        phone,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok || !data.payment_url) {
-      coShowFormError((data.error || 'Test checkout failed.') + (data.detail ? ' (' + data.detail + ')' : ''));
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-flask"></i> Complete Test Order →';
-      return;
-    }
-
-    try { sessionStorage.setItem('slickpay_order_id', data.order_id); } catch {}
-    window.location.href = data.payment_url;
-
-  } catch (err) {
-    coShowFormError('Network error. Please check your connection and try again.');
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-flask"></i> Complete Test Order →';
-  }
-}
-
-// ── CIB/EDAHABIA online payment via SlickPay/SATIM ──────────────
-async function coInitiateSlickPayCheckout() {
-  const currentUser = UserAuth.current();
-  if (!currentUser) { openLoginModal('checkout'); closeCheckout(); return; }
-  const cartItems = Cart.get();
-  if (!cartItems.length) { closeCheckout(); return; }
-
-  const name         = (document.getElementById('co-name')?.value || '').trim();
-  const email        = (document.getElementById('co-email')?.value || currentUser.email || '').trim();
-  // Digital products only — no shipping address needed from the customer.
-  // SlickPay requires a non-empty address (min 5 chars) on the invoice, so
-  // we send a fixed placeholder automatically.
-  const address      = 'Algérie - Livraison numérique';
-  const phonePfx     = (document.getElementById('co-phone-prefix')?.value || '07');
-  const phoneDigits  = (document.getElementById('co-phone')?.value || '').trim();
-  const phone        = phonePfx + phoneDigits;
-
-  if (!name)  { coShowFormError('Please enter your full name.'); return; }
-  if (!phoneDigits || phoneDigits.length !== 8 || !/^\d{8}$/.test(phoneDigits)) {
-    coShowFormError('Enter exactly 8 digits after the prefix.'); return;
-  }
-  if (!email) { coShowFormError('Email is required for online payment.'); return; }
-
-  // Split name into first/last
-  const nameParts = name.split(' ');
-  const firstname = nameParts[0];
-  const lastname  = nameParts.slice(1).join(' ') || nameParts[0];
-
-  const s = Settings.get();
-  const currency = s.currency || 'DA';
-  const total = Cart.total();
-  if (total <= 100) {
-    coShowFormError('Total must be greater than 100 DA for online payment.');
+  // Re-check ownership right before paying (they may have bought it in another tab).
+  if (await coIsAlreadyOwned(currentUser.id, item)) {
+    coResetPayButton();
+    coShowAlreadyOwnedError(item);
     return;
   }
 
-  // Build a single combined product name for the invoice
-  const productName = cartItems.length === 1
-    ? (cartItems[0].variantLabel ? `${cartItems[0].name} — ${cartItems[0].variantLabel}` : cartItems[0].name)
-    : `${s.storeName || 'Order'} (${cartItems.length} items)`;
+  // The invoice needs a first and last name — take them from the account name.
+  const fullName  = (currentUser.name || email.split('@')[0] || 'Customer').trim();
+  const nameParts = fullName.split(/\s+/);
+  const firstname = nameParts[0];
+  const lastname  = nameParts.slice(1).join(' ') || nameParts[0];
+  // Digital products only — no shipping address. SlickPay requires a
+  // non-empty address (min 5 chars) on the invoice, so a fixed placeholder is sent.
+  const address = 'Algérie - Livraison numérique';
 
-  const btn = document.getElementById('co-submit-btn');
-  btn.disabled = true;
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Redirecting to payment...';
 
   try {
@@ -4381,21 +3608,21 @@ async function coInitiateSlickPayCheckout() {
     const res = await fetch(`${backendUrl}/api/checkout`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      // The server looks the price up itself from the product id — the total
+      // shown on screen is never trusted.
       body: JSON.stringify({
-        items: cartItems.map(it => ({
-          product_id:    it.productId || it.id,
-          variant_label: it.variantLabel || null,
-          qty:           it.qty || 1,
-        })),
+        items: [{
+          product_id:    item.productId || item.id,
+          variant_label: item.variantLabel || null,
+          qty:           1,
+        }],
         user_id:      currentUser.id,
-        user_email:   currentUser.email || email,
-        product_id:   cartItems[0]?.productId || cartItems[0]?.id || '',
-        product_name: productName,
-        amount:       total,
+        user_email:   email,
+        product_id:   item.productId || item.id,
+        product_name: item.name,
         firstname,
         lastname,
         email,
-        phone,
         address,
       }),
     });
@@ -4403,217 +3630,20 @@ async function coInitiateSlickPayCheckout() {
     const data = await res.json();
 
     if (!res.ok || !data.payment_url) {
-      coShowFormError(data.error || 'Payment initiation failed. Please try another method.');
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-arrow-right"></i> Next';
+      coShowFormError(data.error || 'Payment initiation failed. Please try again.');
+      coResetPayButton();
       return;
     }
 
-    // Store order ID for the return page
+    // Remember the order for the return page, then go to the bank's payment page.
     try { sessionStorage.setItem('slickpay_order_id', data.order_id); } catch {}
-
-    // Redirect to SATIM payment page
+    try { localStorage.setItem('slickpay_order_id', data.order_id); } catch {}
     window.location.href = data.payment_url;
 
   } catch (err) {
     coShowFormError('Network error. Please check your connection and try again.');
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-arrow-right"></i> Next';
+    coResetPayButton();
   }
-}
-
-function coProceedToProofStep() {
-  const currentUser = UserAuth.current();
-  if (!currentUser) { openLoginModal('checkout'); closeCheckout(); return; }
-  if (!Cart.get().length) { closeCheckout(); return; }
-
-  // Clear previous error
-  const name  = (document.getElementById('co-name')?.value || '').trim();
-  const _phonePfx    = (document.getElementById('co-phone-prefix')?.value || '07');
-  const _phoneDigits = (document.getElementById('co-phone')?.value || '').trim();
-  const phone        = _phonePfx + _phoneDigits; // full 10-digit string, e.g. "0712345678"
-  const method = document.querySelector('input[name="co-payment"]:checked')?.value || '';
-
-  if (!name)  { coShowFormError('Please enter your full name.'); return; }
-  if (!_phoneDigits) { coShowFormError('Phone number is required.'); return; }
-  if (_phoneDigits.length !== 8 || !/^\d{8}$/.test(_phoneDigits)) { coShowFormError('Enter exactly 8 digits after the prefix.'); return; }
-  if (!method) { coShowFormError('Please select a payment method.'); return; }
-
-  _showCoStep('proof');
-}
-
-// Internal: close checkout cleanly without re-opening cart
-function _doCloseCheckout() {
-  document.getElementById('checkout-modal').classList.remove('open');
-  document.body.classList.remove('no-scroll');
-  _showCoStep('form');
-  document.getElementById('co-success').style.display = 'none';
-  _coProofFiles = [];
-  const prev = document.getElementById('co-proof-previews');
-  if (prev) prev.innerHTML = '';
-  closeCoOwnedModal();
-  closeCoAlertModal();
-  document.querySelectorAll('input[name="co-payment"]').forEach(r => r.checked = false);
-  document.querySelectorAll('.co-method-card').forEach(c => c.classList.remove('selected'));
-  const instrEl = document.getElementById('co-payment-instructions');
-  if (instrEl) instrEl.style.display = 'none';
-  _coSurchargeRate = 0;
-  _coSurchargeFlat = 0;
-  const phoneHint = document.getElementById('co-phone-hint');
-  if (phoneHint) phoneHint.style.display = 'none';
-  const phoneInput = document.getElementById('co-phone');
-  if (phoneInput) phoneInput.style.borderColor = '';
-}
-
-function closeCheckout() {
-  _doCloseCheckout();
-  // Re-open cart only if the success screen is NOT showing
-  const successShown = document.getElementById('co-success')?.style.display === 'block';
-  if (!successShown) {
-    const cartOverlay = document.getElementById('cart-overlay');
-    const cartDrawer = document.getElementById('cart-drawer');
-    if (cartOverlay && cartDrawer && !cartDrawer.classList.contains('open')) {
-      cartOverlay.classList.add('open');
-      cartDrawer.classList.add('open');
-      renderCartItems();
-      document.body.classList.add('no-scroll');
-    }
-  }
-}
-
-// Handle proof file selection — convert to base64 immediately to avoid CORS/Storage issues
-async function coHandleProofFiles(files) {
-  const allowed = ['image/jpeg','image/png','image/webp','image/gif'];
-  for (const f of [...files]) {
-    if (!allowed.includes(f.type)) continue;
-    const b64 = await _fileToBase64(f);
-    if (b64) { _coProofFiles.push(b64); renderProofPreviews(); }
-  }
-}
-
-function coHandleProofDrop(e) {
-  e.preventDefault();
-  document.getElementById('co-proof-zone').style.borderColor = '';
-  coHandleProofFiles(e.dataTransfer.files);
-}
-
-function renderProofPreviews() {
-  const wrap = document.getElementById('co-proof-previews');
-  wrap.innerHTML = '';
-  _coProofFiles.forEach((file, i) => {
-    const div = document.createElement('div');
-    div.style.cssText = 'position:relative;width:80px;height:80px;border-radius:8px;overflow:hidden;border:1px solid var(--border);flex-shrink:0';
-    const img = document.createElement('img');
-    img.style.cssText = 'width:100%;height:100%;object-fit:cover';
-    // All entries in _coProofFiles are base64 data URLs
-    img.src = file;
-    const btn = document.createElement('button');
-    btn.style.cssText = 'position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.7);color:#fff;border:none;cursor:pointer;font-size:.65rem;display:flex;align-items:center;justify-content:center';
-    btn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
-    btn.onclick = () => { _coProofFiles.splice(i, 1); renderProofPreviews(); };
-    div.appendChild(img); div.appendChild(btn);
-    wrap.appendChild(div);
-  });
-}
-
-// Convert a File to a compressed base64 data URL
-function _fileToBase64(file) {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      // Compress via canvas to keep the stored doc size reasonable
-      const img = new Image();
-      img.onload = () => {
-        const MAX = 900;
-        let w = img.width, h = img.height;
-        if (w > MAX || h > MAX) {
-          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-          else       { w = Math.round(w * MAX / h); h = MAX; }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', 0.72));
-      };
-      img.onerror = () => resolve(e.target.result); // fallback: original
-      img.src = e.target.result;
-    };
-    reader.onerror = () => resolve('');
-    reader.readAsDataURL(file);
-  });
-}
-
-// STEP 2: submit order
-async function placeOrderWithProof() {
-  const currentUser = UserAuth.current();
-  if (!currentUser) { openLoginModal('checkout'); closeCheckout(); return; }
-  const cartItems = Cart.get();
-  if (!cartItems.length) { closeCheckout(); return; }
-
-  const submitBtn = document.getElementById('co-proof-submit-btn');
-  submitBtn.disabled = true;
-  submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
-
-  // Files are already base64 strings (converted on upload to avoid CORS/Storage issues)
-  const proofBase64 = _coProofFiles.filter(Boolean);
-
-  const customerName   = (document.getElementById('co-name')?.value || '').trim();
-  const customerEmail  = (document.getElementById('co-email')?.value || currentUser.email || '').trim();
-  const _coPhonePrefix = (document.getElementById('co-phone-prefix')?.value || '07');
-  const _coPhoneDigits = (document.getElementById('co-phone')?.value || '').trim();
-  const customerPhone  = _coPhonePrefix + _coPhoneDigits; // full string e.g. "0712345678"
-  const orderNotes     = (document.getElementById('co-notes')?.value || '').trim();
-  const paymentMethod  = document.querySelector('input[name="co-payment"]:checked')?.value || '';
-  const products       = DB.getAll ? DB.getAll('products') : [];
-  const errors = [];
-
-  // One shared orderId ties all items in this checkout together
-  const orderId = 'ORD-' + Date.now() + '-' + Math.random().toString(36).slice(2,7).toUpperCase();
-
-  for (const item of cartItems) {
-    const fullProd = products.find(p => p.id === item.id || p.id === item.productId) || {};
-    try {
-      await Purchases.add(
-        currentUser.id,
-        customerEmail,
-        {
-          id:       item.productId || item.id,
-          name:     item.name,
-          images:   fullProd.images || (item.img ? [item.img] : []),
-          category: fullProd.category || ''
-        },
-        {
-          proofImages:   proofBase64,
-          customerName,
-          customerPhone,
-          customerEmail,
-          paymentMethod,
-          orderNotes,
-          orderId,
-          variantLabel:  item.variantLabel || null,
-        }
-      );
-    } catch(err) {
-      errors.push(item.name + ': ' + (err.message || String(err)));
-      console.error('[Checkout] Purchases.add failed:', err);
-    }
-  }
-
-  submitBtn.disabled = false;
-  submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Order';
-
-  if (errors.length) {
-    coShowFormError(errors.join(', '));
-    return;
-  }
-
-  // Success — close cart first so nothing sits on top
-  const cartOverlay = document.getElementById('cart-overlay');
-  const cartDrawer = document.getElementById('cart-drawer');
-  if (cartDrawer) cartDrawer.classList.remove('open');
-  if (cartOverlay) cartOverlay.classList.remove('open');
-  Cart.clear();
-  _showCoStep('success');
 }
 
 // ===== TOPBAR SOCIALS ===== (source: Settings > social, editable in admin's Social Links panel)
@@ -4685,103 +3715,44 @@ document.addEventListener('click', e => {
   }
 });
 
+// Where the login window was opened from ('checkout' when someone clicked a
+// buy button without being signed in, otherwise '').
+let _loginContext = '';
+
 function openLoginModal(context) {
+  _loginContext = context || '';
+  // A product waiting for sign-in only makes sense for a checkout-triggered
+  // login — don't let a stale one hitch a ride on a normal "Sign in" click.
+  if (_loginContext !== 'checkout') BuyNow.clear();
   const modal = document.getElementById('auth-modal');
   modal.style.display = 'flex';
   document.getElementById('am-error').style.display = 'none';
-  document.getElementById('am-login').style.display = '';
-  document.getElementById('am-google-step').style.display = 'none';
   const banner = document.getElementById('am-checkout-note');
-  if (banner) banner.style.display = context === 'checkout' ? 'flex' : 'none';
+  if (banner) banner.style.display = _loginContext === 'checkout' ? 'flex' : 'none';
 }
 function closeLoginModal() {
   document.getElementById('auth-modal').style.display = 'none';
-  document.getElementById('am-login').style.display = '';
-  document.getElementById('am-google-step').style.display = 'none';
+}
+// The X button: closing the login window also drops the product that was
+// waiting for it, so it doesn't reopen checkout unexpectedly later.
+function dismissLoginModal() {
+  closeLoginModal();
+  BuyNow.clear();
 }
 function showAuthModalError(msg) { const e = document.getElementById('am-error'); e.textContent = msg; e.style.display = 'block'; }
 
+// Sign-in is a full-page redirect to Google and back (Supabase's OAuth flow
+// has no popup mode), so this click handler never gets a normal result — the
+// page navigates away. What happens on the way back is handled by the
+// 'google-redirect-result' listener below. New accounts are created
+// automatically on that return trip; there are no extra questions to answer.
 async function doGoogleSignIn() {
   document.getElementById('am-error').style.display = 'none';
+  // If they were about to buy something, park it so checkout can reopen after sign-in.
+  if (_loginContext === 'checkout') BuyNow.remember();
   const r = await UserAuth.loginWithGoogle();
-  if (r.error) { showAuthModalError(r.error); return; }
-  if (r.error === null) return; // popup closed
-
-  if (r.isNewUser) {
-    // New Google user — show username + phone step
-    _googleProfile = r.googleProfile;
-    document.getElementById('am-login').style.display = 'none';
-    document.getElementById('am-google-step').style.display = 'block';
-    document.getElementById('am-gs-email-display').textContent = r.googleProfile.email;
-    document.getElementById('am-gs-username').value = r.googleProfile.displayName || '';
-    document.getElementById('am-gs-error').style.display = 'none';
-    return;
-  }
-
-  // Returning Google user — fully logged in
-  const wasCheckout = document.getElementById('am-checkout-note').style.display !== 'none';
-  closeLoginModal(); initUserAuth();
-  showToast('Welcome back, ' + r.user.name + '! 👋');
-  // Re-run the full checkout flow (cart validation, free-cart check, form
-  // prefill, payment instructions, step selection) instead of just toggling
-  // the modal's visibility class — toggling alone left every internal step
-  // at display:none, showing an empty white box.
-  if (wasCheckout) setTimeout(() => openCheckout(), 300);
-}
-
-// ── Google post-signup state ───────────────────────────────────────
-let _googleProfile = null;
-
-function gsValidatePhone(input) {
-  input.value = input.value.replace(/\D/g, '').slice(0, 8);
-  const val = input.value;
-  const hint = document.getElementById('am-gs-phone-hint');
-  const icon = document.getElementById('am-gs-phone-icon');
-  if (!val) {
-    hint.style.display = 'block'; hint.textContent = 'Enter 8 digits after the prefix'; hint.style.color = 'var(--text-muted)';
-    icon.textContent = ''; input.style.borderColor = ''; return;
-  }
-  if (/^\d{8}$/.test(val)) {
-    hint.style.display = 'none'; input.style.borderColor = 'rgba(52,84,209,.6)'; icon.textContent = '✓'; icon.style.color = '#3454D1';
-  } else {
-    hint.style.display = 'none'; input.style.borderColor = ''; icon.textContent = '';
-  }
-}
-
-function gsGetFullPhone() {
-  const prefix = document.getElementById('am-gs-phone-prefix').value;
-  const digits  = document.getElementById('am-gs-phone').value.trim();
-  return prefix + digits;
-}
-
-async function doCompleteGoogleSignup() {
-  const username = document.getElementById('am-gs-username').value.trim();
-  const phone = gsGetFullPhone();
-  const errEl = document.getElementById('am-gs-error');
-  errEl.style.display = 'none';
-
-  if (!username) { errEl.textContent = 'Please enter a username.'; errEl.style.display = 'block'; return; }
-  const digits = document.getElementById('am-gs-phone').value.trim();
-  if (!digits || !/^\d{8}$/.test(digits)) { errEl.textContent = 'Please enter a valid 8-digit phone number.'; errEl.style.display = 'block'; return; }
-
-  const btn = document.getElementById('am-gs-submit-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating account…';
-
-  const r = await UserAuth.completeGoogleRegistration(_googleProfile, username, phone);
-  if (r.error) {
-    errEl.textContent = r.error; errEl.style.display = 'block';
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Complete Sign Up';
-    return;
-  }
-
-  const wasCheckout = document.getElementById('am-checkout-note').style.display !== 'none';
-  closeLoginModal(); initUserAuth();
-  showToast('Welcome, ' + r.user.name + '! 🎉');
-  // Same fix as doGoogleSignIn() above — reopen via openCheckout() so the
-  // modal's internal steps actually get populated, not just made visible.
-  if (wasCheckout) setTimeout(() => openCheckout(), 300);
+  if (r.error) { BuyNow.forget(); showAuthModalError(r.error); return; }
+  // r.redirecting — the browser is already on its way to Google.
 }
 
 function doUserLogout() {
@@ -4796,48 +3767,30 @@ function doUserLogout() {
   showToast('Signed out.');
 }
 
-// ── Redirect-fallback resume ─────────────────────────────────────
-// loginWithGoogle() (supabase.js) always redirects to Google and back —
-// Supabase's OAuth flow has no popup mode — so the click handler above
-// (doGoogleSignIn) never gets a normal return value from that call; the
-// page navigates away to Google and back instead. This listens for the
-// 'google-redirect-result' event supabase.js fires once the returning
-// page's auth state resolves, and reacts exactly the same way
-// doGoogleSignIn()/doCompleteGoogleSignup() do above.
+// ── Google sign-in: what happens when the browser comes back ─────────
+// supabase.js fires 'google-redirect-result' once the returning page's auth
+// state resolves. By then the account already exists (it's created
+// automatically the first time someone signs in), so this just closes the
+// login window, refreshes the header, and — if they were in the middle of
+// buying something — reopens checkout for it.
 window.addEventListener('google-redirect-result', (evt) => {
   const r = evt.detail || {};
   console.log('[AuthDebug] index.html received google-redirect-result:', JSON.stringify(r));
   if (r.redirecting) return; // shouldn't happen here, but ignore defensively
 
   if (r.error) {
-    // Best-effort: show the error wherever the login modal happens to be.
+    BuyNow.forget();
     const modal = document.getElementById('auth-modal');
     if (modal) modal.style.display = 'flex';
-    const gsStep = document.getElementById('am-google-step');
-    if (gsStep && gsStep.style.display === 'block') {
-      const errEl = document.getElementById('am-gs-error');
-      errEl.textContent = r.error; errEl.style.display = 'block';
-    } else {
-      showAuthModalError(r.error);
-    }
-    return;
-  }
-
-  if (r.isNewUser) {
-    _googleProfile = r.googleProfile;
-    const modal = document.getElementById('auth-modal');
-    modal.style.display = 'flex';
-    document.getElementById('am-login').style.display = 'none';
-    document.getElementById('am-google-step').style.display = 'block';
-    document.getElementById('am-gs-email-display').textContent = r.googleProfile.email;
-    document.getElementById('am-gs-username').value = r.googleProfile.displayName || '';
-    document.getElementById('am-gs-error').style.display = 'none';
+    showAuthModalError(r.error);
     return;
   }
 
   if (r.user) {
+    const resumed = BuyNow.restore(); // the product they clicked Buy on before signing in, if any
     closeLoginModal(); initUserAuth();
     showToast('Welcome, ' + r.user.name + '! 👋');
+    if (resumed) setTimeout(() => openCheckout(), 400);
   }
 });
 
@@ -5734,17 +4687,8 @@ function acctRenderSettings(c) {
     <div class="acct-hdr"><h2>Settings</h2><p>Manage your account.</p></div>
     <div class="acct-card">
       <h3>Basic info</h3>
-      <div class="acct-field">
-        <label>Display name</label>
-        <input type="text" id="acct-name-input" class="form-input" value="${escapeHtml(u?.name || '')}" style="width:100%"/>
-      </div>
-      <div class="acct-row" style="margin-top:.8rem">
-        <button class="btn btn-primary btn-sm" onclick="acctSaveName()"><i class="fa-solid fa-check"></i> Save</button>
-        <span id="acct-name-msg" style="font-size:.8rem;color:var(--text-muted)"></span>
-      </div>
-      <div class="acct-field" style="margin-top:1.1rem"><label>Email</label><div class="acct-field-static">${escapeHtml(u?.email || '—')}</div></div>
-      <div class="acct-field"><label>Phone</label><div class="acct-field-static" id="acct-phone-val">Loading…</div></div>
-      <p style="font-size:.75rem;color:var(--text-muted);margin-top:.7rem">To change your phone number, contact support.</p>
+      <div class="acct-field"><label>Email</label><div class="acct-field-static">${escapeHtml(u?.email || '—')}</div></div>
+      <p style="font-size:.75rem;color:var(--text-muted);margin-top:.7rem">To change your email, contact support.</p>
     </div>
     <div class="acct-card">
       <h3>Password</h3>
@@ -5761,27 +4705,6 @@ function acctRenderSettings(c) {
       <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.8rem">Switch between light and dark mode.</p>
       <button class="btn btn-outline btn-sm" onclick="toggleTheme()"><i class="fa-solid fa-circle-half-stroke"></i> Toggle Theme</button>
     </div>`;
-  if (u) {
-    _db.collection('users').doc(u.id).get().then(doc => {
-      const el = document.getElementById('acct-phone-val');
-      if (el) el.textContent = (doc.exists && doc.data().phone) ? doc.data().phone : '—';
-    }).catch(() => { const el = document.getElementById('acct-phone-val'); if (el) el.textContent = '—'; });
-  }
-}
-
-async function acctSaveName() {
-  const input = document.getElementById('acct-name-input');
-  const msg = document.getElementById('acct-name-msg');
-  const name = (input.value || '').trim();
-  if (!name) { msg.textContent = 'Name cannot be empty.'; msg.style.color = '#EF4444'; return; }
-  msg.textContent = 'Saving…'; msg.style.color = 'var(--text-muted)';
-  try {
-    await UserAuth.updateName(name);
-    msg.textContent = 'Saved.'; msg.style.color = 'var(--accent)';
-    acctRenderSidebarUser();
-  } catch (e) {
-    msg.textContent = e.message || 'Could not save.'; msg.style.color = '#EF4444';
-  }
 }
 
 async function acctSendPasswordReset() {
@@ -5799,7 +4722,7 @@ function acctRenderHelp(c) {
   const cats = [
     { icon: 'fa-box-archive', title: 'Orders & Purchases', body: 'Every purchase creates an order you can review any time from the Orders tab, including its status and date.' },
     { icon: 'fa-download', title: 'Downloads & Access', body: 'Completed purchases unlock permanently in My Library. If a file or link is missing, contact support with your order number.' },
-    { icon: 'fa-user-gear', title: 'Account', body: 'Update your display name and password from Settings. To change your phone number or email, contact support.' },
+    { icon: 'fa-user-gear', title: 'Account', body: 'Reset your password from Settings. To change your email, contact support.' },
     { icon: 'fa-credit-card', title: 'Payments', body: 'We use secure third-party payment processing. No payment details are stored on our servers.' },
     { icon: 'fa-rotate-left', title: 'Refunds', body: 'See the Guarantee section for details on refunds and what happens if a download does not work.' },
     { icon: 'fa-headset', title: 'Contact Support', body: 'Reach us via WhatsApp or Telegram — links are in the site footer — and we typically respond within hours.' },
@@ -6175,7 +5098,7 @@ async function renderSocialProof() {
 }
 
 // ================================================================
-// ===== EXISTING: updateWaFloat (upgrade with cart prefill) =====
+// ===== EXISTING: updateWaFloat =====
 // ================================================================
 function updateWaFloat() {
   const s = Settings.get();
@@ -6371,15 +5294,6 @@ function updateWaFloat() {
      ─────────────────────────────────────────────────────────────── -->
 <script>
   window.DIGISTORE_BACKEND_URL = 'https://packwebsite.digitch.workers.dev';
-
-  // Set to true ONLY while testing what happens AFTER payment (delivery,
-  // My Learning, cart clearing) — it reveals a "🧪 Test Payment (no
-  // charge)" method in checkout that skips SlickPay entirely. The Worker
-  // independently refuses that request unless TEST_CHECKOUT_ENABLED="true"
-  // is also set in wrangler.jsonc, so this flag alone can't let anyone buy
-  // for free — but set it back to false once you're done testing, so
-  // customers never see the option.
-  window.DIGISTORE_TEST_MODE = true;
 </script>
 
 <!-- ===== PREMIUM POLISH: scroll-reveal (visual only, no logic touched) ===== -->

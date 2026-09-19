@@ -14,7 +14,7 @@
 // ================================================================
 
 // Escapes HTML special characters in untrusted text (customer names,
-// emails, phone numbers, review comments, order notes, etc.) before it's
+// emails, review comments, order notes, etc.) before it's
 // interpolated into innerHTML anywhere in index.html / admin.html. This
 // exists to prevent stored XSS from user-submitted data (e.g. a malicious
 // checkout name or product review) executing script in another visitor's
@@ -373,9 +373,9 @@ const UserAuth = {
       return;
     }
 
-    // Google sign-ins need the "does this account already have a
-    // completed profile (username + phone)" check before being treated
-    // as logged in — see _afterGoogleAuth(). Email/password sessions
+    // Google sign-ins go through _afterGoogleAuth() first, which makes sure
+    // the account has a users row (creating it automatically the first time
+    // someone signs in) before it's treated as logged in. Email/password sessions
     // (created via register()/login() below, which already write/verify
     // the users doc themselves) skip straight to the normal path.
     const isGoogle = user.app_metadata && user.app_metadata.provider === 'google';
@@ -393,7 +393,7 @@ const UserAuth = {
       // If we let the spurious INITIAL_SESSION restore of the OLD account
       // claim it, the flag is gone by the time the real SIGNED_IN event for
       // a genuinely new account arrives — so that account's sign-in (and
-      // its username/phone signup step, for new users) silently does
+      // its first-time account creation, for new users) silently does
       // nothing. Restricting this to the real 'SIGNED_IN' event is what
       // fixes that: the old account still gets restored and logged in
       // normally below, it just doesn't consume the flag meant for the
@@ -463,7 +463,7 @@ const UserAuth = {
 
   current() { return this._current; },
 
-  async register(email, password, name, phone) {
+  async register(email, password, name) {
     try {
       // Never let the public sign-up form create an account using the
       // reserved admin email — that is the exact path used to hijack
@@ -484,61 +484,15 @@ const UserAuth = {
         // setup (instant sign-in, no confirmation step).
         return { error: 'Account created — please check your email to confirm it, then log in.' };
       }
-      const accessToken = signUpData.session.access_token;
       const displayName = name || email.split('@')[0];
-
-      if (phone) {
-        const backendUrl = (window.DIGISTORE_BACKEND_URL || '').replace(/\/+$/, '');
-        if (backendUrl) {
-          try {
-            const res = await fetch(`${backendUrl}/api/complete-google-registration`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-              body: JSON.stringify({ username: displayName, phone, checkUsername: true }),
-            });
-            const data = await res.json();
-            if (!res.ok || data.error) {
-              // Duplicate phone (or any other failure) — roll back the
-              // auth account we just created so the email is free to
-              // retry with, rather than leaving an orphaned account.
-              // (Supabase's client SDK has no self-delete method — this
-              // hits a small Worker route that verifies the token proves
-              // the caller IS this exact account, then deletes it with
-              // the service-role key. See POST /api/rollback-registration
-              // in worker.js.)
-              await fetch(`${backendUrl}/api/rollback-registration`, {
-                method: 'POST', headers: { Authorization: `Bearer ${accessToken}` },
-              }).catch(() => {});
-              await _client.auth.signOut().catch(() => {});
-              return { error: data.error || 'Registration failed. Please try again.' };
-            }
-            // Worker already wrote the full users row — just update the
-            // Auth profile's display name and finish.
-            await _client.auth.updateUser({ data: { full_name: displayName } }).catch(() => {});
-            this._current = data.user;
-            window.dispatchEvent(new Event('auth:change'));
-            return { user: this._current };
-          } catch (ne) {
-            await fetch(`${backendUrl}/api/rollback-registration`, {
-              method: 'POST', headers: { Authorization: `Bearer ${accessToken}` },
-            }).catch(() => {});
-            await _client.auth.signOut().catch(() => {});
-            return { error: 'Could not reach the server. Please check your connection and try again.' };
-          }
-        }
-        // If backendUrl isn't configured, fall through and write directly
-        // below rather than blocking signup entirely over a missing check.
-      }
 
       await _client.auth.updateUser({ data: { full_name: displayName } }).catch(() => {});
       await _db.collection('users').doc(signUpData.user.id).set({
         id: signUpData.user.id, email: email.toLowerCase(), name: displayName,
-        phone: phone || '',
-        phoneVerified: !!phone,
         createdAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(),
       }, { merge: true });
-      this._current = { id: signUpData.user.id, email: signUpData.user.email, name: displayName, phone: phone || '' };
+      this._current = { id: signUpData.user.id, email: signUpData.user.email, name: displayName };
       window.dispatchEvent(new Event('auth:change'));
       return { user: this._current };
     } catch (e) { return { error: this._msg(e.message) }; }
@@ -599,47 +553,34 @@ const UserAuth = {
       return { error: 'This Google account is not available for sign-in. Please use a different account.' };
     }
 
-    // Check if a users row already exists with a phone (returning Google user)
+    // Returning user — a users row already exists, just record the sign-in.
     const existing = await _db.collection('users').doc(user.uid).get();
-    if (existing.exists && existing.data().phone) {
+    if (existing.exists) {
+      const data = existing.data();
       await _db.collection('users').doc(user.uid).set({
         updatedAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(),
       }, { merge: true });
-      const data = existing.data();
-      this._current = { id: user.uid, email: user.email, name: data.name || user.displayName, phone: data.phone };
+      this._current = { id: user.uid, email: user.email, name: data.name || user.displayName || user.email.split('@')[0] };
       window.dispatchEvent(new Event('auth:change'));
       return { user: this._current, isNewUser: false };
     }
 
-    // New Google user (or existing without phone) — stay signed in
-    // (unlike the old Firebase flow, which signed out here — Supabase's
-    // client can't cheaply resume a specific existing session the way
-    // Firebase's popup could, so instead this account just isn't treated
-    // as "logged in" (_current stays null) until completeGoogleRegistration()
-    // below finishes the username+phone step.
-    return {
-      isNewUser: true,
-      googleProfile: {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName || '',
-        photoURL: user.photoURL || '',
-      }
-    };
+    // First sign-in — create the account automatically. No extra
+    // questions: the name comes straight from the Google profile (or the
+    // email address if Google didn't provide one).
+    const created = await this._createGoogleUser(user);
+    if (created.error) return { error: created.error };
+    this._current = created.user;
+    window.dispatchEvent(new Event('auth:change'));
+    return { user: this._current, isNewUser: true };
   },
 
-  // Called after a new Google user completes the username + phone step.
-  async completeGoogleRegistration(googleProfile, username, phone) {
+  // Creates the users row for a brand-new Google account. Goes through the
+  // Worker (service-role key) rather than writing straight from the browser,
+  // same as the other account-creation paths.
+  async _createGoogleUser(user) {
     try {
-      // Identity guard: make sure the live session really is still the
-      // same Google account that started this registration — matters if,
-      // say, another tab signed into a different account while this form
-      // was open.
-      const user = _auth.currentUser;
-      if (!user || user.uid !== googleProfile.uid) {
-        return { error: `Please sign in with ${googleProfile.email} again to finish registration.` };
-      }
       const accessToken = await user.getIdToken();
       const backendUrl = (window.DIGISTORE_BACKEND_URL || '').replace(/\/+$/, '');
       if (!backendUrl) return { error: 'Sign-up is temporarily unavailable (server not configured). Please contact support.' };
@@ -649,71 +590,22 @@ const UserAuth = {
         res = await fetch(`${backendUrl}/api/complete-google-registration`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-          body: JSON.stringify({ username, phone, photoURL: googleProfile.photoURL || '' }),
+          body: JSON.stringify({ name: user.displayName || '', photoURL: user.photoURL || '' }),
         });
         data = await res.json();
       } catch (ne) {
         return { error: 'Could not reach the server. Please check your connection and try again.' };
       }
       if (!res.ok || data.error) {
-        // Duplicate username/phone (409) is a normal validation outcome —
-        // the session is still live either way, so the user can just fix
-        // the field and resubmit without redoing Google sign-in.
-        return { error: data.error || 'Registration failed. Please try again.' };
+        return { error: data.error || 'Sign-up failed. Please try again.' };
       }
-
-      await user.updateProfile({ displayName: data.user.name }).catch(() => {});
-      this._current = data.user;
-      window.dispatchEvent(new Event('auth:change'));
-      return { user: this._current };
+      return { user: data.user };
     } catch (e) {
-      return { error: 'Registration failed. Please try again.' };
+      return { error: 'Sign-up failed. Please try again.' };
     }
   },
 
   async logout() { await _auth.signOut(); this._current = null; window.dispatchEvent(new Event('auth:change')); },
-
-  // Updates the signed-in user's display name — used by the Account →
-  // Settings panel. Writes to both Supabase Auth (source of truth for
-  // displayName) and the 'users' row (so admin views / other reads that
-  // pull from there stay in sync), then updates the in-memory _current
-  // record and notifies the UI.
-  async updateName(newName) {
-    const user = _auth.currentUser;
-    if (!user) throw new Error('You must be signed in.');
-    const name = (newName || '').trim();
-    if (!name) throw new Error('Name cannot be empty.');
-
-    // Names double as usernames elsewhere (checkout, order history, admin
-    // views), so two accounts sharing the exact same one causes real
-    // confusion — block a rename to a name someone ELSE already has.
-    // Case-insensitive; a user re-saving their own current name is fine.
-    // Note: this is a best-effort client-side check (there's a small race
-    // window if two people save the same name at the exact same instant —
-    // a real guarantee needs a case-insensitive unique index on the
-    // database side too), but it stops the common case outright.
-    try {
-      const snap = await _db.collection('users').get();
-      const taken = snap.docs.some(d => {
-        if (d.id === user.uid) return false;
-        const data = d.data();
-        return data && typeof data.name === 'string' && data.name.trim().toLowerCase() === name.toLowerCase();
-      });
-      if (taken) throw new Error('That name is already taken. Please choose another.');
-    } catch (e) {
-      if (e.message === 'That name is already taken. Please choose another.') throw e;
-      // Couldn't even run the check (network hiccup, etc.) — don't block
-      // the rename over an unrelated failure just to read the list.
-    }
-
-    try {
-      await user.updateProfile({ displayName: name });
-    } catch (e) { throw new Error(this._msg(e.message)); }
-    try { await _db.collection('users').doc(user.uid).set({ name }, { merge: true }); } catch (e) { /* non-fatal */ }
-    if (this._current) this._current = { ...this._current, name };
-    window.dispatchEvent(new Event('auth:change'));
-    return name;
-  },
 
   // Sends a "reset your password" email via Supabase Auth to the
   // signed-in user's own address — used by the Account → Settings panel.
@@ -785,7 +677,6 @@ const Purchases = {
       accessLink:    extra.accessLink  || '',
       proofImages:   proofImageUrls,
       customerName:  extra.customerName  || '',
-      customerPhone: extra.customerPhone || '',
       customerEmail: extra.customerEmail || userEmail || '',
       paymentMethod: extra.paymentMethod || '',
       orderNotes:    extra.orderNotes || '',
@@ -1516,61 +1407,93 @@ function hexToRgb(hex){const r=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(
 function adjustColor(hex,amount){const rgb=hexToRgb(hex);if(!rgb)return hex;const clamp=v=>Math.max(0,Math.min(255,v+amount));return '#'+[clamp(rgb.r),clamp(rgb.g),clamp(rgb.b)].map(v=>v.toString(16).padStart(2,'0')).join('');}
 
 // ================================================================
-// CART — localStorage (per-device, intentional)
+// BUY NOW — the single product currently being purchased
 // ================================================================
-const Cart = {
-  get(){try{return JSON.parse(localStorage.getItem('dz_cart')||'[]');}catch{return[];}},
-  _save(c){try{localStorage.setItem('dz_cart',JSON.stringify(c));}catch{}window.dispatchEvent(new Event('cart:update'));},
-  add(prod,qty=1){const c=this.get();const cartId=prod.variantLabel?(prod.id+'__'+prod.variantLabel):prod.id;const ex=c.find(i=>i.id===cartId);if(ex)ex.qty=1;else c.push({id:cartId,productId:prod.id,name:prod.variantLabel?(prod.name+' — '+prod.variantLabel):prod.name,price:prod.price,img:(prod.images||[])[0]||null,qty:1,variantLabel:prod.variantLabel||null});this._save(c);},
-  remove(id){this._save(this.get().filter(i=>i.id!==id));},
-  clear(){localStorage.removeItem('dz_cart');window.dispatchEvent(new Event('cart:update'));},
-  total(){return this.get().reduce((s,i)=>s+i.price*i.qty,0);},
-  count(){return this.get().reduce((s,i)=>s+i.qty,0);},
-  // Drop any cart line whose underlying product no longer exists in the
-  // live catalog (e.g. the seller deleted it). `validIds` is a Set of
-  // currently-existing product ids. Returns how many lines were removed
-  // so callers can toast/notify. People who already bought a product keep
-  // access via the separate `purchases` collection — this prune only
-  // affects items still sitting unpurchased in someone's cart.
-  prune(validIds){
-    const items = this.get();
-    const kept = items.filter(i => validIds.has(i.productId || i.id));
-    if (kept.length !== items.length) { this._save(kept); return items.length - kept.length; }
-    return 0;
+// There is no shopping cart: "Buy Now" / "Unlock Pack" / "Enroll Now" goes
+// straight to checkout with exactly ONE product (plus its chosen variant).
+// This object just holds that product while the checkout window is open.
+// It lives in memory only — nothing is left behind in localStorage.
+//
+// The one exception is remember()/restore(): signing in with Google is a
+// full-page redirect to accounts.google.com and back, which would otherwise
+// forget what the visitor was about to buy. remember() parks the item in
+// localStorage just before that redirect, and restore() picks it back up
+// (once, and only if it's recent) so checkout can reopen automatically.
+const BuyNow = {
+  _item: null,
+  _KEY: 'dz_buy_now',
+  _MAX_AGE_MS: 30 * 60 * 1000,
+
+  // prod: a product object, optionally with variantLabel and a variant-adjusted price.
+  set(prod) {
+    if (!prod) return this.clear();
+    this._item = {
+      id: prod.variantLabel ? (prod.id + '__' + prod.variantLabel) : prod.id,
+      productId: prod.id,
+      name: prod.variantLabel ? (prod.name + ' — ' + prod.variantLabel) : prod.name,
+      price: Number(prod.price) || 0,
+      img: (prod.images || [])[0] || null,
+      qty: 1,
+      variantLabel: prod.variantLabel || null,
+    };
+    window.dispatchEvent(new Event('buynow:update'));
   },
-  syncPrices(products){
-    if (!Array.isArray(products) || !products.length) return false;
-    const byId = new Map(products.map(p => [p.id, p]));
-    const items = this.get();
-    let changed = false;
-    items.forEach(item => {
-      const p = byId.get(item.productId || item.id);
-      if (!p) return; // handled separately by prune()
-      let newPrice = p.price;
-      if (item.variantLabel) {
-        const firstLabel = item.variantLabel.split(' / ')[0];
-        let variantItems = null;
-        if (p.variables && p.variables.length) variantItems = p.variables[0].items;
-        else if (p.variants && p.variants.length) variantItems = p.variants;
-        const match = (variantItems || []).find(v => v.label === firstLabel);
-        newPrice = match && match.price != null ? match.price : p.price;
-      }
-      if (item.price !== newPrice) { item.price = newPrice; changed = true; }
-      const newImg = (p.images || [])[0] || null;
-      if (newImg && item.img !== newImg) { item.img = newImg; changed = true; }
-    });
-    if (changed) this._save(items);
-    return changed;
+  get() { return this._item; },
+  total() { return this._item ? this._item.price * this._item.qty : 0; },
+  clear() {
+    const had = !!this._item;
+    this._item = null;
+    this.forget();
+    if (had) window.dispatchEvent(new Event('buynow:update'));
+  },
+
+  // Re-check the item against the live catalog so a price edited in the admin
+  // panel (or a stale remembered item) is never shown or charged out of date.
+  // Returns false if the product no longer exists. If the catalog hasn't
+  // loaded yet it leaves the item alone and returns true (the server
+  // re-prices every order itself anyway).
+  syncWithCatalog(products) {
+    const item = this._item;
+    if (!item) return false;
+    if (!Array.isArray(products) || !products.length) return true;
+    const p = products.find(x => x.id === (item.productId || item.id));
+    if (!p) return false;
+    let newPrice = p.price;
+    if (item.variantLabel) {
+      const firstLabel = item.variantLabel.split(' / ')[0];
+      let variantItems = null;
+      if (p.variables && p.variables.length) variantItems = p.variables[0].items;
+      else if (p.variants && p.variants.length) variantItems = p.variants;
+      const match = (variantItems || []).find(v => v.label === firstLabel);
+      newPrice = match && match.price != null ? match.price : p.price;
+    }
+    item.price = Number(newPrice) || 0;
+    const newImg = (p.images || [])[0] || null;
+    if (newImg) item.img = newImg;
+    return true;
+  },
+
+  remember() {
+    if (!this._item) return;
+    try { localStorage.setItem(this._KEY, JSON.stringify({ item: this._item, t: Date.now() })); } catch (e) {}
+  },
+  forget() { try { localStorage.removeItem(this._KEY); } catch (e) {} },
+  // Puts the remembered item (if there is a recent one) back as the current
+  // item and removes it from storage. Returns it, or null.
+  restore() {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(this._KEY) || 'null'); } catch (e) {}
+    this.forget();
+    if (!saved || !saved.item || !saved.t || (Date.now() - saved.t) > this._MAX_AGE_MS) return null;
+    this._item = saved.item;
+    window.dispatchEvent(new Event('buynow:update'));
+    return this._item;
   },
 };
 
-// Cross-tab sync: dz_cart lives in localStorage, and the browser's native
-// 'storage' event only fires in OTHER tabs/windows of the same origin —
-// never in the tab that made the change (that one already got the
-// 'cart:update' dispatch from _save() above).
-window.addEventListener('storage', (e) => {
-  if (e.key === 'dz_cart') { window.dispatchEvent(new Event('cart:update')); }
-});
+// Old versions of the site kept a shopping cart in localStorage. It's gone
+// now — clear out anything a returning visitor still has lying around.
+try { localStorage.removeItem('dz_cart'); } catch (e) {}
 
 // ================================================================
 // WISHLIST SYNC — synced per user, fallback to localStorage
@@ -1660,7 +1583,11 @@ const Analytics = {
     } catch(e) { console.warn('Analytics.logView:', e); }
   },
 
-  async logCart(productId, productName) {
+  // Logged when someone clicks Buy Now and checkout opens for a product
+  // (this used to be "added to cart"). The stored event type is still
+  // 'cart' on purpose, so the admin funnel keeps counting the history that
+  // was already recorded under that name.
+  async logCheckoutStart(productId, productName) {
     if (!productId) return;
     const seen = this._seenSet('dz_seen_carts');
     if (seen.has(productId)) return;
@@ -1670,7 +1597,7 @@ const Analytics = {
         type: 'cart', productId, productName: productName || '',
         createdAt: new Date().toISOString()
       });
-    } catch(e) { console.warn('Analytics.logCart:', e); }
+    } catch(e) { console.warn('Analytics.logCheckoutStart:', e); }
   },
 
   async getAllEvents() {
@@ -1744,9 +1671,12 @@ const Presence = {
 };
 
 // ================================================================
-// CART LIVE — collection: cart_live
+// CHECKOUT LIVE — collection: cart_live
 // ================================================================
-const CartLive = {
+// Real-time "who has checkout open right now, and for which product" for the
+// admin analytics. The collection keeps its original name (cart_live) so the
+// existing database table / RLS policy keep working unchanged.
+const CheckoutLive = {
   _sid: null,
   _timer: null,
 
@@ -1762,20 +1692,20 @@ const CartLive = {
 
   async _beat() {
     try {
-      const cart = Cart.get();
-      const productIds = [...new Set(cart.map(i => i.productId || i.id))];
+      const item = BuyNow.get();
+      const productIds = item ? [item.productId || item.id] : [];
       await _db.collection('cart_live').doc(this._getSid()).set({
         productIds,
         lastSeen: new Date().toISOString()
       });
-    } catch(e) { console.warn('CartLive._beat (this usually means the "cart_live" collection needs a Row Level Security policy):', e.message || e); }
+    } catch(e) { console.warn('CheckoutLive._beat (this usually means the "cart_live" collection needs a Row Level Security policy):', e.message || e); }
   },
 
   start() {
     if (this._timer) return;
     this._beat();
     this._timer = setInterval(() => this._beat(), 20000);
-    window.addEventListener('cart:update', () => this._beat());
+    window.addEventListener('buynow:update', () => this._beat());
     document.addEventListener('visibilitychange', () => { if (!document.hidden) this._beat(); });
   },
 
@@ -1792,7 +1722,7 @@ const CartLive = {
         }
       });
       return counts;
-    } catch(e) { console.error('CartLive.getActiveCounts:', e); return {}; }
+    } catch(e) { console.error('CheckoutLive.getActiveCounts:', e); return {}; }
   }
 };
 

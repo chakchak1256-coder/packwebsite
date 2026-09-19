@@ -619,12 +619,12 @@ select.form-input option{background:var(--bg2)}
           </div>
         </div>
         <div style="font-size:.78rem;color:var(--text-muted);margin:-.8rem 0 1rem">
-          "Entered" and "Added to Cart" count unique visitor sessions (deduped per browser). "Purchased" counts checkout submissions from the Purchases records. "Live In Cart" is real-time — it goes up when someone adds the product and back down the moment they remove it.
+          "Entered" and "Started Checkout" count unique visitor sessions (deduped per browser) — "Started Checkout" is when someone clicks Buy Now and the checkout window opens. "Purchased" counts orders from the Purchases records. "Live In Checkout" is real-time — it goes up when someone opens checkout for the product and back down when they close it.
         </div>
 
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Product</th><th>Live Now</th><th>Live In Cart</th><th>Entered</th><th>Added to Cart</th><th>Purchased</th><th>Enter → Cart</th><th>Cart → Buy</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Product</th><th>Live Now</th><th>Live In Checkout</th><th>Entered</th><th>Started Checkout</th><th>Purchased</th><th>Enter → Checkout</th><th>Checkout → Buy</th><th>Actions</th></tr></thead>
             <tbody id="an-tbody"></tbody>
           </table>
         </div>
@@ -858,10 +858,10 @@ select.form-input option{background:var(--bg2)}
       <div class="panel" id="panel-users">
         <div class="sec-header"><span class="sec-title">Registered Users <span id="users-count" style="font-size:.8rem;color:var(--text-muted)"></span></span></div>
         <div class="pur-filters-bar">
-          <input class="form-input" id="users-search" style="flex:1;min-width:180px;max-width:300px" placeholder="Search by name, email or phone..." oninput="renderUsersAdmin()"/>
+          <input class="form-input" id="users-search" style="flex:1;min-width:180px;max-width:300px" placeholder="Search by name or email..." oninput="renderUsersAdmin()"/>
         </div>
         <div class="table-wrap">
-          <table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Registered</th><th>Last Login</th><th>Purchases</th><th>Actions</th></tr></thead><tbody id="users-tbody"></tbody></table>
+          <table><thead><tr><th>Name</th><th>Email</th><th>Registered</th><th>Last Login</th><th>Purchases</th><th>Actions</th></tr></thead><tbody id="users-tbody"></tbody></table>
         </div>
       </div>
 
@@ -1137,7 +1137,7 @@ select.form-input option{background:var(--bg2)}
 // ===== FREE UP STORAGE ON LOAD =====
 // Remove any bloated old keys that may fill quota
 (function freeStorage() {
-  const KEEP = ['dz_settings','dz_products','dz_categories','dz_orders','dz_users','dz_purchases','dz_seeded_v8','dz_cart',
+  const KEEP = ['dz_settings','dz_products','dz_categories','dz_orders','dz_users','dz_purchases','dz_seeded_v8',
                 'dz_fc_products','dz_fc_categories','dz_fc_orders','dz_theme','dz_admin_theme'];
   Object.keys(localStorage).forEach(k => {
     if (k.startsWith('dz_') && !KEEP.includes(k) && !k.startsWith('dz_fc_')) {
@@ -1330,7 +1330,7 @@ function renderDashboard() {
 
 // ===== ANALYTICS =====
 let _anPeriod = 'month';
-let _anEvents = [];      // cached product_events (views + cart adds)
+let _anEvents = [];      // cached product_events (views + checkout starts; stored with type 'cart' for history)
 let _anPurchases = [];   // cached purchases
 let _anLiveByProduct = {};
 let _anLiveCartByProduct = {};
@@ -1398,38 +1398,38 @@ function renderAnalyticsTable() {
     <tr>
       <td class="td-name">${r.p.name}</td>
       <td>${r.live > 0 ? `<span class="status-badge status-done"><i class="fa-solid fa-circle" style="font-size:.45rem;margin-right:4px"></i>${r.live} now</span>` : `<span style="color:var(--text-muted)">—</span>`}</td>
-      <td>${r.liveCart > 0 ? `<span class="status-badge status-done"><i class="fa-solid fa-cart-shopping" style="font-size:.65rem;margin-right:4px"></i>${r.liveCart} now</span>` : `<span style="color:var(--text-muted)">—</span>`}</td>
+      <td>${r.liveCart > 0 ? `<span class="status-badge status-done"><i class="fa-solid fa-credit-card" style="font-size:.65rem;margin-right:4px"></i>${r.liveCart} now</span>` : `<span style="color:var(--text-muted)">—</span>`}</td>
       <td>${r.v}</td>
       <td>${r.c}</td>
       <td>${r.b}</td>
       <td style="color:var(--text-muted)">${r.vc}</td>
       <td style="color:var(--text-muted)">${r.cb}</td>
-      <td><button class="btn btn-sm btn-outline" title="Reset this product's Entered / Added-to-cart stats (Purchased history and live stats are untouched)" onclick="resetProductStats('${r.p.id}','${(r.p.name||'').replace(/'/g,"\\'")}')"><i class="fa-solid fa-rotate-left"></i></button></td>
+      <td><button class="btn btn-sm btn-outline" title="Reset this product's Entered / Started-checkout stats (Purchased history and live stats are untouched)" onclick="resetProductStats('${r.p.id}','${(r.p.name||'').replace(/'/g,"\\'")}')"><i class="fa-solid fa-rotate-left"></i></button></td>
     </tr>`).join('');
 }
 
 async function renderAnalyticsLive() {
   let active = [];
   let cartCounts = {};
-  try { [active, cartCounts] = await Promise.all([ Presence.getActive(45), CartLive.getActiveCounts(45) ]); } catch(e) {}
+  try { [active, cartCounts] = await Promise.all([ Presence.getActive(45), CheckoutLive.getActiveCounts(45) ]); } catch(e) {}
   const totalSite = active.length;
   const byProduct = {};
   let onProductPages = 0;
   active.forEach(a => { if (a.productId) { byProduct[a.productId] = (byProduct[a.productId]||0) + 1; onProductPages++; } });
   _anLiveByProduct = byProduct;
   _anLiveCartByProduct = cartCounts || {};
-  const totalInCarts = Object.values(_anLiveCartByProduct).reduce((s,n) => s+n, 0);
+  const totalInCheckout = Object.values(_anLiveCartByProduct).reduce((s,n) => s+n, 0);
 
   document.getElementById('an-live-stats').innerHTML = [
     { icon:'fa-signal',        color:'#10b981',        label:'People On Site Now',      val: totalSite },
     { icon:'fa-eye',           color:'var(--accent)',  label:'Viewing A Product Now',   val: onProductPages },
-    { icon:'fa-cart-shopping', color:'#F59E0B',        label:'Live Products In Carts',  val: totalInCarts },
+    { icon:'fa-credit-card',  color:'#F59E0B',        label:'Live Products In Checkout', val: totalInCheckout },
   ].map(x => `<div class="stat-card"><div class="stat-icon" style="background:${x.color}18;color:${x.color}"><i class="fa-solid ${x.icon}"></i></div><div><div class="stat-num">${x.val}</div><div class="stat-label">${x.label}</div></div></div>`).join('');
 
   const lb = document.getElementById('live-badge');
   if (lb) { lb.textContent = totalSite; lb.style.display = totalSite ? 'inline-block' : 'none'; }
 
-  if (_anLoaded) renderAnalyticsTable(); // refresh the "Live Now" / "Live In Cart" columns
+  if (_anLoaded) renderAnalyticsTable(); // refresh the "Live Now" / "Live In Checkout" columns
 }
 
 function startAnalyticsLive() {
@@ -1439,16 +1439,16 @@ function startAnalyticsLive() {
 }
 function stopAnalyticsLive() { if (_anLiveTimer) { clearInterval(_anLiveTimer); _anLiveTimer = null; } }
 
-// Reset one product's lifetime "Entered" / "Added to Cart" (and derived
+// Reset one product's lifetime "Entered" / "Started Checkout" (and derived
 // conversion %) numbers back to zero. Does NOT touch: the Purchased
 // column (those are real orders in the 'purchases' collection — resetting
 // stats should never erase actual sales/delivery records), nor the two
-// live stats (Live Now / Live In Cart), since those reflect what's
+// live stats (Live Now / Live In Checkout), since those reflect what's
 // happening right now, not history to be cleared.
 function resetProductStats(productId, productName) {
   confirmAction(
     'Reset stats for "' + productName + '"?',
-    'This clears its Entered / Added to Cart history (and the conversion rates). Purchases and the live "now" stats are not affected. This cannot be undone.',
+    'This clears its Entered / Started Checkout history (and the conversion rates). Purchases and the live "now" stats are not affected. This cannot be undone.',
     async () => {
       try {
         await Analytics.resetProduct(productId);
@@ -2354,7 +2354,6 @@ function _renderPurchasesTable(all) {
       return (p.userEmail||'').toLowerCase().includes(q) ||
              (p.productName||'').toLowerCase().includes(q) ||
              (p.customerName||'').toLowerCase().includes(q) ||
-             (p.customerPhone||'').toLowerCase().includes(q) ||
              (p.orderId||'').toLowerCase().includes(q);
     });
   });
@@ -2482,7 +2481,7 @@ function _renderPurchasesTable(all) {
         <div class="pur-card-meta">
           <div class="pur-card-name">${escapeHtml(displayName)}</div>
           <div class="pur-card-email">${escapeHtml(first.userEmail||'')}</div>
-          <div class="pur-card-date">${date}${first.customerPhone ? ' · ' + escapeHtml(first.customerPhone) : ''}</div>
+          <div class="pur-card-date">${date}</div>
         </div>
         <div class="pur-card-badges">${statusBadge}${pmBadge}${itemsCountBadge}</div>
         <div class="pur-card-chevron"><i class="fa-solid fa-chevron-down"></i></div>
@@ -2494,7 +2493,6 @@ function _renderPurchasesTable(all) {
             <div class="pur-info-grid">
               <div><div class="pur-info-lbl">Name</div><div class="pur-info-val">${escapeHtml(first.customerName||'—')}</div></div>
               <div><div class="pur-info-lbl">Email</div><div class="pur-info-val" style="font-family:monospace;font-size:.78rem">${escapeHtml(first.userEmail||'—')}</div></div>
-              ${first.customerPhone ? `<div><div class="pur-info-lbl">Phone</div><div class="pur-info-val">${escapeHtml(first.customerPhone)}</div></div>` : ''}
               ${first.orderId ? `<div><div class="pur-info-lbl">Order ID</div><div class="pur-info-val" style="font-family:monospace;font-size:.72rem;opacity:.7">${escapeHtml(first.orderId)}</div></div>` : ''}
             </div>
           </div>
@@ -2644,8 +2642,7 @@ async function renderUsersAdmin() {
 
   const users = !q ? _adminAllUsers : _adminAllUsers.filter(u =>
     (u.name||'').toLowerCase().includes(q) ||
-    (u.email||'').toLowerCase().includes(q) ||
-    (u.phone||'').toLowerCase().includes(q)
+    (u.email||'').toLowerCase().includes(q)
   );
 
   // Most recently active first — users who never logged in (or predate
@@ -2656,11 +2653,11 @@ async function renderUsersAdmin() {
   if (count) count.textContent = `(${users.length}${q ? ` of ${_adminAllUsers.length}` : ''})`;
   const tbody = document.getElementById('users-tbody');
   if (!_adminAllUsers.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state" style="border:none;padding:2rem"><i class="fa-solid fa-users" style="font-size:2rem;opacity:.2;margin-bottom:.5rem;display:block"></i><p>No registered users yet.</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state" style="border:none;padding:2rem"><i class="fa-solid fa-users" style="font-size:2rem;opacity:.2;margin-bottom:.5rem;display:block"></i><p>No registered users yet.</p></div></td></tr>`;
     return;
   }
   if (!users.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state" style="border:none;padding:2rem"><p>No users match "${escapeHtml(q)}".</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state" style="border:none;padding:2rem"><p>No users match "${escapeHtml(q)}".</p></div></td></tr>`;
     return;
   }
   tbody.innerHTML = '';
@@ -2671,7 +2668,6 @@ async function renderUsersAdmin() {
     tr.innerHTML = `
       <td style="font-weight:600">${safeName}</td>
       <td style="font-family:monospace;font-size:.83rem">${escapeHtml(u.email||'—')}</td>
-      <td style="font-family:monospace;font-size:.83rem">${escapeHtml(u.phone||'—')}</td>
       <td style="font-size:.82rem;color:var(--text-muted)">${_fmtUserDate(u.createdAt)}</td>
       <td style="font-size:.82rem;color:var(--text-muted)">${_fmtUserDate(u.lastLogin)}</td>
       <td><span class="status-badge ${userPurchases?'status-done':'status-pending'}">${userPurchases} purchase${userPurchases!==1?'s':''}</span></td>
@@ -3486,7 +3482,7 @@ function exportPurchasesCSV() {
   const all = _adminAllPurchases || [];
   if (!all.length) { showToast('No purchases to export.'); return; }
   const s = Settings.get();
-  const headers = ['Order ID', 'Customer Name', 'User Email', 'Phone', 'Product', 'Type', 'Variant', 'Payment Method', 'Status', 'Date', 'Notes'];
+  const headers = ['Order ID', 'Customer Name', 'User Email', 'Product', 'Type', 'Variant', 'Payment Method', 'Status', 'Date', 'Notes'];
   const rows = [headers];
   all.forEach(p => {
     const ts = p.purchaseDate?.toDate?.() || (p.purchaseDate ? new Date(p.purchaseDate) : null) || (p.createdAt ? new Date(p.createdAt) : null);
@@ -3497,7 +3493,6 @@ function exportPurchasesCSV() {
       p.orderId || p.id || '',
       p.customerName || '',
       p.userEmail || '',
-      p.customerPhone || '',
       p.productName || '',
       p.productType || '',
       p.variantLabel || '',
@@ -3507,7 +3502,7 @@ function exportPurchasesCSV() {
       (p.orderNotes || '').replace(/\n/g, ' ')
     ]);
   });
-  // CSV-injection guard: several of these fields (customer name/phone,
+  // CSV-injection guard: several of these fields (customer name,
   // product/variant text, notes) are ultimately customer-submitted. If a
   // value starts with =, +, -, @, or a tab/CR, Excel/Sheets can interpret
   // it as a formula when the file is opened (e.g. a "name" of

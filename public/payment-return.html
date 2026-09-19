@@ -73,23 +73,13 @@ p{font-size:.92rem;color:var(--text-muted);line-height:1.6;margin-bottom:1.5rem}
   // ── Get order ID ────────────────────────────────────────────────
   function getOrderId() {
     const params = new URLSearchParams(window.location.search);
-    return params.get('order') || params.get('order_id') ||
-           localStorage.getItem('slickpay_order_id') || null;
+    let stored = null;
+    try { stored = sessionStorage.getItem('slickpay_order_id') || localStorage.getItem('slickpay_order_id'); } catch {}
+    return params.get('order') || params.get('order_id') || stored || null;
   }
 
   // ── Render states ────────────────────────────────────────────────
   function renderPaid() {
-    // Same effect as Cart.clear() in supabase.js — this page is a separate
-    // static page reached by a full navigation back from SlickPay/SATIM, so
-    // it never loads supabase.js and has no access to the Cart object.
-    // Payment succeeded, so whatever was in the cart has now been bought —
-    // clear it directly so it isn't still sitting there (and re-chargeable)
-    // next time the customer opens the storefront.
-    try {
-      localStorage.removeItem('dz_cart');
-      window.dispatchEvent(new Event('cart:update'));
-    } catch {}
-
     document.getElementById('card').innerHTML = `
       <span class="icon">🎉</span>
       <h1>Payment Successful!</h1>
@@ -138,7 +128,7 @@ p{font-size:.92rem;color:var(--text-muted);line-height:1.6;margin-bottom:1.5rem}
 
       if (data.completed === 1 || data.status === 'paid' || data.status === 'delivered') {
         renderPaid();
-        try { localStorage.removeItem('slickpay_order_id'); } catch {}
+        try { localStorage.removeItem('slickpay_order_id'); sessionStorage.removeItem('slickpay_order_id'); } catch {}
         return;
       }
 
