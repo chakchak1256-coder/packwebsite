@@ -2575,6 +2575,12 @@ let _firebaseResolved = false; // true only after first auth:change fires
 window.addEventListener('auth:change', () => {
   _firebaseResolved = true;
   initUserAuth();
+  // Signed in (for example from the password-reset link opened in another
+  // tab) — a login window still open here has nothing left to do.
+  if (UserAuth.current()) {
+    const am = document.getElementById('auth-modal');
+    if (am && am.style.display === 'flex') closeLoginModal();
+  }
 });
 
 let _pendingHashScroll = window.location.hash || '';

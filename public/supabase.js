@@ -370,7 +370,10 @@ const UserAuth = {
     let blob = '';
     try { blob = (location.hash || '') + '&' + (location.search || ''); } catch (e) { return; }
 
-    if (/[#&]type=(signup|email)(&|$)/.test(blob)) this._arrivedFromConfirmLink = true;
+    if (/[#?&]type=(signup|email)(&|$)/.test(blob)) this._arrivedFromConfirmLink = true;
+    // Opened from the link in a password-reset email. Remembered so that ONLY
+    // this tab shows the "Set a new password" window (see PASSWORD_RECOVERY below).
+    if (/[#?&]type=recovery(&|$)/.test(blob)) this._arrivedFromRecoveryLink = true;
 
     const errDesc = blob.match(/[#?&]error_description=([^&#]*)/);
     const errCode = blob.match(/[#?&]error=([^&#]*)/);
@@ -438,7 +441,15 @@ const UserAuth = {
     // event and opens the "Set a new password" modal. Falls through
     // below afterward so _current still gets set normally.
     if (event === 'PASSWORD_RECOVERY' && user) {
-      window.dispatchEvent(new CustomEvent('password-recovery', { detail: { email: user.email } }));
+      // Supabase shares auth events between every open tab of the site. So
+      // when the reset link is opened in a NEW tab, the tab the person
+      // started from also hears "password recovery" and used to pop up a
+      // second "Set a new password" window. Only the tab that was actually
+      // opened from the link (its address contained type=recovery) shows it.
+      if (this._arrivedFromRecoveryLink) {
+        this._arrivedFromRecoveryLink = false;
+        window.dispatchEvent(new CustomEvent('password-recovery', { detail: { email: user.email } }));
+      }
     }
 
     if (!user) {
