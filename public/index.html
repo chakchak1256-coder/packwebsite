@@ -318,8 +318,19 @@ body.flash-on #topbar{top:56px}
 .user-dropdown-item.danger{color:#EF4444}
 .user-dropdown-item.danger .udi-icon{background:rgba(239,68,68,.1);color:#EF4444}
 .user-dropdown-item.danger:hover{background:rgba(239,68,68,.08)}
-@media(max-width:420px){
-  .user-dropdown{width:calc(100vw - 10vw);right:-4vw}
+/* Phones: the nav pill centers the avatar, so a menu hanging off the avatar's
+   right edge slid off the LEFT side of the screen (icons and text cut off).
+   Instead, center it on the screen just below the nav pill. --dd-top is set
+   from the pill's real position in toggleUserMenu(); the number here is only
+   a fallback (pill top 112px + 52px height + gap). */
+@media(max-width:700px){
+  .user-dropdown{
+    position:fixed;top:var(--dd-top,176px);left:0;right:0;margin:0 auto;
+    width:min(340px,calc(100vw - 32px));
+    max-height:calc(100vh - var(--dd-top,176px) - 12px);
+    max-height:calc(100dvh - var(--dd-top,176px) - 12px);
+    overflow-y:auto;
+  }
 }
 
 .hamburger{display:none;flex-direction:column;gap:4px;width:32px;height:32px;
@@ -3757,7 +3768,13 @@ function initUserAuth() {
 }
 
 function toggleUserMenu() {
-  document.getElementById('user-menu').classList.toggle('open');
+  const menu = document.getElementById('user-menu');
+  // On phones the menu is centered on screen (position:fixed) — put it just
+  // under the nav pill, wherever the pill currently is (it moves down when the
+  // announcement bar is showing). Ignored on wider screens.
+  const nav = document.getElementById('nav');
+  if (nav) menu.style.setProperty('--dd-top', Math.round(nav.getBoundingClientRect().bottom + 12) + 'px');
+  menu.classList.toggle('open');
 }
 document.addEventListener('click', e => {
   const menu = document.getElementById('user-menu');
@@ -5537,51 +5554,6 @@ function updateWaFloat() {
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
-  }
-})();
-</script>
-
-<!-- ================================================================
-     IN-APP BROWSER PROMPT
-     Instagram's and TikTok's in-app browsers restrict things like
-     IndexedDB/storage and background JS in ways that can silently break
-     Database-driven pages like this one (products render via client-side
-     JS after a fetch — there's no server-rendered fallback).
-     Rather than trying to patch around every in-app-browser quirk, this
-     detects those environments by User-Agent and prompts the visitor to
-     open the link in their real browser, where everything works normally.
-     Detection is intentionally narrow (Instagram/TikTok/Facebook specific
-     UA tokens) so real browsers are never affected.
-     ================================================================ -->
-<div id="iab-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;
-     background:#141414;color:#F2F2F2;padding:.9rem 1rem;box-shadow:0 4px 20px rgba(0,0,0,.4);
-     font-family:'Inter',sans-serif;">
-  <div style="max-width:520px;margin:0 auto;display:flex;align-items:center;gap:.75rem;">
-    <div style="font-size:1.4rem;line-height:1">⚠️</div>
-    <div style="flex:1;font-size:.85rem;line-height:1.4;">
-      <strong>This page may not load correctly here.</strong><br/>
-      Tap <strong>⋯</strong> or <strong>⋮</strong> above and choose
-      <strong>"Open in Browser"</strong> for the full store experience.
-    </div>
-    <button onclick="document.getElementById('iab-banner').style.display='none'"
-      style="background:transparent;border:none;color:#71717A;font-size:1.3rem;
-      line-height:1;cursor:pointer;padding:.25rem .4rem;flex-shrink:0;">×</button>
-  </div>
-</div>
-<script>
-(function () {
-  var ua = navigator.userAgent || '';
-  // Instagram: "Instagram" token. TikTok: "musical_ly" / "BytedanceWebview" /
-  // "TikTok" tokens (TikTok's in-app UA has changed over versions, so we
-  // check a few known variants). Facebook's in-app browser (FBAN/FBAV) is
-  // included too since it shares the same underlying restrictions.
-  var isInAppBrowser = /Instagram|FBAN|FBAV|musical_ly|BytedanceWebview|TikTok/i.test(ua);
-  if (isInAppBrowser) {
-    var el = document.getElementById('iab-banner');
-    if (el) {
-      el.style.display = 'block';
-      setTimeout(function () { el.style.display = 'none'; }, 5000); // auto-dismiss after 5s
-    }
   }
 })();
 </script>
