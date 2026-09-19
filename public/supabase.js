@@ -300,7 +300,9 @@ const _auth = {
   async setPersistence(mode) { _persistMode = mode; },
   Persistence: { LOCAL: 'local', SESSION: 'session' },
   async sendPasswordResetEmail(email) {
-    const { error } = await _client.auth.resetPasswordForEmail(email);
+    // redirectTo brings the person back to this site, where the
+    // PASSWORD_RECOVERY event opens the "Set a new password" window.
+    const { error } = await _client.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/' });
     if (error) throw error;
   },
   async updateUserPassword(newPassword) {
@@ -444,71 +446,89 @@ const UserAuth = {
       return;
     }
 
-    // Dispatch auth:change immediately from Auth data so UI renders without waiting for the users table
+    // Email/password session (signed in just now, or restored on page load).
+    // Dispatch auth:change immediately from Auth data so the UI renders
+    // without waiting for the users table...
     this._current = { id: user.uid, email: user.email, name: user.displayName || user.email.split('@')[0] };
     window.dispatchEvent(new Event('auth:change'));
-    // Then fetch the users row in the background to correct email/name if
-    // needed (fixes cases where the account's email differs from the
-    // registered email).
-    _db.collection('users').doc(user.uid).get().then(doc => {
-      if (doc.exists) {
-        const data = doc.data();
-        if (data.email || data.name) {
-          this._current = { id: user.uid, email: data.email || user.email, name: data.name || user.displayName || user.email.split('@')[0] };
-          window.dispatchEvent(new Event('auth:change'));
-        }
-      }
-    }).catch(() => {});
+    // ...then, in the background, make sure this account has a users row
+    // (creates it if it's missing — e.g. someone who confirmed their email
+    // by link, or whose row creation failed the first time) and pick up the
+    // stored name.
+    this._ensureUserRow(user, false).catch(() => {});
   },
 
   current() { return this._current; },
 
-  async register(email, password, name) {
+  // Create an account with email + password. Just those two fields — the
+  // display name defaults to the part of the email before the @.
+  // Resolves { user } when signed in straight away, { notice } when the
+  // project requires email confirmation first, or { error }.
+  async register(email, password) {
     try {
+      const cleanEmail = (email || '').trim();
       // Never let the public sign-up form create an account using the
       // reserved admin email — that is the exact path used to hijack
       // admin access before (register on the storefront, then log into
       // /admin.html with the account you just made). This is a
       // client-side speed bump, not a hard guarantee — see the note
       // above the ADMIN_EMAIL constant for the real fix.
-      if ((email || '').trim().toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+      if (cleanEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
         return { error: 'This email address is not available.' };
       }
 
-      const { data: signUpData, error: signUpErr } = await _client.auth.signUp({ email, password });
-      if (signUpErr) return { error: this._msg(signUpErr.message) };
-      if (!signUpData.session) {
-        // Your Supabase project has "Confirm email" turned on — the
-        // account was created but there's no active session yet. See
-        // SETUP.md if you'd rather this behave like the old Firebase
-        // setup (instant sign-in, no confirmation step).
-        return { error: 'Account created — please check your email to confirm it, then log in.' };
-      }
-      const displayName = name || email.split('@')[0];
+      const { data, error } = await _client.auth.signUp({
+        email: cleanEmail, password,
+        options: { emailRedirectTo: window.location.origin + '/' },
+      });
+      if (error) return { error: this._msg(error.message) };
 
-      await _client.auth.updateUser({ data: { full_name: displayName } }).catch(() => {});
-      await _db.collection('users').doc(signUpData.user.id).set({
-        id: signUpData.user.id, email: email.toLowerCase(), name: displayName,
-        createdAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
-      }, { merge: true });
-      this._current = { id: signUpData.user.id, email: signUpData.user.email, name: displayName };
-      window.dispatchEvent(new Event('auth:change'));
+      // With "Confirm email" on, Supabase doesn't return an error for an
+      // address that's already registered (to avoid revealing which emails
+      // have accounts) — it returns a user with no identities instead.
+      if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        return { error: this._msg('User already registered') };
+      }
+      if (!data.session) {
+        // Your Supabase project has "Confirm email" turned on — the account
+        // exists but there's no active session until the link is clicked.
+        // Turn it off in Supabase → Authentication → Providers → Email if
+        // you'd rather people be signed in instantly.
+        return { notice: 'Account created! Check your email for a confirmation link, then log in.' };
+      }
+
+      const wrapped = _wrapUser(data.user);
+      const r = await this._ensureUserRow(wrapped, true);
+      if (r.error) {
+        // The account itself exists and is signed in — don't fail the
+        // sign-up over this; the row is retried on the next page load.
+        console.warn('[Auth] register: users row not created yet:', r.error);
+        this._current = { id: wrapped.uid, email: wrapped.email, name: wrapped.email.split('@')[0] };
+        window.dispatchEvent(new Event('auth:change'));
+      }
       return { user: this._current };
     } catch (e) { return { error: this._msg(e.message) }; }
   },
 
-  async login(email, password, remember = false) {
+  async login(email, password, remember = true) {
     try {
+      const cleanEmail = (email || '').trim();
+      // The admin account only signs in through admin.html. Answer exactly
+      // like a wrong password so this form doesn't confirm it exists.
+      if (cleanEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        return { error: this._msg('Invalid login credentials') };
+      }
       try { await _auth.setPersistence(remember ? _auth.Persistence.LOCAL : _auth.Persistence.SESSION); } catch (pe) {}
-      const { user } = await _auth.signInWithEmailAndPassword(email, password);
-      this._current = { id: user.uid, email: user.email, name: user.displayName || user.email.split('@')[0] };
-      window.dispatchEvent(new Event('auth:change'));
-      // Record this sign-in for the admin's "last seen" view. Non-blocking —
-      // if it fails (e.g. offline) it shouldn't stop the user from logging in.
-      _db.collection('users').doc(user.uid).set({
-        lastLogin: new Date().toISOString()
-      }, { merge: true }).catch(() => {});
+      const { user } = await _auth.signInWithEmailAndPassword(cleanEmail, password);
+
+      // Records the sign-in for the admin's "last seen" view, and creates the
+      // users row if this account somehow doesn't have one yet.
+      const r = await this._ensureUserRow(user, true);
+      if (r.error) {
+        console.warn('[Auth] login: users row not available:', r.error);
+        this._current = { id: user.uid, email: user.email, name: user.displayName || user.email.split('@')[0] };
+        window.dispatchEvent(new Event('auth:change'));
+      }
       return { user: this._current };
     } catch (e) { return { error: this._msg(e.message) }; }
   },
@@ -553,33 +573,52 @@ const UserAuth = {
       return { error: 'This Google account is not available for sign-in. Please use a different account.' };
     }
 
-    // Returning user — a users row already exists, just record the sign-in.
-    const existing = await _db.collection('users').doc(user.uid).get();
+    return await this._ensureUserRow(user, true);
+  },
+
+  // Makes sure a users row exists for this signed-in account — for BOTH
+  // Google and email/password accounts — and sets the current user from it.
+  //   • Row exists  → returning user; optionally record the sign-in time.
+  //   • Row missing → first sign-in; create it automatically (no questions
+  //     asked — the name comes from the Google profile, or the part of the
+  //     email before the @).
+  // Concurrent calls for the same account share one request, because a fresh
+  // sign-in fires both the auth-event handler and register()/login().
+  // Resolves { user, isNewUser } or { error }.
+  _ensureUserRow(user, touchLastLogin) {
+    this._rowInflight = this._rowInflight || {};
+    if (this._rowInflight[user.uid]) return this._rowInflight[user.uid];
+    const p = this._ensureUserRowNow(user, touchLastLogin)
+      .finally(() => { delete this._rowInflight[user.uid]; });
+    this._rowInflight[user.uid] = p;
+    return p;
+  },
+
+  async _ensureUserRowNow(user, touchLastLogin) {
+    const ref = _db.collection('users').doc(user.uid);
+    const existing = await ref.get();
     if (existing.exists) {
       const data = existing.data();
-      await _db.collection('users').doc(user.uid).set({
-        updatedAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
-      }, { merge: true });
-      this._current = { id: user.uid, email: user.email, name: data.name || user.displayName || user.email.split('@')[0] };
+      if (touchLastLogin) {
+        const now = new Date().toISOString();
+        await ref.set({ updatedAt: now, lastLogin: now }, { merge: true });
+      }
+      this._current = { id: user.uid, email: data.email || user.email, name: data.name || user.displayName || user.email.split('@')[0] };
       window.dispatchEvent(new Event('auth:change'));
       return { user: this._current, isNewUser: false };
     }
 
-    // First sign-in — create the account automatically. No extra
-    // questions: the name comes straight from the Google profile (or the
-    // email address if Google didn't provide one).
-    const created = await this._createGoogleUser(user);
+    const created = await this._createUserRow(user);
     if (created.error) return { error: created.error };
     this._current = created.user;
     window.dispatchEvent(new Event('auth:change'));
     return { user: this._current, isNewUser: true };
   },
 
-  // Creates the users row for a brand-new Google account. Goes through the
-  // Worker (service-role key) rather than writing straight from the browser,
-  // same as the other account-creation paths.
-  async _createGoogleUser(user) {
+  // Creates the users row for a brand-new account. Goes through the Worker
+  // (service-role key) rather than writing straight from the browser, same as
+  // the other account-creation paths.
+  async _createUserRow(user) {
     try {
       const accessToken = await user.getIdToken();
       const backendUrl = (window.DIGISTORE_BACKEND_URL || '').replace(/\/+$/, '');
@@ -587,7 +626,7 @@ const UserAuth = {
 
       let res, data;
       try {
-        res = await fetch(`${backendUrl}/api/complete-google-registration`, {
+        res = await fetch(`${backendUrl}/api/register-user`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
           body: JSON.stringify({ name: user.displayName || '', photoURL: user.photoURL || '' }),
@@ -624,6 +663,19 @@ const UserAuth = {
     return true;
   },
 
+  // "Forgot password" on the login window: sends the reset link to whatever
+  // address was typed (nobody is signed in yet). Supabase answers the same
+  // way whether or not that address has an account, so this never reveals
+  // which emails are registered.
+  async sendPasswordResetTo(email) {
+    const clean = (email || '').trim();
+    if (!clean) throw new Error('Enter your email address first.');
+    try {
+      await _auth.sendPasswordResetEmail(clean);
+    } catch (e) { throw new Error(this._msg(e.message)); }
+    return clean;
+  },
+
   async sendPasswordReset() {    const email = (this._current && this._current.email) || (_auth.currentUser && _auth.currentUser.email);
     if (!email) throw new Error('No email on file for this account.');
     try {
@@ -642,8 +694,8 @@ const UserAuth = {
   _msg(message) {
     console.warn('[Auth]', message);
     const raw = String(message || '');
-    if (/already registered|already been registered/i.test(raw)) return 'Email already registered.';
-    if (/invalid login credentials/i.test(raw)) return 'Incorrect email or password.';
+    if (/already registered|already been registered/i.test(raw)) return 'This email is already registered. Try logging in — or use "Continue with Google" if that\'s how you signed up.';
+    if (/invalid login credentials/i.test(raw)) return 'Incorrect email or password. If you signed up with Google, use "Continue with Google" instead.';
     if (/user not found/i.test(raw)) return 'No account found with this email.';
     if (/password.*(least|characters)/i.test(raw)) return 'Password must be at least 6 characters.';
     if (/invalid.*email/i.test(raw)) return 'Invalid email address.';

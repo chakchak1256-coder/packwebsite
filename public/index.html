@@ -2240,21 +2240,63 @@ footer::before{
     </div>
     <div id="am-error" style="display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:var(--radius-sm);padding:.65rem 1rem;font-size:.83rem;color:#EF4444;margin-bottom:1rem"></div>
 
-    <!-- ── Google Sign In ── -->
+    <div id="am-notice" style="display:none;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:var(--radius-sm);padding:.65rem 1rem;font-size:.83rem;color:#10B981;margin-bottom:1rem"></div>
+
+    <!-- ── Sign in / create account ── -->
     <div id="am-login">
-      <div style="text-align:center;margin-bottom:1.5rem">
+      <div style="text-align:center;margin-bottom:1.3rem">
         <div style="width:52px;height:52px;border-radius:50%;background:rgba(var(--accent-rgb),.1);border:1px solid rgba(var(--accent-rgb),.2);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto .9rem">🔐</div>
-        <h3 style="font-family:'Fraunces',serif;font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:.35rem">Welcome to Orvyn</h3>
-        <p style="font-size:.83rem;color:var(--text-muted)">Sign in with your Google account to continue</p>
+        <h3 id="am-title" style="font-family:'Fraunces',serif;font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:.35rem">Welcome back</h3>
+        <p id="am-sub" style="font-size:.83rem;color:var(--text-muted)">Log in to continue</p>
       </div>
       <button onclick="doGoogleSignIn()" style="width:100%;padding:13px;border-radius:var(--radius-sm);background:var(--bg3);border:1px solid var(--border);color:var(--text);font-weight:600;font-size:.92rem;display:flex;align-items:center;justify-content:center;gap:.7rem;cursor:pointer;transition:all var(--transition)" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
         <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
         Continue with Google
       </button>
+
+      <div style="display:flex;align-items:center;gap:.8rem;margin:1.1rem 0;color:var(--text-muted);font-size:.75rem">
+        <span style="flex:1;height:1px;background:var(--border)"></span>or<span style="flex:1;height:1px;background:var(--border)"></span>
+      </div>
+
+      <form id="am-email-form" onsubmit="event.preventDefault();doEmailAuth()" novalidate>
+        <input id="am-email" type="email" class="form-input" placeholder="Email address" autocomplete="email" inputmode="email" style="width:100%;margin-bottom:.7rem"/>
+        <div style="position:relative;margin-bottom:.5rem">
+          <input id="am-password" type="password" class="form-input" placeholder="Password" autocomplete="current-password" style="width:100%;padding-right:2.8rem"/>
+          <button type="button" id="am-pw-toggle" onclick="toggleAmPassword()" aria-label="Show password" style="position:absolute;right:.3rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;padding:.5rem .6rem;font-size:.85rem"><i class="fa-solid fa-eye"></i></button>
+        </div>
+        <div style="text-align:right;margin-bottom:.9rem;min-height:1.1rem">
+          <a id="am-forgot" href="#" onclick="event.preventDefault();doForgotPassword()" style="font-size:.78rem;color:var(--accent)">Forgot password?</a>
+          <span id="am-pw-hint" style="display:none;font-size:.75rem;color:var(--text-muted)">At least 6 characters</span>
+        </div>
+        <button type="submit" id="am-submit" class="btn btn-primary" style="width:100%;justify-content:center">Log in</button>
+      </form>
+
+      <p style="text-align:center;font-size:.83rem;color:var(--text-muted);margin-top:1.1rem">
+        <span id="am-switch-text">New here?</span>
+        <a href="#" id="am-switch-link" onclick="event.preventDefault();setAuthMode(_authMode==='login'?'signup':'login')" style="color:var(--accent);font-weight:600">Create an account</a>
+      </p>
     </div>
 
 
+
     </div>
+  </div>
+</div>
+
+<!-- ===== SET A NEW PASSWORD (opened by the password-reset email link) ===== -->
+<div id="pw-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1300;backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:1rem">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;width:100%;max-width:400px">
+    <h3 style="font-family:'Fraunces',serif;font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:.35rem">Set a new password</h3>
+    <p style="font-size:.83rem;color:var(--text-muted);margin-bottom:1.2rem">Choose a new password for your account.</p>
+    <div id="pw-error" style="display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:var(--radius-sm);padding:.65rem 1rem;font-size:.83rem;color:#EF4444;margin-bottom:1rem"></div>
+    <form onsubmit="event.preventDefault();doSetNewPassword()" novalidate>
+      <input id="pw-new" type="password" class="form-input" placeholder="New password (at least 6 characters)" autocomplete="new-password" style="width:100%;margin-bottom:.7rem"/>
+      <input id="pw-confirm" type="password" class="form-input" placeholder="Confirm new password" autocomplete="new-password" style="width:100%;margin-bottom:1rem"/>
+      <div style="display:flex;gap:.7rem">
+        <button type="button" class="btn btn-outline" onclick="closePasswordModal()" style="flex:1;justify-content:center">Not now</button>
+        <button type="submit" id="pw-submit" class="btn btn-primary" style="flex:2;justify-content:center">Save password</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -3718,6 +3760,8 @@ document.addEventListener('click', e => {
 // Where the login window was opened from ('checkout' when someone clicked a
 // buy button without being signed in, otherwise '').
 let _loginContext = '';
+// 'login' or 'signup' — which form the email section of the login window shows.
+let _authMode = 'login';
 
 function openLoginModal(context) {
   _loginContext = context || '';
@@ -3726,7 +3770,9 @@ function openLoginModal(context) {
   if (_loginContext !== 'checkout') BuyNow.clear();
   const modal = document.getElementById('auth-modal');
   modal.style.display = 'flex';
-  document.getElementById('am-error').style.display = 'none';
+  document.getElementById('am-email').value = '';
+  document.getElementById('am-password').value = '';
+  setAuthMode('login');
   const banner = document.getElementById('am-checkout-note');
   if (banner) banner.style.display = _loginContext === 'checkout' ? 'flex' : 'none';
 }
@@ -3739,15 +3785,129 @@ function dismissLoginModal() {
   closeLoginModal();
   BuyNow.clear();
 }
-function showAuthModalError(msg) { const e = document.getElementById('am-error'); e.textContent = msg; e.style.display = 'block'; }
+function showAuthModalError(msg) {
+  const n = document.getElementById('am-notice'); if (n) n.style.display = 'none';
+  const e = document.getElementById('am-error'); e.textContent = msg; e.style.display = 'block';
+}
+function showAuthNotice(msg) {
+  document.getElementById('am-error').style.display = 'none';
+  const n = document.getElementById('am-notice'); n.textContent = msg; n.style.display = 'block';
+}
+function clearAuthMessages() {
+  document.getElementById('am-error').style.display = 'none';
+  document.getElementById('am-notice').style.display = 'none';
+}
 
-// Sign-in is a full-page redirect to Google and back (Supabase's OAuth flow
-// has no popup mode), so this click handler never gets a normal result — the
-// page navigates away. What happens on the way back is handled by the
-// 'google-redirect-result' listener below. New accounts are created
+// Switch the email section between "Log in" and "Create account".
+function setAuthMode(mode) {
+  _authMode = mode === 'signup' ? 'signup' : 'login';
+  const signup = _authMode === 'signup';
+  document.getElementById('am-title').textContent = signup ? 'Create your account' : 'Welcome back';
+  document.getElementById('am-sub').textContent = signup ? 'Just an email and a password — nothing else' : 'Log in to continue';
+  document.getElementById('am-submit').textContent = signup ? 'Create account' : 'Log in';
+  document.getElementById('am-forgot').style.display = signup ? 'none' : '';
+  document.getElementById('am-pw-hint').style.display = signup ? '' : 'none';
+  document.getElementById('am-password').autocomplete = signup ? 'new-password' : 'current-password';
+  document.getElementById('am-switch-text').textContent = signup ? 'Already have an account?' : 'New here?';
+  document.getElementById('am-switch-link').textContent = signup ? 'Log in' : 'Create an account';
+  clearAuthMessages();
+}
+
+function toggleAmPassword() {
+  const input = document.getElementById('am-password');
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  document.querySelector('#am-pw-toggle i').className = show ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+  document.getElementById('am-pw-toggle').setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+}
+
+// Email + password: log in, or create an account (email and password only).
+async function doEmailAuth() {
+  const email    = document.getElementById('am-email').value.trim();
+  const password = document.getElementById('am-password').value;
+  const signup   = _authMode === 'signup';
+  clearAuthMessages();
+
+  if (!email || !password) { showAuthModalError('Enter your email and password.'); return; }
+  if (!/^\S+@\S+\.\S+$/.test(email)) { showAuthModalError('Enter a valid email address.'); return; }
+  if (signup && password.length < 6) { showAuthModalError('Password must be at least 6 characters.'); return; }
+
+  const btn = document.getElementById('am-submit');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Please wait...';
+  const r = signup ? await UserAuth.register(email, password) : await UserAuth.login(email, password);
+  btn.disabled = false;
+  btn.textContent = signup ? 'Create account' : 'Log in';
+
+  if (r.error) { showAuthModalError(r.error); return; }
+  if (r.notice) {
+    // Account created, but the project wants the email confirmed first.
+    setAuthMode('login');
+    document.getElementById('am-password').value = '';
+    showAuthNotice(r.notice);
+    return;
+  }
+
+  // Signed in. If they were about to buy something, carry on to checkout.
+  const resume = _loginContext === 'checkout' && BuyNow.get();
+  document.getElementById('am-password').value = '';
+  closeLoginModal(); initUserAuth();
+  showToast((signup ? 'Welcome, ' : 'Welcome back, ') + r.user.name + '! 👋');
+  if (resume) setTimeout(() => openCheckout(), 250);
+}
+
+// "Forgot password?" — emails a reset link to the address typed above.
+async function doForgotPassword() {
+  clearAuthMessages();
+  const email = document.getElementById('am-email').value.trim();
+  if (!email) { showAuthModalError('Type your email address above first, then click "Forgot password?".'); return; }
+  try {
+    await UserAuth.sendPasswordResetTo(email);
+    showAuthNotice('If an account exists for ' + email + ', we\'ve emailed you a link to reset the password.');
+  } catch (e) {
+    showAuthModalError(e.message || 'Could not send the reset email. Please try again.');
+  }
+}
+
+// ── "Set a new password" (the page the reset email link lands on) ──
+function openPasswordModal() {
+  document.getElementById('pw-new').value = '';
+  document.getElementById('pw-confirm').value = '';
+  document.getElementById('pw-error').style.display = 'none';
+  document.getElementById('pw-modal').style.display = 'flex';
+}
+function closePasswordModal() {
+  document.getElementById('pw-modal').style.display = 'none';
+}
+async function doSetNewPassword() {
+  const pw = document.getElementById('pw-new').value;
+  const confirmPw = document.getElementById('pw-confirm').value;
+  const err = document.getElementById('pw-error');
+  err.style.display = 'none';
+  if (pw.length < 6) { err.textContent = 'Password must be at least 6 characters.'; err.style.display = 'block'; return; }
+  if (pw !== confirmPw) { err.textContent = 'The two passwords don\'t match.'; err.style.display = 'block'; return; }
+  const btn = document.getElementById('pw-submit');
+  btn.disabled = true;
+  try {
+    await UserAuth.setNewPassword(pw);
+    closePasswordModal();
+    showToast('Password updated ✓');
+  } catch (e) {
+    err.textContent = e.message || 'Could not update the password. Please try again.';
+    err.style.display = 'block';
+  }
+  btn.disabled = false;
+}
+// Fired by supabase.js when someone arrives via the password-reset email link.
+window.addEventListener('password-recovery', () => { closeLoginModal(); openPasswordModal(); });
+
+// Sign-in with Google is a full-page redirect to Google and back (Supabase's
+// OAuth flow has no popup mode), so this click handler never gets a normal
+// result — the page navigates away. What happens on the way back is handled
+// by the 'google-redirect-result' listener below. New accounts are created
 // automatically on that return trip; there are no extra questions to answer.
 async function doGoogleSignIn() {
-  document.getElementById('am-error').style.display = 'none';
+  clearAuthMessages();
   // If they were about to buy something, park it so checkout can reopen after sign-in.
   if (_loginContext === 'checkout') BuyNow.remember();
   const r = await UserAuth.loginWithGoogle();
@@ -4681,8 +4841,11 @@ function acctRenderOrdersList() {
 
 function acctRenderSettings(c) {
   const u = UserAuth.current();
-  const provider = (_auth.currentUser && _auth.currentUser.app_metadata && _auth.currentUser.app_metadata.provider) || 'email';
-  const hasPassword = provider !== 'google'; // Google accounts start with no password set
+  const meta = (_auth.currentUser && _auth.currentUser.app_metadata) || {};
+  // Google accounts start with no password; one set later shows up as an extra 'email' provider.
+  const hasPassword = Array.isArray(meta.providers) && meta.providers.length
+    ? meta.providers.includes('email')
+    : (meta.provider || 'email') !== 'google';
   c.innerHTML = `
     <div class="acct-hdr"><h2>Settings</h2><p>Manage your account.</p></div>
     <div class="acct-card">
