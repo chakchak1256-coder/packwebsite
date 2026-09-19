@@ -174,7 +174,7 @@ async function slickpayRequest(env, path, { method = 'GET', body } = {}) {
 const SLICKPAY_GATEWAY_FEE_DA_FALLBACK = 40;
 
 const SlickPay = {
-  async createInvoice(env, { amount, items, firstname, lastname, email, phone, address, returnUrl, webhookUrl, webhookSignature, webhookMetaData, fees = 100 }) {
+  async createInvoice(env, { amount, items, firstname, lastname, email, address, returnUrl, webhookUrl, webhookSignature, webhookMetaData, fees = 100 }) {
     const payload = {
       amount,
       items,
@@ -183,7 +183,6 @@ const SlickPay = {
       firstname,
       lastname,
       email,
-      phone,
       address,
     };
     if (env.SLICKPAY_ACCOUNT) payload.account = env.SLICKPAY_ACCOUNT;
@@ -404,7 +403,7 @@ const Docs = {
     params.set('limit', String(limit));
     for (const [field, value] of fieldFilters) {
       // ->> compares the JSON value as text. Every field this app filters
-      // by (userId, productId, status, phone, name, variantLabel,
+      // by (userId, productId, status, variantLabel,
       // invoiceId) is stored and compared as a string, so this matches
       // Firestore's EQUAL semantics for these fields exactly. `null`
       // needs `is.null` instead of `eq.` (Postgres, unlike `=`, treats
@@ -655,7 +654,6 @@ async function deliverOrder(env, order) {
       accessData,
       proofImages:   [],
       customerName:  `${order.firstname || ''} ${order.lastname || ''}`.trim(),
-      customerPhone: order.phone || '',
       customerEmail: order.userEmail || order.email || '',
       paymentMethod: 'slickpay',
       orderNotes:    '',
@@ -1019,7 +1017,7 @@ export default {
     // ============================================================
     // ROUTE: POST /api/checkout
     // Creates a SlickPay invoice and returns { order_id, payment_url, amount }
-    // Body: { product_id, product_name, amount, firstname, lastname, email, phone }
+    // Body: { items | product_id, firstname, lastname, email, user_id, user_email }
     // ============================================================
     if (path === '/api/checkout' && method === 'POST') {
       try {
@@ -1031,7 +1029,7 @@ export default {
         try { body = await request.json(); } catch { return json({ error: 'Invalid JSON body.' }, 400); }
 
         const {
-          product_id, product_name, firstname, lastname, email, phone, address,
+          product_id, product_name, firstname, lastname, email, address,
           items: rawItems, user_id, user_email,
         } = body || {};
         // NOTE: a client-supplied `amount` field, if present in the request body,
@@ -1040,8 +1038,8 @@ export default {
         // total, or anyone can pay whatever they want for a product.
         const safeAddress = (address && address.trim().length >= 5) ? address.trim() : 'Algérie - Livraison numérique';
 
-        if (!firstname || !lastname || (!email && !phone)) {
-          return json({ error: 'Missing required fields: firstname, lastname, and email or phone.' }, 400);
+        if (!firstname || !lastname || !email) {
+          return json({ error: 'Missing required fields: firstname, lastname and email.' }, 400);
         }
 
         // Build a normalized items list whether the client sent a full cart
@@ -1109,8 +1107,7 @@ export default {
             ],
             firstname,
             lastname,
-            email: email || undefined,
-            phone: phone || undefined,
+            email,
             address: safeAddress,
             returnUrl,
             webhookUrl:       env.SLICKPAY_WEBHOOK_URL || undefined,
@@ -1159,7 +1156,6 @@ export default {
             firstname,
             lastname,
             email:        email        || '',
-            phone:        phone        || '',
             address:      safeAddress,
             status:       'pending',
             paymentUrl,
@@ -1334,7 +1330,6 @@ export default {
           accessData,
           proofImages:   [],
           customerName:  profile.name || '',
-          customerPhone: profile.phone || '',
           customerEmail: auth.email || profile.email || '',
           paymentMethod: 'free',
           orderNotes:    '',
@@ -1442,15 +1437,17 @@ export default {
       }
     }
 
+    // ============================================================
     // ROUTE: POST /api/complete-google-registration
-    // Finishes a Google sign-up (username + phone) server-side, using the
-    // service-role key, instead of the client SDK writing directly. The
-    // duplicate username/phone checks need to scan the whole `users`
-    // collection, which the anon key's RLS policies deliberately don't
-    // allow (only your own user doc, or the admin) — routing this through
-    // the Worker's service-role key bypasses that restriction safely,
-    // since the checks themselves are what keep it safe (same pattern as
-    // /api/claim-free, /api/delete-user, etc).
+    // Creates the `users` row for a brand-new Google sign-in — called once,
+    // automatically, by supabase.js the first time an account signs in. No
+    // username or phone number is collected: the name comes from the Google
+    // profile (or falls back to the email address).
+    //
+    // It's done here, server-side with the service-role key, instead of the
+    // browser writing the row itself — same pattern as /api/claim-free,
+    // /api/delete-user, etc. The identity comes from the verified session
+    // token (requireUserAuth), never from the request body.
     // ============================================================
     if (path === '/api/complete-google-registration' && method === 'POST') {
       const auth = await requireUserAuth(request, env);
@@ -1463,72 +1460,32 @@ export default {
           return json({ error: 'This Google account is not available for sign-in. Please use a different account.' }, 403);
         }
 
-        let body;
-        try { body = await request.json(); } catch { return json({ error: 'Invalid JSON body.' }, 400); }
+        let body = {};
+        try { body = await request.json(); } catch { /* body is optional */ }
 
-        const username = (body.username || '').toString().trim().slice(0, 60);
-        const phone    = (body.phone || '').toString().trim().slice(0, 20);
         const photoURL = (body.photoURL || '').toString().trim().slice(0, 500);
-        const checkUsername = body.checkUsername !== false; // default true (Google flow); email/password signup passes false to preserve its original behavior of allowing duplicate display names
-        if (!username) return json({ error: 'Please enter a username.' }, 400);
-        if (!phone)    return json({ error: 'Please enter a phone number.' }, 400);
-
-        // Duplicate checks — run server-side with the service account, so
-        // they always work regardless of client Firestore rules.
-        if (checkUsername) {
-          const nameMatches = await Docs.queryCollection(env, 'users', [['name', username]], 2);
-          if (nameMatches.some(u => u.id !== auth.uid)) {
-            return json({ error: 'This username is already taken. Please choose another one.' }, 409);
-          }
-        }
-        const phoneMatches = await Docs.queryCollection(env, 'users', [['phone', phone]], 2);
-        if (phoneMatches.some(u => u.id !== auth.uid)) {
-          return json({ error: 'This phone number is already linked to another account.' }, 409);
-        }
+        const existing = await Docs.getDoc(env, 'users', auth.uid);
+        const fallbackName = (auth.email || '').split('@')[0] || 'Customer';
+        // Never overwrite a name that's already on file with the Google one.
+        const name = (existing && existing.name)
+          || (body.name || '').toString().trim().slice(0, 60)
+          || fallbackName;
 
         const now = new Date().toISOString();
-        const existing = await Docs.getDoc(env, 'users', auth.uid);
         const userDoc = {
           id: auth.uid,
           email: auth.email || '',
-          name: username,
-          phone,
+          name,
           photoURL: photoURL || (existing && existing.photoURL) || '',
           createdAt: (existing && existing.createdAt) || now,
           lastLogin: now,
         };
         await Docs.setDoc(env, 'users', auth.uid, userDoc);
 
-        return json({ ok: true, user: { id: auth.uid, email: userDoc.email, name: userDoc.name, phone: userDoc.phone } });
+        return json({ ok: true, user: { id: auth.uid, email: userDoc.email, name: userDoc.name } });
 
       } catch (err) {
         console.error('[complete-google-registration] error:', err.message);
-        return json({ error: 'Internal server error.' }, 500);
-      }
-    }
-
-    // ============================================================
-    // ROUTE: POST /api/rollback-registration
-    // Self-service account deletion, used ONLY by supabase.js's
-    // register() when the account it just created (via Supabase Auth's
-    // signUp()) turns out to have a duplicate phone number and the
-    // signup needs to be rolled back so the email address is free to
-    // retry with. The Supabase browser SDK has no "delete my own
-    // account" method (only the service-role key can delete accounts),
-    // so this route exists purely to let a user delete THEMSELVES —
-    // requireUserAuth() below proves the caller's token really does
-    // belong to the account being deleted; there is no `uid` parameter
-    // to trust from the request body.
-    // ============================================================
-    if (path === '/api/rollback-registration' && method === 'POST') {
-      const auth = await requireUserAuth(request, env);
-      if (!auth.ok) return json({ error: auth.error }, auth.status);
-      try {
-        await Docs.deleteDoc(env, 'users', auth.uid).catch(() => {});
-        await deleteSupabaseAuthUser(env, auth.uid);
-        return json({ ok: true });
-      } catch (err) {
-        console.error('[rollback-registration] error:', err.message);
         return json({ error: 'Internal server error.' }, 500);
       }
     }
