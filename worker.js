@@ -1438,26 +1438,27 @@ export default {
     }
 
     // ============================================================
-    // ROUTE: POST /api/complete-google-registration
-    // Creates the `users` row for a brand-new Google sign-in — called once,
-    // automatically, by supabase.js the first time an account signs in. No
-    // username or phone number is collected: the name comes from the Google
-    // profile (or falls back to the email address).
+    // ROUTE: POST /api/register-user
+    // Creates the `users` row for a brand-new account — Google OR email +
+    // password. Called once, automatically, by supabase.js the first time an
+    // account signs in. No username or phone number is collected: the name
+    // comes from the Google profile if there is one, otherwise from the part
+    // of the email before the @.
     //
     // It's done here, server-side with the service-role key, instead of the
     // browser writing the row itself — same pattern as /api/claim-free,
     // /api/delete-user, etc. The identity comes from the verified session
     // token (requireUserAuth), never from the request body.
     // ============================================================
-    if (path === '/api/complete-google-registration' && method === 'POST') {
+    if (path === '/api/register-user' && method === 'POST') {
       const auth = await requireUserAuth(request, env);
       if (!auth.ok) return json({ error: auth.error }, auth.status);
       try {
         // The admin account must only ever be reached via admin.html's
         // dedicated email+password login — never through this public
-        // signup route, no matter which Google session authenticated it.
+        // signup route, no matter which session authenticated it.
         if (env.ADMIN_EMAIL && (auth.email || '').toLowerCase() === env.ADMIN_EMAIL.toLowerCase()) {
-          return json({ error: 'This Google account is not available for sign-in. Please use a different account.' }, 403);
+          return json({ error: 'This account is not available for sign-in.' }, 403);
         }
 
         let body = {};
@@ -1485,7 +1486,7 @@ export default {
         return json({ ok: true, user: { id: auth.uid, email: userDoc.email, name: userDoc.name } });
 
       } catch (err) {
-        console.error('[complete-google-registration] error:', err.message);
+        console.error('[register-user] error:', err.message);
         return json({ error: 'Internal server error.' }, 500);
       }
     }
