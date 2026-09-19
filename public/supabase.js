@@ -860,6 +860,70 @@ const UserAuth = {
 UserAuth.init();
 
 // ================================================================
+// DEVICE TRACKER — which browsers/devices an account is used from
+// ================================================================
+// Each browser keeps a random ID in localStorage. After a customer is signed
+// in it tells the Worker "this account is being used from device X"
+// (at most once every 6 hours per account), and the Worker stores it with the
+// IP and rough location Cloudflare sees. The admin's Members page turns that
+// into a device count per account — a way to spot one login being shared.
+//
+// It's an estimate, not an exact head-count: clearing site data, a private
+// window, or a second browser on the same computer each look like a new
+// device; and only sign-ins from this version onwards are counted.
+const DeviceTracker = {
+  _ID_KEY: 'dz_device_id',
+  _EVERY_MS: 6 * 60 * 60 * 1000,
+
+  id() {
+    try {
+      let v = localStorage.getItem(this._ID_KEY);
+      if (!v || !/^[A-Za-z0-9-]{16,64}$/.test(v)) {
+        v = (window.crypto && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : 'd' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12) + Math.random().toString(36).slice(2, 12);
+        localStorage.setItem(this._ID_KEY, v);
+      }
+      return v;
+    } catch (e) { return null; }
+  },
+
+  async ping() {
+    if (window.__IS_ADMIN) return;
+    const user = UserAuth.current();
+    if (!user) return;
+    const deviceId = this.id();
+    const backendUrl = (window.DIGISTORE_BACKEND_URL || '').replace(/\/+$/, '');
+    if (!deviceId || !backendUrl) return;
+
+    const stampKey = 'dz_device_ping_' + user.id;
+    try {
+      if (Date.now() - Number(localStorage.getItem(stampKey) || 0) < this._EVERY_MS) return;
+      localStorage.setItem(stampKey, String(Date.now())); // set first so simultaneous calls don't double-send
+    } catch (e) {}
+
+    try {
+      const { data } = await _client.auth.getSession();
+      const token = data && data.session && data.session.access_token;
+      if (!token) { try { localStorage.removeItem(stampKey); } catch (e) {} return; }
+      const res = await fetch(`${backendUrl}/api/device-ping`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ deviceId }),
+      });
+      if (!res.ok) { try { localStorage.removeItem(stampKey); } catch (e) {} }
+    } catch (e) {
+      try { localStorage.removeItem(stampKey); } catch (e2) {} // try again next time
+    }
+  },
+};
+// Detached with a timeout: never call other Supabase methods from inside the
+// auth-change callback itself (see UserAuth._handleAuthChange).
+window.addEventListener('auth:change', () => {
+  if (UserAuth.current()) setTimeout(() => DeviceTracker.ping(), 2000);
+});
+
+// ================================================================
 // PURCHASES — collection: purchases
 // ================================================================
 const Purchases = {
@@ -1249,6 +1313,28 @@ const AdminUsers = {
     }
   },
 
+  // Gives a member a product without them paying (server-side — see
+  // POST /api/admin/grant-product in worker.js). Resolves
+  // { ok, alreadyOwned?, purchase } or { error }.
+  async grantProduct(userId, productId, variantLabel, note) {
+    const idToken = await Auth.getIdToken();
+    if (!idToken) return { error: 'Not authenticated as admin.' };
+    const backendUrl = (window.DIGISTORE_BACKEND_URL || '').replace(/\/+$/, '');
+    if (!backendUrl) return { error: 'DIGISTORE_BACKEND_URL is not configured.' };
+    try {
+      const res = await fetch(`${backendUrl}/api/admin/grant-product`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
+        body: JSON.stringify({ userId, productId, variantLabel: variantLabel || null, note: note || '' }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return { error: data.error || 'Could not give the product.' };
+      return data;
+    } catch (e) {
+      return { error: e.message };
+    }
+  },
+
   async remove(uid) {
     const idToken = await Auth.getIdToken();
     if (!idToken) return { error: 'Not authenticated as admin.' };
@@ -1266,6 +1352,43 @@ const AdminUsers = {
     } catch (e) {
       return { error: e.message };
     }
+  },
+};
+
+// ================================================================
+// ADMIN DEVICES — how many devices each account is used from
+// ================================================================
+const AdminDevices = {
+  // Every account's devices (most recently seen first), or one account's.
+  async list(uid) {
+    try {
+      const idToken = await Auth.getIdToken();
+      const backendUrl = (window.DIGISTORE_BACKEND_URL || '').replace(/\/+$/, '');
+      if (!idToken || !backendUrl) return [];
+      const res = await fetch(`${backendUrl}/api/admin/user-devices` + (uid ? `?uid=${encodeURIComponent(uid)}` : ''), {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { console.error('[AdminDevices] list failed:', data.error || res.status); return []; }
+      return data.devices || [];
+    } catch (e) { console.error('[AdminDevices] list failed:', e.message); return []; }
+  },
+
+  // Forget an account's device history so the count starts again from zero.
+  async clear(uid) {
+    const idToken = await Auth.getIdToken();
+    const backendUrl = (window.DIGISTORE_BACKEND_URL || '').replace(/\/+$/, '');
+    if (!idToken || !backendUrl) return { error: 'Not authenticated as admin.' };
+    try {
+      const res = await fetch(`${backendUrl}/api/admin/clear-devices`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + idToken },
+        body: JSON.stringify({ uid }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return { error: data.error || 'Could not clear the device history.' };
+      return { ok: true, removed: data.removed || 0 };
+    } catch (e) { return { error: e.message }; }
   },
 };
 

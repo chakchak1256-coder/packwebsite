@@ -364,7 +364,7 @@ async function seedAll() {
   if (savedProducts.manual) {
     await step('Create pending order (manual fulfillment)', async () => {
       const doc = await Purchases.add('seed-user-manual', 'seed.pending@example.com', savedProducts.manual, {
-        customerName: 'Seed Test Buyer', customerPhone: '0550000000', customerEmail: 'seed.pending@example.com',
+        customerName: 'Seed Test Buyer', customerEmail: 'seed.pending@example.com',
         paymentMethod: 'CCP', orderNotes: 'Seed order — should appear as pending in the admin Orders panel.', orderId: 'SEED-PENDING-001',
       });
       await DB.update('purchases', doc.id, { _seed: SEED_TAG });

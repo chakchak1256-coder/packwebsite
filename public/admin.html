@@ -432,6 +432,18 @@ select.form-input option{background:var(--bg2)}
 .modal-title{font-size:1rem;font-weight:700;margin-bottom:1.3rem;color:var(--text)}
 .modal-actions{display:flex;gap:.65rem;justify-content:flex-end;margin-top:1.3rem}
 
+/* MEMBER MANAGER (Members page) */
+.mm-section{margin-top:1.4rem;padding-top:1.2rem;border-top:1px solid var(--border)}
+.mm-section:first-of-type{margin-top:.6rem;padding-top:0;border-top:none}
+.mm-h{font-size:.86rem;font-weight:700;color:var(--text);margin-bottom:.35rem;display:flex;align-items:center;gap:.45rem}
+.mm-help{font-size:.78rem;color:var(--text-muted);margin-bottom:.8rem;line-height:1.55}
+.mm-alert{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#EF4444;border-radius:var(--radius-sm);padding:.6rem .9rem;font-size:.8rem;margin-bottom:.8rem}
+.mm-row{display:flex;align-items:center;gap:.7rem;padding:.6rem .8rem;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);margin-bottom:.45rem}
+.mm-row .grow{flex:1;min-width:0}
+.mm-row .nm{font-size:.86rem;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mm-row .sub{font-size:.74rem;color:var(--text-muted)}
+.mm-flag{display:inline-flex;align-items:center;gap:.3rem}
+
 /* DELIVER TYPE BUTTONS */
 .deliver-type-btn{
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;
@@ -858,10 +870,23 @@ select.form-input option{background:var(--bg2)}
       <div class="panel" id="panel-users">
         <div class="sec-header"><span class="sec-title">Registered Users <span id="users-count" style="font-size:.8rem;color:var(--text-muted)"></span></span></div>
         <div class="pur-filters-bar">
-          <input class="form-input" id="users-search" style="flex:1;min-width:180px;max-width:300px" placeholder="Search by name or email..." oninput="renderUsersAdmin()"/>
+          <input class="form-input" id="users-search" style="flex:1;min-width:180px;max-width:300px" placeholder="Search by name or email..." oninput="renderUsersTable()"/>
+          <label style="display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--text-muted)">
+            Flag accounts on
+            <input class="form-input" id="users-dev-threshold" type="number" min="2" max="50" value="3" style="width:66px" onchange="saveDeviceThreshold()"/>
+            or more devices
+          </label>
+          <label style="display:flex;align-items:center;gap:.4rem;font-size:.8rem;color:var(--text-muted);cursor:pointer">
+            <input type="checkbox" id="users-only-flagged" onchange="renderUsersTable()"/> Only flagged
+          </label>
         </div>
+        <p style="color:var(--text-muted);font-size:.8rem;margin-bottom:1rem;max-width:760px;line-height:1.55">
+          <strong>Devices</strong> = different browsers/devices that signed in to the account in the last 30 days — a way to spot one account being shared.
+          It's an estimate: private windows, cleared site data and a second browser each count as another device, and only activity since this feature went live is counted.
+          Click <strong>Manage</strong> on a member to see their devices, give them a product, or see what they own.
+        </p>
         <div class="table-wrap">
-          <table><thead><tr><th>Name</th><th>Email</th><th>Registered</th><th>Last Login</th><th>Purchases</th><th>Actions</th></tr></thead><tbody id="users-tbody"></tbody></table>
+          <table><thead><tr><th>Name</th><th>Email</th><th>Registered</th><th>Last Login</th><th>Purchases</th><th>Devices</th><th>Actions</th></tr></thead><tbody id="users-tbody"></tbody></table>
         </div>
       </div>
 
@@ -1107,6 +1132,39 @@ select.form-input option{background:var(--bg2)}
       <button class="btn btn-outline" onclick="closePurchaseModal()">Cancel</button>
       <button class="btn btn-primary" onclick="savePurchase()"><i class="fa-solid fa-check"></i> Save Purchase</button>
     </div>
+  </div>
+</div>
+
+<!-- Member manager (Members page → Manage) -->
+<div class="modal-overlay" id="member-modal" onclick="if(event.target===this)closeMemberModal()">
+  <div class="modal-box" style="max-width:780px;max-height:92vh;overflow-y:auto;position:relative">
+    <button onclick="closeMemberModal()" aria-label="Close" style="position:absolute;top:1rem;right:1rem;width:30px;height:30px;border-radius:50%;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted)"><i class="fa-solid fa-xmark"></i></button>
+    <h3 class="modal-title" id="mm-title" style="margin-bottom:.2rem">Member</h3>
+    <div id="mm-sub" style="font-size:.8rem;color:var(--text-muted);margin-bottom:1rem"></div>
+
+    <div class="mm-section" id="mm-devices"></div>
+
+    <div class="mm-section">
+      <div class="mm-h"><i class="fa-solid fa-gift" style="color:var(--accent)"></i> Give a product</div>
+      <div class="mm-help">Adds the product to this member's My Library without a payment — they get exactly what a buyer gets (access link, files or course content).</div>
+      <div class="form-grid" style="grid-template-columns:1fr">
+        <div class="form-group">
+          <label class="form-label">Product</label>
+          <select class="form-input" id="mm-product" onchange="mmProductChanged()"><option value="">Choose a course or pack…</option></select>
+        </div>
+        <div id="mm-options"></div>
+        <div class="form-group">
+          <label class="form-label">Note <span style="font-weight:400;opacity:.6">(optional — only you see it)</span></label>
+          <input class="form-input" id="mm-note" maxlength="300" placeholder="e.g. Contest winner, replacement for a refund…"/>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.8rem;margin-top:.9rem;flex-wrap:wrap">
+        <button class="btn btn-primary" id="mm-give-btn" onclick="mmGiveProduct()"><i class="fa-solid fa-gift"></i> Give product</button>
+        <span id="mm-give-msg" style="font-size:.8rem;color:var(--text-muted)"></span>
+      </div>
+    </div>
+
+    <div class="mm-section" id="mm-owned"></div>
   </div>
 </div>
 
@@ -1381,7 +1439,8 @@ function renderAnalyticsTable() {
   };
   const viewCounts = countBy(_anEvents, e => e.type === 'view');
   const cartCounts = countBy(_anEvents, e => e.type === 'cart');
-  const buyCounts  = countBy(_anPurchases, () => true);
+  // Products the admin gave away aren't sales — keep them out of the funnel.
+  const buyCounts  = countBy(_anPurchases, p => p.paymentMethod !== 'admin_grant');
 
   const rows = prods.map(p => {
     const v = viewCounts[p.id]||0, c = cartCounts[p.id]||0, b = buyCounts[p.id]||0;
@@ -2409,7 +2468,7 @@ function _renderPurchasesTable(all) {
     const sc = statusCfg[orderStatus] || statusCfg.pending;
     const statusBadge = `<span class="status-badge ${sc.cls}" ${sc.extra?`style="${sc.extra}"`:''}><i class="fa-solid ${sc.icon}" style="font-size:.63rem"></i> ${sc.label}</span>`;
 
-    const pmLabel = first.paymentMethod === 'eddahabia' ? '🏧 EDDAHABIA' : first.paymentMethod === 'cib' ? '💳 CIB / EDAHABIA' : first.paymentMethod === 'baridimob' ? '🏦 BaridiMob' : (first.paymentMethod||'');
+    const pmLabel = first.paymentMethod === 'eddahabia' ? '🏧 EDDAHABIA' : first.paymentMethod === 'cib' ? '💳 CIB / EDAHABIA' : first.paymentMethod === 'baridimob' ? '🏦 BaridiMob' : first.paymentMethod === 'admin_grant' ? '🎁 Gift from admin' : (first.paymentMethod||'');
     const pmBadge = pmLabel ? `<span class="status-badge" style="background:rgba(59,130,246,.08);color:#60A5FA;border:1px solid rgba(59,130,246,.2)">${pmLabel}</span>` : '';
     const itemsCountBadge = items.length > 1 ? `<span class="status-badge" style="background:rgba(var(--accent-rgb),.08);color:var(--accent);border:1px solid rgba(var(--accent-rgb),.2)">${items.length} items</span>` : '';
 
@@ -2634,30 +2693,70 @@ function _fmtUserDate(ts) {
 }
 
 let _adminAllUsers = [];
+let _adminUserPurchases = [];
+let _adminDevicesByUser = {};   // uid -> [device docs]
+const DEVICE_ACTIVE_DAYS = 30;
 
+function _deviceThreshold() {
+  const n = parseInt(localStorage.getItem('dz_admin_device_threshold') || '3', 10);
+  return Number.isFinite(n) && n >= 2 ? n : 3;
+}
+function saveDeviceThreshold() {
+  const el = document.getElementById('users-dev-threshold');
+  let n = parseInt(el.value, 10);
+  if (!Number.isFinite(n) || n < 2) n = 2;
+  if (n > 50) n = 50;
+  el.value = n;
+  try { localStorage.setItem('dz_admin_device_threshold', String(n)); } catch (e) {}
+  renderUsersTable();
+}
+function _isActiveDevice(d) {
+  const t = new Date(d.lastSeen || 0).getTime();
+  return t && (Date.now() - t) <= DEVICE_ACTIVE_DAYS * 86400000;
+}
+function _activeDevices(uid) { return (_adminDevicesByUser[uid] || []).filter(_isActiveDevice); }
+
+// Loads everything the Members page needs, then draws it.
 async function renderUsersAdmin() {
-  _adminAllUsers = await AdminUsers.list();
-  const purchases = await Purchases.getAll();
-  const q = (document.getElementById('users-search')?.value || '').trim().toLowerCase();
+  const thr = document.getElementById('users-dev-threshold');
+  if (thr) thr.value = _deviceThreshold();
+  const [users, purchases, devices] = await Promise.all([
+    AdminUsers.list(), Purchases.getAll(), AdminDevices.list(),
+  ]);
+  _adminAllUsers = users;
+  _adminUserPurchases = purchases;
+  _adminDevicesByUser = {};
+  devices.forEach(d => { if (d.uid) (_adminDevicesByUser[d.uid] = _adminDevicesByUser[d.uid] || []).push(d); });
+  renderUsersTable();
+}
 
-  const users = !q ? _adminAllUsers : _adminAllUsers.filter(u =>
+// Redraws the table from what's already loaded (used by search / filters, so
+// typing doesn't re-download everything on every keystroke).
+function renderUsersTable() {
+  const purchases = _adminUserPurchases;
+  const q = (document.getElementById('users-search')?.value || '').trim().toLowerCase();
+  const onlyFlagged = !!document.getElementById('users-only-flagged')?.checked;
+  const threshold = _deviceThreshold();
+
+  let users = !q ? _adminAllUsers.slice() : _adminAllUsers.filter(u =>
     (u.name||'').toLowerCase().includes(q) ||
     (u.email||'').toLowerCase().includes(q)
   );
+  if (onlyFlagged) users = users.filter(u => _activeDevices(u.id).length >= threshold);
 
   // Most recently active first — users who never logged in (or predate
   // lastLogin tracking) sort to the bottom.
   users.sort((a, b) => (_userTsToDate(b.lastLogin)?.getTime()||0) - (_userTsToDate(a.lastLogin)?.getTime()||0));
 
   const count = document.getElementById('users-count');
-  if (count) count.textContent = `(${users.length}${q ? ` of ${_adminAllUsers.length}` : ''})`;
+  if (count) count.textContent = `(${users.length}${(q || onlyFlagged) ? ` of ${_adminAllUsers.length}` : ''})`;
   const tbody = document.getElementById('users-tbody');
   if (!_adminAllUsers.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state" style="border:none;padding:2rem"><i class="fa-solid fa-users" style="font-size:2rem;opacity:.2;margin-bottom:.5rem;display:block"></i><p>No registered users yet.</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state" style="border:none;padding:2rem"><i class="fa-solid fa-users" style="font-size:2rem;opacity:.2;margin-bottom:.5rem;display:block"></i><p>No registered users yet.</p></div></td></tr>`;
     return;
   }
   if (!users.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state" style="border:none;padding:2rem"><p>No users match "${escapeHtml(q)}".</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state" style="border:none;padding:2rem"><p>${onlyFlagged && !q ? `No accounts are on ${threshold} or more devices.` : `No users match "${escapeHtml(q)}".`}</p></div></td></tr>`;
     return;
   }
   tbody.innerHTML = '';
@@ -2665,14 +2764,201 @@ async function renderUsersAdmin() {
     const tr = document.createElement('tr');
     const userPurchases = purchases.filter(p => p.userId === u.id).length;
     const safeName = escapeHtml(u.name || '—');
+    const active = _activeDevices(u.id).length;
+    const flagged = active >= threshold;
+    const devCell = active
+      ? `<span class="status-badge ${flagged ? 'status-cancel' : 'status-done'} mm-flag" title="${active} device${active!==1?'s':''} active in the last ${DEVICE_ACTIVE_DAYS} days">${flagged ? '<i class="fa-solid fa-triangle-exclamation"></i>' : '<i class="fa-solid fa-laptop"></i>'} ${active} device${active!==1?'s':''}</span>`
+      : `<span style="color:var(--text-muted);font-size:.8rem" title="No sign-ins recorded in the last ${DEVICE_ACTIVE_DAYS} days">—</span>`;
     tr.innerHTML = `
       <td style="font-weight:600">${safeName}</td>
       <td style="font-family:monospace;font-size:.83rem">${escapeHtml(u.email||'—')}</td>
       <td style="font-size:.82rem;color:var(--text-muted)">${_fmtUserDate(u.createdAt)}</td>
       <td style="font-size:.82rem;color:var(--text-muted)">${_fmtUserDate(u.lastLogin)}</td>
       <td><span class="status-badge ${userPurchases?'status-done':'status-pending'}">${userPurchases} purchase${userPurchases!==1?'s':''}</span></td>
-      <td><button class="btn btn-sm btn-danger" onclick="deleteUserAdmin('${u.id}','${safeName.replace(/'/g,"\\'")}')" title="Delete user"><i class="fa-solid fa-trash"></i></button></td>`;
+      <td>${devCell}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-outline" onclick="openMemberModal('${u.id}')" title="Devices, give a product, their products"><i class="fa-solid fa-sliders"></i> Manage</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteUserAdmin('${u.id}','${safeName.replace(/'/g,"\\'")}')" title="Delete user"><i class="fa-solid fa-trash"></i></button>
+      </td>`;
     tbody.appendChild(tr);
+  });
+}
+
+// ===== MEMBER MANAGER (devices · give a product · their products) =====
+let _mmUid = null;
+
+function closeMemberModal() {
+  document.getElementById('member-modal').classList.remove('open');
+  _mmUid = null;
+}
+
+async function openMemberModal(uid) {
+  const u = _adminAllUsers.find(x => x.id === uid);
+  if (!u) return;
+  _mmUid = uid;
+  document.getElementById('mm-title').textContent = u.name || u.email || 'Member';
+  document.getElementById('mm-sub').innerHTML =
+    `${escapeHtml(u.email || '')} · Registered ${_fmtUserDate(u.createdAt)} · Last login ${_fmtUserDate(u.lastLogin)}`;
+  mmFillProducts();
+  document.getElementById('mm-note').value = '';
+  document.getElementById('mm-give-msg').textContent = '';
+  document.getElementById('member-modal').classList.add('open');
+  mmRenderDevices();
+  mmRenderOwned();
+  // Pull this one account's freshest device list in the background.
+  const fresh = await AdminDevices.list(uid);
+  if (_mmUid === uid) { _adminDevicesByUser[uid] = fresh; mmRenderDevices(); renderUsersTable(); }
+}
+
+function mmRenderDevices() {
+  const uid = _mmUid; if (!uid) return;
+  const all = (_adminDevicesByUser[uid] || []).slice().sort((a, b) => new Date(b.lastSeen||0) - new Date(a.lastSeen||0));
+  const active = all.filter(_isActiveDevice);
+  const threshold = _deviceThreshold();
+  const countries = new Set(active.map(d => d.country).filter(Boolean));
+  const el = document.getElementById('mm-devices');
+
+  let html = `<div class="mm-h"><i class="fa-solid fa-laptop" style="color:var(--accent)"></i> Devices using this account</div>`;
+  if (!all.length) {
+    html += `<div class="mm-help">No devices recorded yet. A device appears here after this member signs in on the store (only sign-ins since this feature went live are counted).</div>`;
+    el.innerHTML = html; return;
+  }
+  html += `<div class="mm-help"><strong>${active.length}</strong> device${active.length!==1?'s':''} active in the last ${DEVICE_ACTIVE_DAYS} days · ${all.length} in total${countries.size > 1 ? ` · seen from <strong>${countries.size} countries</strong>` : ''}</div>`;
+  if (active.length >= threshold) {
+    html += `<div class="mm-alert"><i class="fa-solid fa-triangle-exclamation"></i> Possible shared account — ${active.length} devices in ${DEVICE_ACTIVE_DAYS} days (your limit is ${threshold}). One person often uses a phone and a laptop, so look at the locations and how recent they are before deciding.</div>`;
+  }
+  html += `<div class="table-wrap"><table><thead><tr><th>Device</th><th>Location</th><th>IP</th><th>Last seen</th><th>First seen</th><th>Visits</th></tr></thead><tbody>` +
+    all.map(d => {
+      const where = [d.city, d.country].filter(Boolean).join(', ') || '—';
+      const dim = _isActiveDevice(d) ? '' : 'opacity:.5;';
+      return `<tr style="${dim}">
+        <td style="font-weight:600;font-size:.83rem">${escapeHtml(_parseUserAgent(d.userAgent))}${_isActiveDevice(d) ? '' : ' <span style="font-weight:400;font-size:.72rem;color:var(--text-muted)">(inactive)</span>'}</td>
+        <td style="font-size:.82rem">${escapeHtml(where)}</td>
+        <td style="font-family:monospace;font-size:.78rem">${escapeHtml(d.ip || '—')}</td>
+        <td style="font-size:.78rem;color:var(--text-muted)">${_fmtUserDate(d.lastSeen)}</td>
+        <td style="font-size:.78rem;color:var(--text-muted)">${_fmtUserDate(d.firstSeen)}</td>
+        <td style="font-size:.82rem">${d.visits || 1}</td>
+      </tr>`;
+    }).join('') + `</tbody></table></div>
+    <div style="margin-top:.7rem"><button class="btn btn-sm btn-outline" onclick="mmClearDevices()"><i class="fa-solid fa-eraser"></i> Clear device history</button>
+    <span style="font-size:.74rem;color:var(--text-muted);margin-left:.5rem">Starts the count again from zero (e.g. after you've warned them).</span></div>`;
+  el.innerHTML = html;
+}
+
+function mmClearDevices() {
+  const uid = _mmUid; if (!uid) return;
+  confirmAction('Clear device history', "Forget every device recorded for this member? The count starts again from zero the next time they sign in. Their account and products are not affected.", async () => {
+    const r = await AdminDevices.clear(uid);
+    if (r.error) { showToast(r.error); return; }
+    _adminDevicesByUser[uid] = [];
+    showToast('Device history cleared.');
+    mmRenderDevices(); renderUsersTable();
+  });
+}
+
+// ----- Give a product -----
+function _mmProductGroups(p) {
+  if (Array.isArray(p.variables) && p.variables.some(g => (g.items||[]).length)) {
+    return p.variables.filter(g => (g.items||[]).length).map(g => ({ title: g.title || 'Option', items: g.items.map(i => i.label).filter(Boolean) }));
+  }
+  if (Array.isArray(p.variants) && p.variants.length) {
+    return [{ title: p.variantName || 'Option', items: p.variants.map(v => v.label).filter(Boolean) }];
+  }
+  return [];
+}
+
+function mmFillProducts() {
+  const sel = document.getElementById('mm-product');
+  sel.innerHTML = '<option value="">Choose a course or pack…</option>';
+  DB.getAll('products').slice().sort((a, b) => (a.name||'').localeCompare(b.name||'')).forEach(p => {
+    const o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = p.name + (p.contentType === 'course' ? '  (course)' : '');
+    sel.appendChild(o);
+  });
+  document.getElementById('mm-options').innerHTML = '';
+}
+
+function mmProductChanged() {
+  const p = DB.getAll('products').find(x => x.id === document.getElementById('mm-product').value);
+  const box = document.getElementById('mm-options');
+  box.innerHTML = '';
+  if (!p) return;
+  _mmProductGroups(p).forEach((g, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'form-group';
+    wrap.style.marginTop = '.7rem';
+    wrap.innerHTML = `<label class="form-label">${escapeHtml(g.title)}</label>
+      <select class="form-input mm-opt" data-idx="${i}">${g.items.map(l => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('')}</select>`;
+    box.appendChild(wrap);
+  });
+}
+
+async function mmGiveProduct() {
+  const uid = _mmUid; if (!uid) return;
+  const productId = document.getElementById('mm-product').value;
+  const msg = document.getElementById('mm-give-msg');
+  if (!productId) { msg.style.color = '#EF4444'; msg.textContent = 'Choose a product first.'; return; }
+  const opts = [...document.querySelectorAll('#mm-options .mm-opt')].map(s => s.value);
+  const variantLabel = opts.length ? opts.join(' / ') : null;
+  const note = document.getElementById('mm-note').value.trim();
+
+  const btn = document.getElementById('mm-give-btn');
+  btn.disabled = true; msg.style.color = 'var(--text-muted)'; msg.textContent = 'Giving…';
+  const r = await AdminUsers.grantProduct(uid, productId, variantLabel, note);
+  btn.disabled = false;
+  if (r.error) { msg.style.color = '#EF4444'; msg.textContent = r.error; return; }
+  if (r.alreadyOwned) { msg.style.color = '#F59E0B'; msg.textContent = 'This member already has that product.'; return; }
+
+  const pending = r.purchase && r.purchase.status === 'pending';
+  msg.style.color = '#10B981';
+  msg.textContent = pending
+    ? 'Given ✓ — marked pending because this product is delivered manually. Deliver it from Enrollments & Access.'
+    : 'Given ✓ — it is now in their My Library.';
+  showToast('Product given.');
+  document.getElementById('mm-note').value = '';
+  _adminUserPurchases = await Purchases.getAll();
+  mmRenderOwned(); renderUsersTable();
+}
+
+// ----- What they own -----
+function _mmDate(p) { return new Date(p.purchaseDate?.toDate?.() || p.purchaseDate || p.createdAt || 0).getTime() || 0; }
+
+function mmRenderOwned() {
+  const uid = _mmUid; if (!uid) return;
+  const mine = _adminUserPurchases.filter(p => p.userId === uid).sort((a, b) => _mmDate(b) - _mmDate(a));
+  const el = document.getElementById('mm-owned');
+  let html = `<div class="mm-h"><i class="fa-solid fa-box-open" style="color:var(--accent)"></i> Their products <span style="font-weight:400;color:var(--text-muted)">(${mine.length})</span></div>`;
+  if (!mine.length) {
+    html += `<div class="mm-help">Nothing yet.</div>`;
+    el.innerHTML = html; return;
+  }
+  html += `<div class="mm-help">Products you gave are marked <strong>Gift</strong> and can be removed here. Paid orders are managed in Enrollments &amp; Access.</div>`;
+  html += mine.map(p => {
+    const isGift = p.paymentMethod === 'admin_grant';
+    const how = isGift ? '<span class="status-badge status-pending">🎁 Gift</span>'
+              : p.paymentMethod === 'free' ? '<span class="status-badge status-done">Free</span>'
+              : '<span class="status-badge status-done">Purchased</span>';
+    const st = (p.status || '') === 'pending' ? '<span class="status-badge status-pending">Pending delivery</span>' : '';
+    const noteTxt = isGift && p.orderNotes ? ` · “${escapeHtml(p.orderNotes)}”` : '';
+    return `<div class="mm-row">
+      <div class="grow"><div class="nm">${escapeHtml(p.productName || 'Product')}</div>
+        <div class="sub">${_fmtUserDate(p.purchaseDate || p.createdAt)}${noteTxt}</div></div>
+      ${st}${how}
+      ${isGift ? `<button class="btn btn-sm btn-danger" onclick="mmRemoveGift('${p.id}')" title="Remove this gift"><i class="fa-solid fa-trash"></i></button>` : ''}
+    </div>`;
+  }).join('');
+  el.innerHTML = html;
+}
+
+function mmRemoveGift(purchaseId) {
+  const p = _adminUserPurchases.find(x => x.id === purchaseId);
+  if (!p || p.paymentMethod !== 'admin_grant') return;
+  confirmAction('Remove gift', `Take "${p.productName || 'this product'}" away from this member? It disappears from their My Library.`, async () => {
+    await Purchases.delete(purchaseId);
+    _adminUserPurchases = await Purchases.getAll();
+    showToast('Gift removed.');
+    mmRenderOwned(); renderUsersTable();
   });
 }
 
