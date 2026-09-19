@@ -847,6 +847,11 @@ const UserAuth = {
     if (/user not found/i.test(raw)) return 'No account found with this email.';
     if (/password.*(least|characters)/i.test(raw)) return 'Password must be at least 6 characters.';
     if (/invalid.*email/i.test(raw)) return 'Invalid email address.';
+    // Supabase couldn't hand the email to the mail server (SMTP not set up or
+    // misconfigured, or a broken email template). Customers get a plain
+    // message; the exact reason is in the browser console above and in
+    // Supabase → Logs → Auth.
+    if (/error sending .*email/i.test(raw)) return 'We couldn\'t send the email right now. Please try again in a few minutes, or contact support if it keeps happening.';
     if (/rate limit|too many/i.test(raw)) return 'Too many attempts. Try again later.';
     if (/network/i.test(raw)) return 'Network error. Check your connection.';
     return raw || 'Something went wrong. Please try again.';
