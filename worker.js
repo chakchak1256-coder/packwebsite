@@ -642,11 +642,17 @@ async function deliverOrder(env, order) {
       }
     }
 
+    // The cart item's name already carries the chosen option ("Tracker — Gold",
+    // see priceCartItems) — only append it if it isn't there yet, otherwise
+    // the library shows "Tracker — Gold — Gold".
+    const optionSuffix = item.variantLabel ? ` — ${item.variantLabel}` : '';
+    const purchaseName = (name || '') + ((optionSuffix && !(name || '').endsWith(optionSuffix)) ? optionSuffix : '');
+
     const purchaseDoc = {
       userId:        order.userId,
       userEmail:     order.userEmail || order.email || '',
       productId:     item.productId || '',
-      productName:   item.variantLabel ? `${name || ''} — ${item.variantLabel}` : (name || ''),
+      productName:   purchaseName,
       productImage:  (images || [])[0] || '',
       productType:   category || 'Digital',
       contentType:   contentType || 'product',
