@@ -432,6 +432,7 @@ select.form-input option{background:var(--bg2)}
 .modal-title{font-size:1rem;font-weight:700;margin-bottom:1.3rem;color:var(--text)}
 .modal-actions{display:flex;gap:.65rem;justify-content:flex-end;margin-top:1.3rem}
 
+#users-tbody .status-badge{white-space:nowrap}
 /* MEMBER MANAGER (Members page) */
 .mm-section{margin-top:1.4rem;padding-top:1.2rem;border-top:1px solid var(--border)}
 .mm-section:first-of-type{margin-top:.6rem;padding-top:0;border-top:none}
@@ -480,6 +481,11 @@ select.form-input option{background:var(--bg2)}
   .stats-row{grid-template-columns:1fr}
   #content{padding:1rem}
 }
+/* PHONES: without min-width:0 the content area grows to the width of the widest
+   table (~1000px) instead of the screen, so everything past the screen edge is cut
+   off — filter bars, paragraphs, buttons. With it, tables scroll sideways inside
+   their own box (.table-wrap) as intended. */
+#main,#content{min-width:0}
 </style>
 </head>
 <body>
@@ -2806,7 +2812,8 @@ async function openMemberModal(uid) {
   mmRenderDevices();
   mmRenderOwned();
   // Pull this one account's freshest device list in the background.
-  const fresh = await AdminDevices.list(uid);
+  // (Only this member's devices — never trust the list to be pre-filtered.)
+  const fresh = (await AdminDevices.list(uid)).filter(d => d.uid === uid);
   if (_mmUid === uid) { _adminDevicesByUser[uid] = fresh; mmRenderDevices(); renderUsersTable(); }
 }
 
@@ -2979,17 +2986,22 @@ function deleteUserAdmin(uid, name) {
 function _parseUserAgent(ua) {
   if (!ua) return 'Unknown device';
   let browser = 'Unknown browser';
-  if (/Edg\//.test(ua)) browser = 'Edge';
-  else if (/OPR\//.test(ua)) browser = 'Opera';
-  else if (/Chrome\//.test(ua) && !/Chromium/.test(ua)) browser = 'Chrome';
-  else if (/Firefox\//.test(ua)) browser = 'Firefox';
+  // (Order matters: Edge/Opera/Samsung and the iPhone builds of Chrome/Firefox
+  // ("CriOS", "FxiOS") all also contain "Chrome" or "Safari" in their string.)
+  if (/Edg\/|EdgiOS\/|EdgA\//.test(ua)) browser = 'Edge';
+  else if (/OPR\/|OPiOS\//.test(ua)) browser = 'Opera';
+  else if (/SamsungBrowser\//.test(ua)) browser = 'Samsung Internet';
+  else if (/CriOS\//.test(ua) || (/Chrome\//.test(ua) && !/Chromium/.test(ua))) browser = 'Chrome';
+  else if (/FxiOS\/|Firefox\//.test(ua)) browser = 'Firefox';
   else if (/Safari\//.test(ua) && !/Chrome/.test(ua)) browser = 'Safari';
 
   let os = 'Unknown OS';
-  if (/Windows/.test(ua)) os = 'Windows';
-  else if (/Mac OS X/.test(ua)) os = 'macOS';
+  // iPhone/iPad strings say "like Mac OS X", so they must be tested BEFORE macOS
+  // (they were being shown as "Safari on macOS").
+  if (/iPhone|iPad|iPod/.test(ua)) os = 'iOS';
+  else if (/Windows/.test(ua)) os = 'Windows';
   else if (/Android/.test(ua)) os = 'Android';
-  else if (/iPhone|iPad|iPod/.test(ua)) os = 'iOS';
+  else if (/Mac OS X/.test(ua)) os = 'macOS';
   else if (/Linux/.test(ua)) os = 'Linux';
 
   return `${browser} on ${os}`;

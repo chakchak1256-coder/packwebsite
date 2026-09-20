@@ -1048,7 +1048,11 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:4rem 0 2
 
 /* ===== COURSE PLAYER ===== */
 #course-player-page{
-  display:none;position:fixed;inset:0;z-index:900;
+  /* Above the site's top bar / search bar (z-index 905) — the player is a
+     full-screen view with its own header (back button, title, progress and, on
+     phones, the button that opens the lesson list). At 900 the site header
+     covered all of that on small screens. Still below every popup window (1100+). */
+  display:none;position:fixed;inset:0;z-index:950;
   background:var(--bg);overflow:hidden;
 }
 #course-player-page.active{display:flex;flex-direction:column}
@@ -1811,15 +1815,29 @@ footer::before{
 .low-perf .dig-sparkline .dig-glowpath{
   display:none !important;
 }
+/* Short screens (a phone held sideways, a small browser window): the profile menu
+   must never run off the bottom where Logout can't be reached — it scrolls inside
+   itself instead. --dd-top is set by toggleUserMenu() to where the menu starts. */
+.user-dropdown{max-height:calc(100vh - var(--dd-top,90px) - 12px);overflow-y:auto}
+
 /* ===== PHONES: keep overlay pages below the floating top bar =====
    Placed at the END of the stylesheet on purpose: the earlier copy of this rule
    (near the top) was being overridden by each page's own base padding, which left
    the "Back to Home" button hidden behind the nav pill. The account page was
    never in the list at all. */
 @media(max-width:700px){
+  /* With the announcement (flash sale) bar showing, the phone layout shifts
+     down 38px. The general "push nav down" rules further up the file were
+     overriding these, which left the nav pill (sign-in / avatar / menu button)
+     hidden behind the black top bar. */
+  /* (On phones the announcement bar is 56px tall — that's what #topbar and
+     #mobile-search-bar already assume — so everything below shifts by 56.) */
+  body.flash-on #nav{top:168px}
+  body.flash-on #mobile-nav{top:220px}
+  body.flash-on #hero{padding-top:312px}
   .all-products-inner,.product-page-inner,.mp-inner,.wishlist-inner,.acct-inner{padding-top:184px}
   body.flash-on .all-products-inner,body.flash-on .product-page-inner,
-  body.flash-on .mp-inner,body.flash-on .wishlist-inner,body.flash-on .acct-inner{padding-top:222px}
+  body.flash-on .mp-inner,body.flash-on .wishlist-inner,body.flash-on .acct-inner{padding-top:240px}
 }
 </style>
 </head>
@@ -4502,6 +4520,16 @@ function mpOpenDetailModal(purchase) {
 // a cached list, or the fact that the button was reachable at all.
 // ================================================================
 let cpState = null; // { productId, modules, progress, currentLessonId }
+
+// Phones: the lesson list slides over the page and covers its own open/close
+// button, so tapping anywhere outside it now closes it (before, the only way out
+// was to pick a lesson).
+document.addEventListener('click', (e) => {
+  const sb = document.getElementById('cp-sidebar');
+  if (!sb || !sb.classList.contains('open')) return;
+  if (sb.contains(e.target) || (e.target.closest && e.target.closest('.cp-mobile-toggle'))) return;
+  sb.classList.remove('open');
+});
 
 async function openCoursePlayer(productId) {
   closeMyProducts();
