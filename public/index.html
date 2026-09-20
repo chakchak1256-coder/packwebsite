@@ -1811,6 +1811,16 @@ footer::before{
 .low-perf .dig-sparkline .dig-glowpath{
   display:none !important;
 }
+/* ===== PHONES: keep overlay pages below the floating top bar =====
+   Placed at the END of the stylesheet on purpose: the earlier copy of this rule
+   (near the top) was being overridden by each page's own base padding, which left
+   the "Back to Home" button hidden behind the nav pill. The account page was
+   never in the list at all. */
+@media(max-width:700px){
+  .all-products-inner,.product-page-inner,.mp-inner,.wishlist-inner,.acct-inner{padding-top:184px}
+  body.flash-on .all-products-inner,body.flash-on .product-page-inner,
+  body.flash-on .mp-inner,body.flash-on .wishlist-inner,body.flash-on .acct-inner{padding-top:222px}
+}
 </style>
 </head>
 <body>
@@ -2242,7 +2252,7 @@ footer::before{
 
 <!-- ===== AUTH MODAL ===== -->
 <div id="auth-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1200;backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:1rem">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;width:100%;max-width:400px;position:relative">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:3.1rem 2rem 2rem;width:100%;max-width:400px;position:relative;max-height:calc(100vh - 2rem);overflow-y:auto">
     <button onclick="dismissLoginModal()" style="position:absolute;top:1rem;right:1rem;width:30px;height:30px;border-radius:50%;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-muted);cursor:pointer;font-size:.8rem"><i class="fa-solid fa-xmark"></i></button>
 
     <div id="am-checkout-note" style="display:none;align-items:center;gap:.6rem;background:rgba(var(--accent-rgb),.08);border:1px solid rgba(var(--accent-rgb),.2);border-radius:var(--radius-sm);padding:.65rem 1rem;font-size:.82rem;color:var(--accent);margin-bottom:1rem">
