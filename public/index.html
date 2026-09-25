@@ -793,6 +793,10 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:4rem 0 2
 .co-method strong{display:block;font-size:.85rem;font-weight:700;color:var(--text)}
 .co-method small{display:block;font-size:.75rem;color:var(--text-muted);margin-top:.1rem}
 .co-account{font-size:.78rem;color:var(--text-muted);text-align:center;margin-bottom:1.1rem;overflow-wrap:anywhere}
+.co-sub-fields{display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem;padding:.9rem;border-radius:var(--radius-sm);background:var(--card);border:1px solid var(--border)}
+.co-sub-fields .form-label{font-size:.78rem;margin-bottom:.25rem}
+.co-sub-hint{font-size:.75rem;color:var(--text-muted);display:flex;gap:.4rem;align-items:flex-start;margin-bottom:.2rem}
+.co-sub-hint i{margin-top:.15rem}
 .co-actions{display:flex;gap:.7rem}
 
 /* ===== ALL PRODUCTS OVERLAY ===== */
@@ -2043,6 +2047,12 @@ footer::before{
         <p>Learn practical skills through structured content.</p>
         <span class="cat-cta">Browse Courses <i class="fa-solid fa-arrow-right"></i></span>
       </div>
+      <div class="cat-card" id="cat-card-subscription" onclick="openAllProducts('all','subscription')">
+        <div class="cat-icon"><i class="fa-solid fa-rotate"></i></div>
+        <h3>Subscriptions</h3>
+        <p>Recurring access, set up on your account by our team.</p>
+        <span class="cat-cta">Browse Subscriptions <i class="fa-solid fa-arrow-right"></i></span>
+      </div>
     </div>
   </div>
 </section>
@@ -2357,6 +2367,20 @@ footer::before{
         </div>
       </div>
 
+      <div class="co-sub-fields" id="co-sub-fields" style="display:none">
+        <div class="co-sub-hint"><i class="fa-solid fa-circle-info"></i> We'll set this subscription up on your account by hand — enter the details below so we can.</div>
+        <div><label class="form-label">Username</label><input class="form-input" id="co-sub-username" placeholder="Username for this subscription" style="width:100%"/></div>
+        <div><label class="form-label">Email</label><input class="form-input" id="co-sub-email" type="email" placeholder="Email for this subscription" style="width:100%"/></div>
+        <div id="co-sub-password-wrap"><label class="form-label">Password</label><input class="form-input" id="co-sub-password" type="password" placeholder="Password for this subscription" style="width:100%"/></div>
+        <div id="co-sub-device-wrap">
+          <label class="form-label">Device</label>
+          <select class="form-input" id="co-sub-device" style="width:100%">
+            <option value="android">Android</option>
+            <option value="apple">iPhone / iPad</option>
+          </select>
+        </div>
+      </div>
+
       <div class="co-total">
         <span class="co-total-lbl">Total</span>
         <span class="co-total-val" id="co-total">—</span>
@@ -2408,6 +2432,7 @@ footer::before{
       <button class="type-tab" data-type="product" onclick="setTypeFilter('product')"><i class="fa-solid fa-cube"></i> Digital Products</button>
       <button class="type-tab" data-type="pack" onclick="setTypeFilter('pack')"><i class="fa-solid fa-layer-group"></i> Digital Packs</button>
       <button class="type-tab" data-type="course" onclick="setTypeFilter('course')"><i class="fa-solid fa-graduation-cap"></i> Courses</button>
+      <button class="type-tab" data-type="subscription" onclick="setTypeFilter('subscription')"><i class="fa-solid fa-rotate"></i> Subscriptions</button>
     </div>
     <div class="filter-chips" id="filter-chips"></div>
     <div class="products-grid" id="all-products-grid"></div>
@@ -2869,7 +2894,7 @@ function makeProductCard(prod) {
       </button>
     </div>
     <div class="prod-info">
-      <div class="prod-cat">${prod.category||''}${prod.contentType && prod.contentType !== 'product' ? ` <span class="prod-type-tag">· ${prod.contentType === 'course' ? 'Course' : 'Pack'}</span>` : ''}</div>
+      <div class="prod-cat">${prod.category||''}${prod.contentType && prod.contentType !== 'product' ? ` <span class="prod-type-tag">· ${prod.contentType === 'course' ? 'Course' : prod.contentType === 'subscription' ? 'Subscription' : 'Pack'}</span>` : ''}</div>
       <div class="prod-name">${prod.name}</div>
       ${starsHtml}
       <div class="prod-price-row">
@@ -2985,7 +3010,7 @@ function visibleProducts() {
 // bounces the active type filter back to "All" if it was pointing at a
 // type that just got turned off underneath it.
 function applyContentTypeVisibility() {
-  [['product', 'cat-card-product'], ['pack', 'cat-card-pack'], ['course', 'cat-card-course']].forEach(([type, cardId]) => {
+  [['product', 'cat-card-product'], ['pack', 'cat-card-pack'], ['course', 'cat-card-course'], ['subscription', 'cat-card-subscription']].forEach(([type, cardId]) => {
     const on = isTypeEnabled(type);
     const card = document.getElementById(cardId);
     if (card) card.style.display = on ? '' : 'none';
@@ -3127,7 +3152,7 @@ function openProductDetail(id, fromAllPage = true) {
   const metaDesc = document.querySelector('meta[name="description"]');
   if (metaDesc) metaDesc.setAttribute('content', (prod.description || `Buy ${prod.name} on Orvyn.`).slice(0, 160));
 
-  document.getElementById('pd-cat').innerHTML = `${prod.category||''}${prod.contentType && prod.contentType !== 'product' ? ` <span class="prod-type-tag">· ${prod.contentType === 'course' ? 'Course' : 'Pack'}</span>` : ''}`;
+  document.getElementById('pd-cat').innerHTML = `${prod.category||''}${prod.contentType && prod.contentType !== 'product' ? ` <span class="prod-type-tag">· ${prod.contentType === 'course' ? 'Course' : prod.contentType === 'subscription' ? 'Subscription' : 'Pack'}</span>` : ''}`;
   document.getElementById('pd-name').textContent = prod.name;
   document.getElementById('pd-price').textContent = formatPrice(prod.price, s.currency);
   document.getElementById('pd-desc').textContent = prod.description||'';
@@ -3213,8 +3238,8 @@ function openProductDetail(id, fromAllPage = true) {
     const isFree = (Number(activeProd.price) || 0) <= 0;
     document.getElementById('pd-buy-btn').style.display  = isFree ? 'none' : '';
     document.getElementById('pd-free-btn').style.display = isFree ? '' : 'none';
-    const buyLabel = prod.contentType === 'course' ? 'Enroll Now' : prod.contentType === 'pack' ? 'Unlock Pack' : 'Buy Now';
-    const freeLabel = prod.contentType === 'course' ? 'Enroll for Free' : prod.contentType === 'pack' ? 'Unlock for Free' : 'Add to My Library';
+    const buyLabel = prod.contentType === 'course' ? 'Enroll Now' : prod.contentType === 'pack' ? 'Unlock Pack' : prod.contentType === 'subscription' ? 'Subscribe Now' : 'Buy Now';
+    const freeLabel = prod.contentType === 'course' ? 'Enroll for Free' : prod.contentType === 'pack' ? 'Unlock for Free' : prod.contentType === 'subscription' ? 'Subscribe for Free' : 'Add to My Library';
     document.getElementById('pd-buy-btn').innerHTML = `<i class="fa-solid fa-bolt"></i> ${buyLabel}`;
     document.getElementById('pd-free-btn').innerHTML = `<i class="fa-solid fa-gift"></i> ${freeLabel}`;
   }
@@ -3614,6 +3639,7 @@ function openCheckout() {
   variantEl.style.display = item.variantLabel ? '' : 'none';
   document.getElementById('co-total').textContent = formatPrice(BuyNow.total(), s.currency);
   document.getElementById('co-account-email').textContent = user.email || '';
+  coFillSubscriptionFields(item);
   coResetPayButton();
 
   document.getElementById('checkout-modal').classList.add('open');
@@ -3623,6 +3649,45 @@ function openCheckout() {
   coIsAlreadyOwned(user.id, item).then(owned => {
     if (owned && BuyNow.get() === item) coShowAlreadyOwnedError(item);
   });
+}
+
+// Shows the username/email/password/device fields when the product being
+// bought is a subscription (fulfilled by hand — see Enrollments & Access in
+// the admin panel), pre-filled where sensible, and hides whichever of
+// password/device this particular subscription doesn't need.
+function coFillSubscriptionFields(item) {
+  const wrap = document.getElementById('co-sub-fields');
+  const isSub = item && item.contentType === 'subscription';
+  wrap.style.display = isSub ? '' : 'none';
+  if (!isSub) return;
+  const fields = item.subscriptionFields || { password: true, device: true };
+  document.getElementById('co-sub-password-wrap').style.display = fields.password === false ? 'none' : '';
+  document.getElementById('co-sub-device-wrap').style.display = fields.device === false ? 'none' : '';
+  document.getElementById('co-sub-username').value = '';
+  const user = UserAuth.current();
+  document.getElementById('co-sub-email').value = (user && user.email) || '';
+  document.getElementById('co-sub-password').value = '';
+  document.getElementById('co-sub-device').value = 'android';
+}
+
+// Reads and validates the subscription fields for the item currently being
+// bought. Returns { data } or { error } — never both.
+function coReadSubscriptionFields(item) {
+  if (!item || item.contentType !== 'subscription') return { data: null };
+  const fields = item.subscriptionFields || { password: true, device: true };
+  const username = document.getElementById('co-sub-username').value.trim();
+  const email = document.getElementById('co-sub-email').value.trim();
+  const password = document.getElementById('co-sub-password').value;
+  const device = document.getElementById('co-sub-device').value;
+  if (!username) return { error: 'Enter the username for this subscription.' };
+  if (!email || !/^\S+@\S+\.\S+$/.test(email)) return { error: 'Enter a valid email for this subscription.' };
+  if (fields.password !== false && !password) return { error: 'Enter the password for this subscription.' };
+  if (fields.device !== false && device !== 'android' && device !== 'apple') return { error: 'Choose a device for this subscription.' };
+  return { data: {
+    username, email,
+    password: fields.password !== false ? password : null,
+    device: fields.device !== false ? device : null,
+  } };
 }
 
 // Hides the window but keeps the selected product (used when sign-in is needed).
@@ -3727,6 +3792,15 @@ async function coPay() {
     return;
   }
 
+  // Subscriptions collect what the admin will need to set the account up by
+  // hand — validated here, before charging, not after.
+  const subResult = coReadSubscriptionFields(item);
+  if (subResult.error) {
+    coResetPayButton();
+    coShowFormError(subResult.error);
+    return;
+  }
+
   // The invoice needs a first and last name — take them from the account name.
   const fullName  = (currentUser.name || email.split('@')[0] || 'Customer').trim();
   const nameParts = fullName.split(/\s+/);
@@ -3759,6 +3833,7 @@ async function coPay() {
         lastname,
         email,
         address,
+        subscription: subResult.data,
       }),
     });
 
@@ -4322,13 +4397,14 @@ function mpMakeCard(purchase) {
   const date = new Date(ts).toLocaleDateString('en-DZ', { year:'numeric', month:'short', day:'numeric' });
   const typeIcon = mpGetTypeIcon(purchase.productType);
   const isCourse = purchase.contentType === 'course';
+  const isSubscription = purchase.contentType === 'subscription';
   const isPending = purchase.status && purchase.status !== 'completed';
   const progress = purchase.progress || {};
   const pct = isCourse && purchase._totalLessons ? Math.round((100 * (progress.completedLessonIds||[]).length) / Math.max(1, purchase._totalLessons)) : null;
   card.innerHTML = `
     <div class="pc-image">
       <img src="${img}" alt="${escapeHtml(purchase.productName||'')}" loading="lazy"/>
-      <span class="pc-type-badge">${typeIcon} ${escapeHtml(isCourse ? 'Course' : (purchase.contentType === 'pack' ? 'Pack' : (purchase.productType || 'Content')))}</span>
+      <span class="pc-type-badge">${typeIcon} ${escapeHtml(isCourse ? 'Course' : (purchase.contentType === 'pack' ? 'Pack' : isSubscription ? 'Subscription' : (purchase.productType || 'Content')))}</span>
     </div>
     <div class="pc-body">
       <div class="pc-name">${escapeHtml(purchase.productName||'')}</div>

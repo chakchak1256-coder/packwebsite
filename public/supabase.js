@@ -1783,6 +1783,11 @@ const BuyNow = {
       img: (prod.images || [])[0] || null,
       qty: 1,
       variantLabel: prod.variantLabel || null,
+      // Subscriptions are fulfilled by hand (an admin sets up the account), so
+      // checkout collects what the admin will need up front. subscriptionFields
+      // says which of those fields THIS product actually needs.
+      contentType: prod.contentType || 'product',
+      subscriptionFields: prod.contentType === 'subscription' ? (prod.subscriptionFields || { password: true, device: true }) : null,
     };
     window.dispatchEvent(new Event('buynow:update'));
   },
@@ -1818,6 +1823,8 @@ const BuyNow = {
     item.price = Number(newPrice) || 0;
     const newImg = (p.images || [])[0] || null;
     if (newImg) item.img = newImg;
+    item.contentType = p.contentType || 'product';
+    item.subscriptionFields = p.contentType === 'subscription' ? (p.subscriptionFields || { password: true, device: true }) : null;
     return true;
   },
 

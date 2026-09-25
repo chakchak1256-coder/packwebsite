@@ -350,6 +350,12 @@ select.form-input option{background:var(--bg2)}
 .pur-read-more{display:inline-flex;align-items:center;gap:.3rem;font-size:.75rem;color:var(--accent);
   cursor:pointer;margin-top:.3rem;font-weight:600;background:none;border:none;padding:0;font-family:inherit}
 .pur-read-more:hover{opacity:.75}
+.pur-sub-box{background:rgba(var(--accent-rgb),.06);border:1px solid rgba(var(--accent-rgb),.25);border-radius:8px;
+  padding:.6rem .8rem;margin-top:.5rem;font-size:.78rem;display:flex;flex-direction:column;gap:.3rem}
+.pur-sub-row{display:flex;gap:.4rem;align-items:baseline}
+.pur-sub-row .lbl{color:var(--text-muted);min-width:70px;flex-shrink:0}
+.pur-sub-row .val{font-family:monospace;word-break:break-all}
+.pur-sub-reveal{background:none;border:none;color:var(--accent);cursor:pointer;font-size:.72rem;padding:0;font-family:inherit;font-weight:600}
 
 .pur-proof-grid{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem}
 .pur-proof-thumb{width:80px;height:80px;border-radius:8px;object-fit:cover;
@@ -674,6 +680,7 @@ select.form-input option{background:var(--bg2)}
                   <option value="course">Course (modules &amp; lessons — learners progress inside the platform)</option>
                   <option value="pack">Digital Pack (a bundle of resources/files unlocked after purchase)</option>
                   <option value="product">Digital Product (a single file, tool, or template)</option>
+                  <option value="subscription">Subscription (recurring access — you set up the account by hand)</option>
                 </select>
               </div>
               <div class="form-group full"><label class="form-label" id="prod-name-label">Course Title</label><input class="form-input" id="prod-name" placeholder="e.g. Full-Stack Web Development" required/></div>
@@ -753,9 +760,31 @@ select.form-input option{background:var(--bg2)}
               </div>
             </div>
           </div>
+          <!-- SUBSCRIPTION SETUP (shown for Content Type = Subscription) -->
+          <div class="form-section" id="subscription-section" style="display:none">
+            <div class="form-section-title"><i class="fa-solid fa-rotate"></i> Subscription Setup</div>
+            <div class="variant-hint" style="margin-bottom:1rem">
+              <i class="fa-solid fa-circle-info"></i>
+              Subscriptions are never delivered automatically — every order lands as <strong>Pending</strong> in
+              Enrollments &amp; Access, with whatever the buyer entered at checkout, so you can set up the account
+              yourself and deliver it from there. Set the plan lengths (e.g. 1 Month, 1 Year) with their own prices
+              below, under <strong>Pricing Variants</strong>. The buyer's username and email are always collected —
+              turn off the fields below that this subscription doesn't need.
+            </div>
+            <div style="display:flex;flex-direction:column;gap:.7rem">
+              <div style="display:flex;align-items:center;gap:.75rem">
+                <input type="checkbox" id="prod-sub-require-password" checked style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer"/>
+                <label for="prod-sub-require-password" class="form-label" style="cursor:pointer;margin:0">Ask for a password</label>
+              </div>
+              <div style="display:flex;align-items:center;gap:.75rem">
+                <input type="checkbox" id="prod-sub-require-device" checked style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer"/>
+                <label for="prod-sub-require-device" class="form-label" style="cursor:pointer;margin:0">Ask for a device (Android / iPhone)</label>
+              </div>
+            </div>
+          </div>
           <!-- VARIABLES SECTION -->
           <div class="form-section">
-            <div class="form-section-title"><i class="fa-solid fa-sliders"></i> Pricing Variants <span style="font-weight:400;font-size:.75rem;color:var(--text-muted);margin-left:.4rem">(optional)</span></div>
+            <div class="form-section-title" id="variables-section-title"><i class="fa-solid fa-sliders"></i> Pricing Variants <span style="font-weight:400;font-size:.75rem;color:var(--text-muted);margin-left:.4rem">(optional)</span></div>
             <div class="variant-hint" style="margin-bottom:1rem">
               <i class="fa-solid fa-circle-info"></i>
               Add one or more variable groups (e.g. <strong>Access Length</strong> with options like 1 Month, 3 Months, Lifetime).
@@ -799,6 +828,7 @@ select.form-input option{background:var(--bg2)}
                 <option value="product">Digital Products</option>
                 <option value="pack">Digital Packs</option>
                 <option value="course">Courses</option>
+                <option value="subscription">Subscriptions</option>
               </select>
             </div>
             <div class="form-group" style="margin-bottom:1rem"><label class="form-label">Topic Name</label><input class="form-input" id="cat-name" placeholder="e.g. Streaming" required/></div>
@@ -1596,6 +1626,9 @@ function loadProductForm() {
     document.getElementById('prod-badge').value = p.badge||'';
     document.getElementById('prod-featured').checked = !!p.featured;
     document.getElementById('prod-desc').value = p.description||'';
+    const subFields = p.subscriptionFields || { password: true, device: true };
+    document.getElementById('prod-sub-require-password').checked = subFields.password !== false;
+    document.getElementById('prod-sub-require-device').checked = subFields.device !== false;
     productImages = [...(p.images||[])];
     renderProductImagePreviews();
     renderCurriculumBuilder();
@@ -1645,15 +1678,23 @@ function loadProductForm() {
 function toggleContentTypeUI() {
   const type = document.getElementById('prod-content-type').value;
   const isCourse = type === 'course';
+  const isSubscription = type === 'subscription';
   document.getElementById('curriculum-section').style.display = isCourse ? '' : 'none';
-  document.getElementById('pack-delivery-section').style.display = isCourse ? 'none' : '';
-  document.getElementById('prod-name-label').textContent = isCourse ? 'Course Title' : (type === 'pack' ? 'Pack Title' : 'Title');
-  document.getElementById('prod-desc-label').textContent = isCourse ? 'Course Description' : (type === 'pack' ? 'Pack Description' : 'Description');
+  document.getElementById('pack-delivery-section').style.display = (isCourse || isSubscription) ? 'none' : '';
+  document.getElementById('subscription-section').style.display = isSubscription ? '' : 'none';
+  document.getElementById('prod-name-label').textContent = isCourse ? 'Course Title' : (type === 'pack' ? 'Pack Title' : isSubscription ? 'Subscription Title' : 'Title');
+  document.getElementById('prod-desc-label').textContent = isCourse ? 'Course Description' : (type === 'pack' ? 'Pack Description' : isSubscription ? 'Subscription Description' : 'Description');
   const packHeader = document.querySelector('#pack-delivery-section .form-section-title');
   if (packHeader) {
     packHeader.innerHTML = type === 'pack'
       ? '<i class="fa-solid fa-bolt"></i> Pack Resources <span style="font-weight:400;font-size:.75rem;color:var(--text-muted);margin-left:.4rem">(unlocked instantly on purchase)</span>'
       : '<i class="fa-solid fa-bolt"></i> Automatic Delivery <span style="font-weight:400;font-size:.75rem;color:var(--text-muted);margin-left:.4rem">(optional)</span>';
+  }
+  const varTitle = document.getElementById('variables-section-title');
+  if (varTitle) {
+    varTitle.innerHTML = isSubscription
+      ? '<i class="fa-solid fa-sliders"></i> Subscription Plans <span style="font-weight:400;font-size:.75rem;color:var(--text-muted);margin-left:.4rem">(e.g. 1 Month, 1 Year — each with its own price)</span>'
+      : '<i class="fa-solid fa-sliders"></i> Pricing Variants <span style="font-weight:400;font-size:.75rem;color:var(--text-muted);margin-left:.4rem">(optional)</span>';
   }
 }
 
@@ -2026,7 +2067,10 @@ async function saveProduct(e) {
     }))
     .filter(grp => grp.title && grp.items.length > 0);
 
-  const autoDeliver  = contentType !== 'course' && document.getElementById('prod-auto-deliver').checked;
+  const isSubscription = contentType === 'subscription';
+  // Subscriptions are always delivered by hand (see Enrollments & Access) —
+  // never auto-completed, no matter what's left checked in a stale form.
+  const autoDeliver  = contentType !== 'course' && !isSubscription && document.getElementById('prod-auto-deliver').checked;
   const linkEnabled  = document.getElementById('prod-delivery-enable-link').checked;
   const filesEnabled = document.getElementById('prod-delivery-enable-files').checked;
   const rawLink = (document.getElementById('prod-delivery-link').value || '').trim();
@@ -2048,7 +2092,15 @@ async function saveProduct(e) {
     description: document.getElementById('prod-desc').value.trim(),
     images: productImages,
     variables: variables,
-    // 'course' | 'pack' | 'product' — decides how the storefront presents
+    // Only meaningful when contentType === 'subscription'. Username and email
+    // are always collected at checkout; password/device are the two fields an
+    // admin can turn off per-product (e.g. a subscription that doesn't need a
+    // device). Buyer-visible (which fields to show at checkout), never secret.
+    subscriptionFields: isSubscription ? {
+      password: document.getElementById('prod-sub-require-password').checked,
+      device:   document.getElementById('prod-sub-require-device').checked,
+    } : null,
+    // 'course' | 'pack' | 'product' | 'subscription' — decides how the storefront presents
     // this item (a Course Player with modules/lessons vs a Pack access
     // page vs the legacy product card) and, server-side, whether a paid
     // purchase auto-completes (see deliverOrder() in worker.js).
@@ -2068,7 +2120,8 @@ async function saveProduct(e) {
     deliveryFiles: deliveryFiles.map(f => ({ url: f.url, path: f.path || '', name: f.name, size: f.size || 0 })),
   };
   if (!data.name || data.price === '' || isNaN(data.price) || data.price < 0) { showToast('Please fill required fields (title and price)'); return; }
-  if (contentType !== 'course' && autoDeliver && !deliveryLink && !deliveryFiles.length) { showToast('Add a resource link, upload a file, or turn off automatic unlock.'); return; }
+  if (contentType !== 'course' && !isSubscription && autoDeliver && !deliveryLink && !deliveryFiles.length) { showToast('Add a resource link, upload a file, or turn off automatic unlock.'); return; }
+  if (isSubscription && !variables.length) { showToast('Add at least one subscription plan (e.g. 1 Month) under Pricing Variants.'); return; }
   if (contentType === 'course' && !courseCurriculum.modules.length) { showToast('Add at least one module before saving a course.'); return; }
   const btn = document.getElementById('save-prod-btn');
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span id="save-prod-btn-text">Saving…</span>'; }
@@ -2109,9 +2162,10 @@ function deleteProduct(id) { confirmAction('Delete this content?', 'This action 
 // show up in the "Unsorted" group below until an admin edits them and
 // picks one.
 const CONTENT_TYPES = [
-  { key: 'product', label: 'Digital Products', icon: 'fa-cube',          desc: 'Individual resources for your next project.' },
-  { key: 'pack',    label: 'Digital Packs',    icon: 'fa-layer-group',   desc: 'Curated bundles with more value in one place.' },
-  { key: 'course',  label: 'Courses',          icon: 'fa-graduation-cap',desc: 'Learn practical skills through structured content.' },
+  { key: 'product',      label: 'Digital Products', icon: 'fa-cube',          desc: 'Individual resources for your next project.' },
+  { key: 'pack',         label: 'Digital Packs',    icon: 'fa-layer-group',   desc: 'Curated bundles with more value in one place.' },
+  { key: 'course',       label: 'Courses',          icon: 'fa-graduation-cap',desc: 'Learn practical skills through structured content.' },
+  { key: 'subscription', label: 'Subscriptions',    icon: 'fa-rotate',        desc: 'Recurring access you set up by hand for each buyer.' },
 ];
 let _addCatDefaultType = 'product';
 let _typeImagePending = {}; // { product|pack|course: base64 } — staged uploads not yet saved
@@ -2515,6 +2569,17 @@ function _renderPurchasesTable(all) {
       const accessSnippet = isCompleted
         ? (p.accessLink ? `<div class="pur-item-access" title="${escapeHtml(p.accessLink)}">✓ ${escapeHtml(p.accessLink)}</div>`
           : `<div style="font-size:.68rem;color:var(--accent);margin-top:.2rem">✓ Access fields set</div>`) : '';
+      // What the buyer entered at checkout for a subscription — this is what
+      // you need to actually go set the account up, then mark it Delivered.
+      const sd = p.subscriptionDetails;
+      const subBoxId = 'pur-sub-pw-' + p.id;
+      const subSnippet = (p.contentType === 'subscription' && sd) ? `<div class="pur-sub-box">
+          <div class="pur-sub-row"><span class="lbl">Username</span><span class="val">${escapeHtml(sd.username || '—')}</span></div>
+          <div class="pur-sub-row"><span class="lbl">Email</span><span class="val">${escapeHtml(sd.email || '—')}</span></div>
+          ${sd.password ? `<div class="pur-sub-row"><span class="lbl">Password</span><span class="val" id="${subBoxId}">••••••••</span>
+            <button type="button" class="pur-sub-reveal" onclick="_toggleSubPassword('${subBoxId}','${escapeHtml(sd.password).replace(/'/g,"\'")}',this)">Show</button></div>` : ''}
+          ${sd.device ? `<div class="pur-sub-row"><span class="lbl">Device</span><span class="val">${sd.device === 'apple' ? 'iPhone / iPad' : 'Android'}</span></div>` : ''}
+        </div>` : '';
       const imgEl = p.productImage
         ? `<img class="pur-item-img" src="${p.productImage}" alt="">`
         : `<div class="pur-item-img-ph"><i class="fa-solid fa-box"></i></div>`;
@@ -2531,7 +2596,7 @@ function _renderPurchasesTable(all) {
           <div class="pur-item-name">${escapeHtml(p.productName||'—')}</div>
           ${p.variantLabel ? `<span class="pur-item-variant">${escapeHtml(p.variantLabel)}</span>` : ''}
           ${p.productType ? `<div style="font-size:.68rem;color:var(--text-muted);margin-top:.1rem">${escapeHtml(p.productType)}</div>` : ''}
-          ${accessSnippet}
+          ${accessSnippet}${subSnippet}
         </div>
         <div class="pur-item-actions">${deliverBtn}${cancelRestoreBtn}${deleteBtn}</div>
       </div>`;
@@ -2574,6 +2639,16 @@ function _renderPurchasesTable(all) {
 }
 
 function _togglePurCard(card) { card.classList.toggle('open'); }
+
+// Reveals/hides a subscription password inline in the purchase row. Kept out
+// of the DOM in plain text until clicked — only masked dots are rendered.
+function _toggleSubPassword(elId, plain, btn) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const showing = el.textContent !== '••••••••';
+  el.textContent = showing ? '••••••••' : plain;
+  if (btn) btn.textContent = showing ? 'Show' : 'Hide';
+}
 
 function _toggleNotes(safeKey) {
   const txt = document.getElementById('notes-txt-' + safeKey);
