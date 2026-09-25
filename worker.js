@@ -548,6 +548,7 @@ async function priceCartItems(env, cartItems) {
       // GET /api/content/:id route, so a course purchase is always
       // auto-completed on payment confirmation (see deliverOrder below).
       contentType: product.contentType || 'product',
+      subscriptionFields: product.subscriptionFields || null,
       unitPrice,
       qty,
       variantLabel,
@@ -626,7 +627,10 @@ async function deliverOrder(env, order) {
     // at all, it's the curriculum served by GET /api/content/:id, which
     // checks this very purchase doc's status. So a paid course is always
     // completed immediately; there's nothing for an admin to "deliver".
-    const isAuto = !!(autoDeliver && deliveryLink) || contentType === 'course';
+    // Subscriptions are the opposite extreme: NEVER auto-completed, no matter
+    // what a product's (unused, hidden) delivery fields say — an admin has to
+    // actually go set the account up by hand before this is "delivered".
+    const isAuto = contentType !== 'subscription' && (!!(autoDeliver && deliveryLink) || contentType === 'course');
 
     // Build accessData: Download Link and the uploaded file list are now
     // independent — a product can have either, or both merged together
@@ -648,6 +652,11 @@ async function deliverOrder(env, order) {
     const optionSuffix = item.variantLabel ? ` — ${item.variantLabel}` : '';
     const purchaseName = (name || '') + ((optionSuffix && !(name || '').endsWith(optionSuffix)) ? optionSuffix : '');
 
+    // Attached only to the subscription line item, and only ever read by the
+    // admin panel (Enrollments & Access) to set the account up — never shown
+    // back to any storefront visitor.
+    const subscriptionDetails = contentType === 'subscription' ? (order.subscription || null) : null;
+
     const purchaseDoc = {
       userId:        order.userId,
       userEmail:     order.userEmail || order.email || '',
@@ -658,6 +667,7 @@ async function deliverOrder(env, order) {
       contentType:   contentType || 'product',
       accessLink:    isAuto && contentType !== 'course' ? deliveryLink : '',
       accessData,
+      subscriptionDetails,
       proofImages:   [],
       customerName:  `${order.firstname || ''} ${order.lastname || ''}`.trim(),
       customerEmail: order.userEmail || order.email || '',
@@ -1099,7 +1109,7 @@ export default {
         const now = new Date().toISOString();
         const delivery = await getProductDelivery(env, productId, product);
         const contentType = product.contentType || 'product';
-        const isAuto = !!(delivery.autoDeliver && delivery.deliveryLink) || contentType === 'course';
+        const isAuto = contentType !== 'subscription' && (!!(delivery.autoDeliver && delivery.deliveryLink) || contentType === 'course');
 
         let accessData = {};
         if (isAuto && contentType !== 'course') {
@@ -1250,7 +1260,7 @@ export default {
 
         const {
           product_id, product_name, firstname, lastname, email: bodyEmail, address,
-          items: rawItems,
+          items: rawItems, subscription: rawSubscription,
         } = body || {};
         const email = String(bodyEmail || auth.email || '').trim();
         // NOTE: a client-supplied `amount` field, if present in the request body,
@@ -1292,6 +1302,30 @@ export default {
           return json({ error: 'We could not process your cart right now. Please try again in a moment, or contact support if this persists.' }, 400);
         }
         const computedAmount = pricedItems.reduce((sum, it) => sum + it.unitPrice * it.qty, 0);
+
+        // Subscriptions are fulfilled by hand — the buyer's username/email
+        // (and, per-product, password/device) are collected here and re-
+        // validated server-side against what THIS product actually requires,
+        // never trusting the checkout page to have enforced it correctly.
+        const subscriptionItem = pricedItems.find(it => it.contentType === 'subscription');
+        let subscriptionDetails = null;
+        if (subscriptionItem) {
+          const fields = subscriptionItem.subscriptionFields || { password: true, device: true };
+          const sub = (rawSubscription && typeof rawSubscription === 'object') ? rawSubscription : {};
+          const username = String(sub.username || '').trim().slice(0, 200);
+          const subEmail = String(sub.email || '').trim().slice(0, 200);
+          const password = String(sub.password || '').slice(0, 500);
+          const device = sub.device === 'apple' ? 'apple' : sub.device === 'android' ? 'android' : '';
+          if (!username) return json({ error: 'Enter the username for this subscription.' }, 400);
+          if (!subEmail || !/^\S+@\S+\.\S+$/.test(subEmail)) return json({ error: 'Enter a valid email for this subscription.' }, 400);
+          if (fields.password !== false && !password) return json({ error: 'Enter the password for this subscription.' }, 400);
+          if (fields.device !== false && !device) return json({ error: 'Choose a device for this subscription.' }, 400);
+          subscriptionDetails = {
+            username, email: subEmail,
+            password: fields.password !== false ? password : null,
+            device: fields.device !== false ? device : null,
+          };
+        }
 
         const finalProductName = product_name || (pricedItems.length === 1 ? pricedItems[0].name : `Order (${pricedItems.length} items)`);
 
@@ -1378,6 +1412,7 @@ export default {
             lastname,
             email:        email        || '',
             address:      safeAddress,
+            subscription: subscriptionDetails,
             status:       'pending',
             paymentUrl,
             createdAt:    new Date().toISOString(),
@@ -1522,7 +1557,7 @@ export default {
         const now = new Date().toISOString();
         const delivery = await getProductDelivery(env, productId, product);
         const contentType = product.contentType || 'product';
-        const isAuto = !!(delivery.autoDeliver && delivery.deliveryLink) || contentType === 'course';
+        const isAuto = contentType !== 'subscription' && (!!(delivery.autoDeliver && delivery.deliveryLink) || contentType === 'course');
 
         let accessData = {};
         if (isAuto && contentType !== 'course') {
