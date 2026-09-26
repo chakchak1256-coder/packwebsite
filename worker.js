@@ -1310,20 +1310,29 @@ export default {
         const subscriptionItem = pricedItems.find(it => it.contentType === 'subscription');
         let subscriptionDetails = null;
         if (subscriptionItem) {
-          const fields = subscriptionItem.subscriptionFields || { password: true, device: true };
+          const fields = subscriptionItem.subscriptionFields || { username: true, email: true, password: true, device: true };
           const sub = (rawSubscription && typeof rawSubscription === 'object') ? rawSubscription : {};
           const username = String(sub.username || '').trim().slice(0, 200);
           const subEmail = String(sub.email || '').trim().slice(0, 200);
           const password = String(sub.password || '').slice(0, 500);
           const device = sub.device === 'apple' ? 'apple' : sub.device === 'android' ? 'android' : '';
-          if (!username) return json({ error: 'Enter the username for this subscription.' }, 400);
-          if (!subEmail || !/^\S+@\S+\.\S+$/.test(subEmail)) return json({ error: 'Enter a valid email for this subscription.' }, 400);
+          const profile = String(sub.profile || '').trim().slice(0, 100);
+          const pin = String(sub.pin || '').trim().slice(0, 20);
+          const notes = String(sub.notes || '').trim().slice(0, 1000);
+          if (fields.username !== false && !username) return json({ error: 'Enter the username for this subscription.' }, 400);
+          if (fields.email !== false && (!subEmail || !/^\S+@\S+\.\S+$/.test(subEmail))) return json({ error: 'Enter a valid email for this subscription.' }, 400);
           if (fields.password !== false && !password) return json({ error: 'Enter the password for this subscription.' }, 400);
           if (fields.device !== false && !device) return json({ error: 'Choose a device for this subscription.' }, 400);
+          if (fields.profile === true && !profile) return json({ error: 'Enter the profile name / slot for this subscription.' }, 400);
+          if (fields.pin === true && !pin) return json({ error: 'Enter the PIN code for this subscription.' }, 400);
           subscriptionDetails = {
-            username, email: subEmail,
+            username: fields.username !== false ? username : null,
+            email: fields.email !== false ? subEmail : null,
             password: fields.password !== false ? password : null,
             device: fields.device !== false ? device : null,
+            profile: fields.profile === true ? profile : null,
+            pin: fields.pin === true ? pin : null,
+            notes: fields.notes === true ? (notes || null) : null,
           };
         }
 
