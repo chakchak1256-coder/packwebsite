@@ -1787,7 +1787,7 @@ const BuyNow = {
       // checkout collects what the admin will need up front. subscriptionFields
       // says which of those fields THIS product actually needs.
       contentType: prod.contentType || 'product',
-      subscriptionFields: prod.contentType === 'subscription' ? (prod.subscriptionFields || { password: true, device: true }) : null,
+      subscriptionFields: prod.contentType === 'subscription' ? (prod.subscriptionFields || { username: true, email: true, password: true, device: true }) : null,
     };
     window.dispatchEvent(new Event('buynow:update'));
   },
@@ -1824,7 +1824,7 @@ const BuyNow = {
     const newImg = (p.images || [])[0] || null;
     if (newImg) item.img = newImg;
     item.contentType = p.contentType || 'product';
-    item.subscriptionFields = p.contentType === 'subscription' ? (p.subscriptionFields || { password: true, device: true }) : null;
+    item.subscriptionFields = p.contentType === 'subscription' ? (p.subscriptionFields || { username: true, email: true, password: true, device: true }) : null;
     return true;
   },
 

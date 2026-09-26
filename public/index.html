@@ -1100,6 +1100,10 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:4rem 0 2
 .cp-main-inner{max-width:800px;margin:0 auto}
 .cp-video-wrap{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:var(--radius);overflow:hidden;margin-bottom:1.5rem}
 .cp-video-wrap video,.cp-video-wrap iframe{width:100%;height:100%;border:0;display:block}
+.cp-pdf-wrap{margin-bottom:1.5rem}
+.cp-pdf-frame{width:100%;height:75vh;min-height:420px;border:1px solid var(--border);border-radius:var(--radius);display:block;background:#fff}
+.cp-pdf-download{margin-top:.8rem;display:inline-flex}
+@media(max-width:700px){.cp-pdf-frame{height:60vh}}
 .cp-lesson-h1{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:800;margin-bottom:.8rem}
 .cp-lesson-text{font-size:.95rem;line-height:1.8;color:var(--text);white-space:pre-wrap}
 .cp-resources{margin-top:1.6rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1rem}
@@ -2369,8 +2373,8 @@ footer::before{
 
       <div class="co-sub-fields" id="co-sub-fields" style="display:none">
         <div class="co-sub-hint"><i class="fa-solid fa-circle-info"></i> We'll set this subscription up on your account by hand — enter the details below so we can.</div>
-        <div><label class="form-label">Username</label><input class="form-input" id="co-sub-username" placeholder="Username for this subscription" style="width:100%"/></div>
-        <div><label class="form-label">Email</label><input class="form-input" id="co-sub-email" type="email" placeholder="Email for this subscription" style="width:100%"/></div>
+        <div id="co-sub-username-wrap"><label class="form-label">Username</label><input class="form-input" id="co-sub-username" placeholder="Username for this subscription" style="width:100%"/></div>
+        <div id="co-sub-email-wrap"><label class="form-label">Email</label><input class="form-input" id="co-sub-email" type="email" placeholder="Email for this subscription" style="width:100%"/></div>
         <div id="co-sub-password-wrap"><label class="form-label">Password</label><input class="form-input" id="co-sub-password" type="password" placeholder="Password for this subscription" style="width:100%"/></div>
         <div id="co-sub-device-wrap">
           <label class="form-label">Device</label>
@@ -2379,6 +2383,9 @@ footer::before{
             <option value="apple">iPhone / iPad</option>
           </select>
         </div>
+        <div id="co-sub-profile-wrap"><label class="form-label">Profile name / slot</label><input class="form-input" id="co-sub-profile" placeholder="e.g. \"Kids\", \"Profile 2\"" style="width:100%"/></div>
+        <div id="co-sub-pin-wrap"><label class="form-label">PIN code</label><input class="form-input" id="co-sub-pin" inputmode="numeric" placeholder="4-digit PIN" style="width:100%"/></div>
+        <div id="co-sub-notes-wrap"><label class="form-label">Anything else we should know? <span style="font-weight:400;opacity:.6">(optional)</span></label><textarea class="form-input" id="co-sub-notes" rows="2" placeholder="Any special request" style="width:100%;resize:vertical"></textarea></div>
       </div>
 
       <div class="co-total">
@@ -3660,33 +3667,52 @@ function coFillSubscriptionFields(item) {
   const isSub = item && item.contentType === 'subscription';
   wrap.style.display = isSub ? '' : 'none';
   if (!isSub) return;
-  const fields = item.subscriptionFields || { password: true, device: true };
-  document.getElementById('co-sub-password-wrap').style.display = fields.password === false ? 'none' : '';
-  document.getElementById('co-sub-device-wrap').style.display = fields.device === false ? 'none' : '';
+  const fields = item.subscriptionFields || { username: true, email: true, password: true, device: true };
+  const show = (id, on) => { document.getElementById(id).style.display = on ? '' : 'none'; };
+  show('co-sub-username-wrap', fields.username !== false);
+  show('co-sub-email-wrap', fields.email !== false);
+  show('co-sub-password-wrap', fields.password !== false);
+  show('co-sub-device-wrap', fields.device !== false);
+  show('co-sub-profile-wrap', fields.profile === true);
+  show('co-sub-pin-wrap', fields.pin === true);
+  show('co-sub-notes-wrap', fields.notes === true);
   document.getElementById('co-sub-username').value = '';
   const user = UserAuth.current();
-  document.getElementById('co-sub-email').value = (user && user.email) || '';
+  document.getElementById('co-sub-email').value = fields.email !== false ? ((user && user.email) || '') : '';
   document.getElementById('co-sub-password').value = '';
   document.getElementById('co-sub-device').value = 'android';
+  document.getElementById('co-sub-profile').value = '';
+  document.getElementById('co-sub-pin').value = '';
+  document.getElementById('co-sub-notes').value = '';
 }
 
 // Reads and validates the subscription fields for the item currently being
 // bought. Returns { data } or { error } — never both.
 function coReadSubscriptionFields(item) {
   if (!item || item.contentType !== 'subscription') return { data: null };
-  const fields = item.subscriptionFields || { password: true, device: true };
+  const fields = item.subscriptionFields || { username: true, email: true, password: true, device: true };
   const username = document.getElementById('co-sub-username').value.trim();
   const email = document.getElementById('co-sub-email').value.trim();
   const password = document.getElementById('co-sub-password').value;
   const device = document.getElementById('co-sub-device').value;
-  if (!username) return { error: 'Enter the username for this subscription.' };
-  if (!email || !/^\S+@\S+\.\S+$/.test(email)) return { error: 'Enter a valid email for this subscription.' };
+  const profile = document.getElementById('co-sub-profile').value.trim();
+  const pin = document.getElementById('co-sub-pin').value.trim();
+  const notes = document.getElementById('co-sub-notes').value.trim();
+  if (fields.username !== false && !username) return { error: 'Enter the username for this subscription.' };
+  if (fields.email !== false && (!email || !/^\S+@\S+\.\S+$/.test(email))) return { error: 'Enter a valid email for this subscription.' };
   if (fields.password !== false && !password) return { error: 'Enter the password for this subscription.' };
   if (fields.device !== false && device !== 'android' && device !== 'apple') return { error: 'Choose a device for this subscription.' };
+  if (fields.profile === true && !profile) return { error: 'Enter the profile name / slot for this subscription.' };
+  if (fields.pin === true && !pin) return { error: 'Enter the PIN code for this subscription.' };
+  // The note is always optional, even when the field is shown.
   return { data: {
-    username, email,
+    username: fields.username !== false ? username : null,
+    email: fields.email !== false ? email : null,
     password: fields.password !== false ? password : null,
     device: fields.device !== false ? device : null,
+    profile: fields.profile === true ? profile : null,
+    pin: fields.pin === true ? pin : null,
+    notes: fields.notes === true ? (notes || null) : null,
   } };
 }
 
@@ -4679,7 +4705,7 @@ function cpRenderSidebar() {
       ${(mod.lessons || []).map(lsn => `
         <div class="cp-lesson ${lsn.id === cpState.currentLessonId ? 'active' : ''} ${done.has(lsn.id) ? 'done' : ''}" onclick="cpOpenLesson('${lsn.id}')">
           <span class="cp-lesson-check">${done.has(lsn.id) ? '<i class="fa-solid fa-check"></i>' : ''}</span>
-          <i class="fa-solid ${lsn.type === 'video' ? 'fa-circle-play' : 'fa-file-lines'} cp-lesson-icon"></i>
+          <i class="fa-solid ${lsn.type === 'video' ? 'fa-circle-play' : lsn.type === 'pdf' ? 'fa-file-pdf' : 'fa-file-lines'} cp-lesson-icon"></i>
           <span class="cp-lesson-title">${escapeHtml(lsn.title || 'Untitled lesson')}</span>
         </div>
       `).join('')}
@@ -4733,6 +4759,11 @@ function cpOpenLesson(lessonId) {
 
   document.getElementById('cp-main-inner').innerHTML = `
     ${lsn.type === 'video' && lsn.videoUrl ? `<div class="cp-video-wrap">${cpEmbedVideo(lsn.videoUrl)}</div>` : ''}
+    ${lsn.type === 'pdf' && lsn.pdfUrl ? `
+      <div class="cp-pdf-wrap">
+        <iframe src="${escapeHtml(lsn.pdfUrl)}" class="cp-pdf-frame" title="${escapeHtml(lsn.title || 'Lesson PDF')}" loading="lazy"></iframe>
+        <a class="btn btn-outline cp-pdf-download" href="${escapeHtml(lsn.pdfUrl)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-download"></i> Open / Download PDF</a>
+      </div>` : ''}
     <h1 class="cp-lesson-h1">${escapeHtml(lsn.title || 'Untitled lesson')}</h1>
     ${lsn.textContent ? `<div class="cp-lesson-text">${escapeHtml(lsn.textContent)}</div>` : ''}
     ${resourcesHtml}

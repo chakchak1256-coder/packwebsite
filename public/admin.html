@@ -768,10 +768,18 @@ select.form-input option{background:var(--bg2)}
               Subscriptions are never delivered automatically — every order lands as <strong>Pending</strong> in
               Enrollments &amp; Access, with whatever the buyer entered at checkout, so you can set up the account
               yourself and deliver it from there. Set the plan lengths (e.g. 1 Month, 1 Year) with their own prices
-              below, under <strong>Pricing Variants</strong>. The buyer's username and email are always collected —
-              turn off the fields below that this subscription doesn't need.
+              below, under <strong>Pricing Variants</strong>. Turn on whichever fields below this subscription
+              actually needs from the buyer at checkout.
             </div>
             <div style="display:flex;flex-direction:column;gap:.7rem">
+              <div style="display:flex;align-items:center;gap:.75rem">
+                <input type="checkbox" id="prod-sub-require-username" checked style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer"/>
+                <label for="prod-sub-require-username" class="form-label" style="cursor:pointer;margin:0">Ask for a username</label>
+              </div>
+              <div style="display:flex;align-items:center;gap:.75rem">
+                <input type="checkbox" id="prod-sub-require-email" checked style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer"/>
+                <label for="prod-sub-require-email" class="form-label" style="cursor:pointer;margin:0">Ask for an email</label>
+              </div>
               <div style="display:flex;align-items:center;gap:.75rem">
                 <input type="checkbox" id="prod-sub-require-password" checked style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer"/>
                 <label for="prod-sub-require-password" class="form-label" style="cursor:pointer;margin:0">Ask for a password</label>
@@ -779,6 +787,19 @@ select.form-input option{background:var(--bg2)}
               <div style="display:flex;align-items:center;gap:.75rem">
                 <input type="checkbox" id="prod-sub-require-device" checked style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer"/>
                 <label for="prod-sub-require-device" class="form-label" style="cursor:pointer;margin:0">Ask for a device (Android / iPhone)</label>
+              </div>
+              <div style="height:1px;background:var(--border);margin:.2rem 0"></div>
+              <div style="display:flex;align-items:center;gap:.75rem">
+                <input type="checkbox" id="prod-sub-require-profile" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer"/>
+                <label for="prod-sub-require-profile" class="form-label" style="cursor:pointer;margin:0">Ask for a profile name / slot <span style="font-weight:400;color:var(--text-muted)">(shared-account services with multiple profiles)</span></label>
+              </div>
+              <div style="display:flex;align-items:center;gap:.75rem">
+                <input type="checkbox" id="prod-sub-require-pin" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer"/>
+                <label for="prod-sub-require-pin" class="form-label" style="cursor:pointer;margin:0">Ask for a PIN code <span style="font-weight:400;color:var(--text-muted)">(profile lock, e.g. Netflix)</span></label>
+              </div>
+              <div style="display:flex;align-items:center;gap:.75rem">
+                <input type="checkbox" id="prod-sub-require-notes" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer"/>
+                <label for="prod-sub-require-notes" class="form-label" style="cursor:pointer;margin:0">Ask for a note <span style="font-weight:400;color:var(--text-muted)">(any special request from the buyer)</span></label>
               </div>
             </div>
           </div>
@@ -1626,9 +1647,14 @@ function loadProductForm() {
     document.getElementById('prod-badge').value = p.badge||'';
     document.getElementById('prod-featured').checked = !!p.featured;
     document.getElementById('prod-desc').value = p.description||'';
-    const subFields = p.subscriptionFields || { password: true, device: true };
+    const subFields = p.subscriptionFields || { username: true, email: true, password: true, device: true };
+    document.getElementById('prod-sub-require-username').checked = subFields.username !== false;
+    document.getElementById('prod-sub-require-email').checked = subFields.email !== false;
     document.getElementById('prod-sub-require-password').checked = subFields.password !== false;
     document.getElementById('prod-sub-require-device').checked = subFields.device !== false;
+    document.getElementById('prod-sub-require-profile').checked = subFields.profile === true;
+    document.getElementById('prod-sub-require-pin').checked = subFields.pin === true;
+    document.getElementById('prod-sub-require-notes').checked = subFields.notes === true;
     productImages = [...(p.images||[])];
     renderProductImagePreviews();
     renderCurriculumBuilder();
@@ -1793,6 +1819,9 @@ function renderCurriculumBuilder() {
               <label class="co-method-card" style="flex:1;cursor:pointer;padding:.5rem .8rem;border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;gap:.4rem;${lsn.type === 'text' ? 'border-color:var(--primary)' : ''}">
                 <input type="radio" name="lsn-type-${mi}-${li}" ${lsn.type === 'text' ? 'checked' : ''} onchange="setLessonType(${mi},${li},'text')"/> <i class="fa-solid fa-align-left"></i> Text / Article
               </label>
+              <label class="co-method-card" style="flex:1;cursor:pointer;padding:.5rem .8rem;border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;gap:.4rem;${lsn.type === 'pdf' ? 'border-color:var(--primary)' : ''}">
+                <input type="radio" name="lsn-type-${mi}-${li}" ${lsn.type === 'pdf' ? 'checked' : ''} onchange="setLessonType(${mi},${li},'pdf')"/> <i class="fa-solid fa-file-pdf"></i> PDF
+              </label>
             </div>
             ${lsn.type === 'video' ? `
               <div class="form-group full" style="margin-bottom:.5rem">
@@ -1807,6 +1836,21 @@ function renderCurriculumBuilder() {
               <div class="form-group full">
                 <label class="form-label">Notes for this lesson <span>(optional)</span></label>
                 <textarea class="form-input" rows="2" placeholder="Anything to add alongside the video..." oninput="updateLessonField(${mi},${li},'textContent', this.value)">${escapeHtmlSafe(lsn.textContent)}</textarea>
+              </div>
+            ` : lsn.type === 'pdf' ? `
+              <div class="form-group full" style="margin-bottom:.5rem">
+                <label class="form-label">PDF URL <span>(a link to a PDF already hosted somewhere)</span></label>
+                <input class="form-input" placeholder="https://...pdf" value="${escapeAttr(lsn.pdfUrl)}" oninput="updateLessonField(${mi},${li},'pdfUrl', this.value)"/>
+              </div>
+              <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:.5rem">— or —</div>
+              <label class="btn btn-sm btn-outline" style="cursor:pointer;display:inline-flex;margin-bottom:.5rem">
+                <i class="fa-solid fa-upload"></i>&nbsp;Upload a PDF file
+                <input type="file" accept="application/pdf,.pdf" style="display:none" onchange="uploadLessonPdfFile(${mi},${li},this)"/>
+              </label>
+              ${lsn.pdfUrl ? `<div style="font-size:.78rem;color:var(--accent);margin-bottom:.5rem"><i class="fa-solid fa-circle-check"></i> ${escapeHtml(lsn.pdfUrl.split('/').pop())}</div>` : ''}
+              <div class="form-group full">
+                <label class="form-label">Notes for this lesson <span>(optional)</span></label>
+                <textarea class="form-input" rows="2" placeholder="Anything to add alongside the PDF..." oninput="updateLessonField(${mi},${li},'textContent', this.value)">${escapeHtmlSafe(lsn.textContent)}</textarea>
               </div>
             ` : `
               <div class="form-group full">
@@ -2097,8 +2141,13 @@ async function saveProduct(e) {
     // admin can turn off per-product (e.g. a subscription that doesn't need a
     // device). Buyer-visible (which fields to show at checkout), never secret.
     subscriptionFields: isSubscription ? {
+      username: document.getElementById('prod-sub-require-username').checked,
+      email:    document.getElementById('prod-sub-require-email').checked,
       password: document.getElementById('prod-sub-require-password').checked,
       device:   document.getElementById('prod-sub-require-device').checked,
+      profile:  document.getElementById('prod-sub-require-profile').checked,
+      pin:      document.getElementById('prod-sub-require-pin').checked,
+      notes:    document.getElementById('prod-sub-require-notes').checked,
     } : null,
     // 'course' | 'pack' | 'product' | 'subscription' — decides how the storefront presents
     // this item (a Course Player with modules/lessons vs a Pack access
@@ -2122,6 +2171,10 @@ async function saveProduct(e) {
   if (!data.name || data.price === '' || isNaN(data.price) || data.price < 0) { showToast('Please fill required fields (title and price)'); return; }
   if (contentType !== 'course' && !isSubscription && autoDeliver && !deliveryLink && !deliveryFiles.length) { showToast('Add a resource link, upload a file, or turn off automatic unlock.'); return; }
   if (isSubscription && !variables.length) { showToast('Add at least one subscription plan (e.g. 1 Month) under Pricing Variants.'); return; }
+  if (isSubscription) {
+    const anySubField = ['username','email','password','device','profile','pin','notes'].some(k => document.getElementById(`prod-sub-require-${k}`).checked);
+    if (!anySubField) { showToast('Turn on at least one field under Subscription Setup, so checkout collects something you can use.'); return; }
+  }
   if (contentType === 'course' && !courseCurriculum.modules.length) { showToast('Add at least one module before saving a course.'); return; }
   const btn = document.getElementById('save-prod-btn');
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span id="save-prod-btn-text">Saving…</span>'; }
@@ -2574,11 +2627,14 @@ function _renderPurchasesTable(all) {
       const sd = p.subscriptionDetails;
       const subBoxId = 'pur-sub-pw-' + p.id;
       const subSnippet = (p.contentType === 'subscription' && sd) ? `<div class="pur-sub-box">
-          <div class="pur-sub-row"><span class="lbl">Username</span><span class="val">${escapeHtml(sd.username || '—')}</span></div>
-          <div class="pur-sub-row"><span class="lbl">Email</span><span class="val">${escapeHtml(sd.email || '—')}</span></div>
+          ${sd.username ? `<div class="pur-sub-row"><span class="lbl">Username</span><span class="val">${escapeHtml(sd.username)}</span></div>` : ''}
+          ${sd.email ? `<div class="pur-sub-row"><span class="lbl">Email</span><span class="val">${escapeHtml(sd.email)}</span></div>` : ''}
           ${sd.password ? `<div class="pur-sub-row"><span class="lbl">Password</span><span class="val" id="${subBoxId}">••••••••</span>
             <button type="button" class="pur-sub-reveal" onclick="_toggleSubPassword('${subBoxId}','${escapeHtml(sd.password).replace(/'/g,"\'")}',this)">Show</button></div>` : ''}
           ${sd.device ? `<div class="pur-sub-row"><span class="lbl">Device</span><span class="val">${sd.device === 'apple' ? 'iPhone / iPad' : 'Android'}</span></div>` : ''}
+          ${sd.profile ? `<div class="pur-sub-row"><span class="lbl">Profile</span><span class="val">${escapeHtml(sd.profile)}</span></div>` : ''}
+          ${sd.pin ? `<div class="pur-sub-row"><span class="lbl">PIN</span><span class="val">${escapeHtml(sd.pin)}</span></div>` : ''}
+          ${sd.notes ? `<div class="pur-sub-row"><span class="lbl">Note</span><span class="val" style="font-family:inherit">${escapeHtml(sd.notes)}</span></div>` : ''}
         </div>` : '';
       const imgEl = p.productImage
         ? `<img class="pur-item-img" src="${p.productImage}" alt="">`
