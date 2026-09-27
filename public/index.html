@@ -2735,7 +2735,10 @@ function handleDbUpdate() {
     // Guarded on validIds.size so this never wipes anything before the
     // product list has actually loaded.
     const allProducts = visibleProducts();
-    const validIds = new Set(allProducts.map(p => p.id));
+    // Hidden products still EXIST — only truly deleted / switched-off ones are
+    // pruned from wishlists, so hiding something for a while doesn't wipe
+    // people's saved items.
+    const validIds = new Set(DB.getAll('products').filter(p => isTypeEnabled(p.contentType || 'product')).map(p => p.id));
     if (validIds.size) {
       Wishlist.prune(validIds);
     }
@@ -2779,7 +2782,7 @@ function handleDbUpdate() {
     // Deep link to a single product (e.g. someone opened a shared product link)
     if (_pendingProductOpen) {
       const sharedProd = DB.getById('products', _pendingProductOpen);
-      if (sharedProd && isTypeEnabled(sharedProd.contentType || 'product')) openProductDetail(sharedProd.id, false);
+      if (sharedProd && sharedProd.hidden !== true && isTypeEnabled(sharedProd.contentType || 'product')) openProductDetail(sharedProd.id, false);
       _pendingProductOpen = ''; // only try once — catalog is fully loaded by the first db:update
       _hideDeepLinkLoader();
     }
@@ -3009,7 +3012,8 @@ function isTypeEnabled(type) {
 // lists/searches/suggests products — filters out any item whose content
 // type has been switched off in the admin panel.
 function visibleProducts() {
-  return DB.getAll('products').filter(p => isTypeEnabled(p.contentType || 'product'));
+  // Products the admin has hidden (Courses & Packs → eye button) never appear.
+  return DB.getAll('products').filter(p => p.hidden !== true && isTypeEnabled(p.contentType || 'product'));
 }
 
 // Hides the homepage "Three ways to level up" card and the All Products
@@ -5429,7 +5433,7 @@ function renderRecentlyViewed() {
   if (!grid) return;
   try {
     const rv = JSON.parse(sessionStorage.getItem('dz_rv') || '[]');
-    const prods = rv.map(x => DB.getById('products', x.id)).filter(p => p && isTypeEnabled(p.contentType || 'product'));
+    const prods = rv.map(x => DB.getById('products', x.id)).filter(p => p && p.hidden !== true && isTypeEnabled(p.contentType || 'product'));
     grid.innerHTML = '';
     if (!prods.length) {
       grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:4rem 2rem;border:1px dashed var(--border);border-radius:var(--radius)">

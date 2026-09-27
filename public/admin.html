@@ -689,6 +689,7 @@ select.form-input option{background:var(--bg2)}
               <div class="form-group"><label class="form-label">Old Price (DA) <span>(optional)</span></label><input class="form-input" id="prod-old-price" type="number" min="0" placeholder="2500"/></div>
               <div class="form-group"><label class="form-label">Badge <span>(optional)</span></label><input class="form-input" id="prod-badge" type="text" placeholder="e.g. NEW, BESTSELLER, LIMITED... (leave empty for none)"/></div>
               <div class="form-group" style="display:flex;align-items:center;gap:.75rem;padding-top:1.5rem"><input type="checkbox" id="prod-featured" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer"/><label for="prod-featured" class="form-label" style="cursor:pointer;margin:0">Featured</label></div>
+              <div class="form-group" style="display:flex;align-items:center;gap:.75rem;padding-top:1.5rem"><input type="checkbox" id="prod-hidden" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer"/><label for="prod-hidden" class="form-label" style="cursor:pointer;margin:0">Hide from store <span style="font-weight:400;color:var(--text-muted)">(not deleted — buyers keep access)</span></label></div>
               <div class="form-group full"><label class="form-label" id="prod-desc-label">Course Description</label><textarea class="form-input" id="prod-desc" rows="4" placeholder="What will learners get from this?"></textarea></div>
             </div>
           </div>
@@ -1599,21 +1600,23 @@ function renderProductsList() {
 
   const tbody = document.getElementById('products-tbody');
   if (!prods.length) { tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="fa-solid fa-graduation-cap"></i><p>Nothing here yet. <strong>Add your first course or pack!</strong></p></div></td></tr>`; return; }
-  const typeLabel = t => t === 'course' ? '🎓 Course' : t === 'pack' ? '📦 Pack' : '🧩 Product';
+  const typeLabel = t => t === 'course' ? '🎓 Course' : t === 'pack' ? '📦 Pack' : t === 'subscription' ? '🔁 Subscription' : '🧩 Product';
   tbody.innerHTML = prods.map(p => {
     const img = (p.images||[])[0] || generatePlaceholder(p.name, 80, 60);
     const typeOff = enabledTypes[p.contentType || 'product'] === false;
-    return `<tr${typeOff ? ' style="opacity:.55"' : ''}>
+    const isHidden = p.hidden === true;
+    return `<tr${(typeOff || isHidden) ? ' style="opacity:.55"' : ''}>
       <td><div class="td-img"><img src="${img}" alt=""/></div></td>
-      <td><div class="td-name">${p.name}</div>${p.badge?`<span class="status-badge status-pending">${p.badge}</span>`:''}${typeOff?' <span class="status-badge" style="background:rgba(239,68,68,.1);color:#EF4444;border:1px solid rgba(239,68,68,.2)" title="This item\'s content type is switched off"><i class="fa-solid fa-eye-slash"></i> Hidden</span>':''}</td>
+      <td><div class="td-name">${p.name}</div>${isHidden?'<span class="status-badge" style="background:rgba(245,158,11,.12);color:#F59E0B;border:1px solid rgba(245,158,11,.3)"><i class="fa-solid fa-eye-slash"></i> Hidden from store</span> ':''}${p.badge?`<span class="status-badge status-pending">${p.badge}</span>`:''}${typeOff?' <span class="status-badge" style="background:rgba(239,68,68,.1);color:#EF4444;border:1px solid rgba(239,68,68,.2)" title="This item\'s content type is switched off"><i class="fa-solid fa-eye-slash"></i> Hidden</span>':''}</td>
       <td style="font-size:.82rem;white-space:nowrap">${typeLabel(p.contentType)}</td>
       <td class="td-cat">${p.category||'—'}</td>
       <td class="td-price">${p.price ? p.price.toLocaleString()+' '+s.currency : 'FREE'}</td>
       <td style="color:var(--text-muted);text-decoration:line-through">${p.oldPrice?p.oldPrice.toLocaleString()+' '+s.currency:'—'}</td>
       <td><span style="font-size:.8rem;${p.featured?'color:var(--accent)':'color:var(--text-muted)'}">${p.featured?'⭐ Yes':'No'}</span></td>
       <td><div class="td-actions">
-        <button class="btn btn-sm btn-outline" onclick="editProduct('${p.id}')"><i class="fa-solid fa-pen"></i></button>
-        <button class="btn btn-sm btn-danger" onclick="deleteProduct('${p.id}')"><i class="fa-solid fa-trash"></i></button>
+        <button class="btn btn-sm btn-outline" onclick="toggleProductHidden('${p.id}')" title="${isHidden ? 'Show in store again' : 'Hide from store'}"><i class="fa-solid ${isHidden ? 'fa-eye' : 'fa-eye-slash'}"></i></button>
+        <button class="btn btn-sm btn-outline" onclick="editProduct('${p.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+        <button class="btn btn-sm btn-danger" onclick="deleteProduct('${p.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
       </div></td>
     </tr>`;
   }).join('');
@@ -1646,6 +1649,7 @@ function loadProductForm() {
     document.getElementById('prod-old-price').value = p.oldPrice||'';
     document.getElementById('prod-badge').value = p.badge||'';
     document.getElementById('prod-featured').checked = !!p.featured;
+    document.getElementById('prod-hidden').checked = !!p.hidden;
     document.getElementById('prod-desc').value = p.description||'';
     const subFields = p.subscriptionFields || { username: true, email: true, password: true, device: true };
     document.getElementById('prod-sub-require-username').checked = subFields.username !== false;
@@ -2133,6 +2137,7 @@ async function saveProduct(e) {
     oldPrice: parseFloat(document.getElementById('prod-old-price').value)||null,
     badge: document.getElementById('prod-badge').value||null,
     featured: document.getElementById('prod-featured').checked,
+    hidden: document.getElementById('prod-hidden').checked,
     description: document.getElementById('prod-desc').value.trim(),
     images: productImages,
     variables: variables,
@@ -2205,6 +2210,19 @@ async function saveProduct(e) {
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> <span id="save-prod-btn-text">' + (id ? 'Update Content' : 'Save Content') + '</span>'; }
   }
 }
+// Hide / show a product on the storefront without deleting it. Hidden products
+// disappear from the home page, Explore, search and direct links, and can't be
+// bought — but anyone who already owns one keeps it in My Library.
+async function toggleProductHidden(id) {
+  const p = DB.getAll('products').find(x => x.id === id);
+  if (!p) return;
+  const nowHidden = !(p.hidden === true);
+  const r = await DB.update('products', id, { hidden: nowHidden });
+  if (!r) { showToast('❌ Could not update — please try again.'); return; }
+  renderProductsList();
+  showToast(nowHidden ? `"${p.name}" is now hidden from the store` : `"${p.name}" is visible in the store again`);
+}
+
 function deleteProduct(id) { confirmAction('Delete this content?', 'This action cannot be undone. Learners who already have access will keep it, but it will no longer be listed.', () => { DB.delete('products', id); renderProductsList(); showToast('Content deleted'); }); }
 
 // ===== CONTENT TYPES & TOPICS =====
