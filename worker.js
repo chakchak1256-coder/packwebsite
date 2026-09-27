@@ -533,6 +533,9 @@ async function priceCartItems(env, cartItems) {
     const productId = item.productId || item.id;
     const product = await Docs.getDoc(env, 'products', productId);
     if (!product) throw new Error(`Product not found: ${productId}`);
+    // A product the admin hid from the store can't be bought, even by someone
+    // who still has its id (an old link, a stale cart, a direct API call).
+    if (product.hidden === true) { const e = new Error(`Product is hidden: ${productId}`); e.unavailable = true; throw e; }
     const { price: unitPrice, label: variantLabel } = resolveVariant(product, item.variantLabel);
     const qty = Math.max(1, parseInt(item.qty, 10) || 1);
     const delivery = await getProductDelivery(env, productId, product);
@@ -1299,6 +1302,7 @@ export default {
           // state (e.g. "SUPABASE_SERVICE_ROLE_KEY secret is not set") to
           // shoppers.
           console.error('[checkout] priceCartItems failed:', err.message);
+          if (err.unavailable) return json({ error: 'This product is no longer available.' }, 400);
           return json({ error: 'We could not process your cart right now. Please try again in a moment, or contact support if this persists.' }, 400);
         }
         const computedAmount = pricedItems.reduce((sum, it) => sum + it.unitPrice * it.qty, 0);
@@ -1548,7 +1552,7 @@ export default {
         if (!productId) return json({ error: 'productId is required.' }, 400);
 
         const product = await Docs.getDoc(env, 'products', productId);
-        if (!product) return json({ error: 'Product not found.' }, 404);
+        if (!product || product.hidden === true) return json({ error: 'Product not found.' }, 404);
 
         const { price, label: variantLabel } = resolveVariant(product, body.variantLabel || body.variant_label || null);
         if (Number(price) > 0) {
